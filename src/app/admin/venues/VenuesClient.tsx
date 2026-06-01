@@ -11,13 +11,16 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
   const [venueName, setVenueName] = useState('')
   const [pitchNames, setPitchNames] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleAddVenue(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
+    setError(null)
     const fd = new FormData()
     fd.set('name', venueName)
-    await addVenue(fd)
+    const result = await addVenue(fd)
+    if (result?.error) { setError(result.error); setSaving(false); return }
     setVenueName('')
     setSaving(false)
     window.location.reload()
@@ -55,6 +58,7 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
       {/* Add venue */}
       <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6">
         <h2 className="text-base font-semibold text-gray-900 mb-4">Add venue</h2>
+        {error && <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{error}</div>}
         <form onSubmit={handleAddVenue} className="flex gap-3">
           <input
             value={venueName}
