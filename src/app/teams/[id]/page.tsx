@@ -6,14 +6,15 @@ import BackButton from '@/components/BackButton'
 
 export const dynamic = 'force-dynamic'
 
-export default async function TeamDashboardPage({ params }: { params: { id: string } }) {
+export default async function TeamDashboardPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/signin')
 
   const [{ data: profile }, { data: team }, { data: seasons }] = await Promise.all([
     supabase.from('profiles').select('full_name, role').eq('id', user.id).single(),
-    supabase.from('teams').select('*').eq('id', params.id).single(),
+    supabase.from('teams').select('*').eq('id', id).single(),
     supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
   ])
 
