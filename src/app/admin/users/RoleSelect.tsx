@@ -42,6 +42,7 @@ export default function RoleSelect({
       className="border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-700 disabled:opacity-50"
     >
       <option value="standard">Standard</option>
+      <option value="fixture_secretary">Fixture Secretary</option>
       <option value="admin">Admin</option>
     </select>
   )

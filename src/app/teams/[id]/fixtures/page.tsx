@@ -70,7 +70,7 @@ export default async function FixturesPage({
 
   const { data: fixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, opponent_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
+    .select('id, date, kickoff_time, venue, confirmed, opponent_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
@@ -143,6 +143,9 @@ export default async function FixturesPage({
                   const isPast = new Date(f.date) < new Date(new Date().toDateString())
                   return (
                     <tr key={f.id} className={isPast ? 'opacity-50' : ''}>
+                      <td className="pl-3 py-3 w-2">
+                        <div className={`w-2 h-2 rounded-full ${(f as any).confirmed ? 'bg-green-500' : 'bg-red-400'}`} title={(f as any).confirmed ? 'Confirmed' : 'Unconfirmed'} />
+                      </td>
                       <td className="px-5 py-3 text-gray-900 font-medium whitespace-nowrap">{formatDate(f.date)}</td>
                       <td className="px-3 py-3 text-gray-600 whitespace-nowrap">{formatTime(f.kickoff_time)}</td>
                       <td className="px-3 py-3 text-gray-900">

@@ -10,6 +10,7 @@ interface Props {
   children: React.ReactNode
   userName?: string | null
   isAdmin?: boolean
+  isFixtureSecretary?: boolean
 }
 
 function MenuIcon() {
@@ -28,11 +29,12 @@ function CloseIcon() {
   )
 }
 
-export default function AppShell({ children, userName: nameProp, isAdmin: adminProp }: Props) {
+export default function AppShell({ children, userName: nameProp, isAdmin: adminProp, isFixtureSecretary: fsProp }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [userName, setUserName] = useState<string | null>(nameProp ?? null)
   const [isAdmin, setIsAdmin] = useState(adminProp ?? false)
+  const [isFixtureSecretary, setIsFixtureSecretary] = useState(fsProp ?? false)
   const pathname = usePathname()
   const profileRef = useRef<HTMLDivElement>(null)
 
@@ -47,6 +49,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
           if (data) {
             setUserName(data.full_name)
             setIsAdmin(data.role === 'admin')
+            setIsFixtureSecretary(data.role === 'fixture_secretary')
           }
         })
     })
@@ -55,6 +58,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
   // Update state when props change
   useEffect(() => { if (nameProp !== undefined) setUserName(nameProp ?? null) }, [nameProp])
   useEffect(() => { if (adminProp !== undefined) setIsAdmin(adminProp) }, [adminProp])
+  useEffect(() => { if (fsProp !== undefined) setIsFixtureSecretary(fsProp) }, [fsProp])
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -76,6 +80,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
 
   const navLinks = [
     { href: '/dashboard', label: 'Home' },
+    ...(isAdmin || isFixtureSecretary ? [{ href: '/fixtures', label: 'Fixtures' }] : []),
     ...(isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
 
