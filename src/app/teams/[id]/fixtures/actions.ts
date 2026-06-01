@@ -16,6 +16,7 @@ export async function addFixture(teamId: string, formData: FormData) {
     kickoff_time: tbc || !kickoffRaw ? null : kickoffRaw,
     opponent_id: formData.get('opponent_id') as string,
     venue: formData.get('venue') as string,
+    competition: formData.get('competition') as string,
   })
 
   if (error) return { error: error.message }
@@ -37,6 +38,7 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
     kickoff_time: tbc || !kickoffRaw ? null : kickoffRaw,
     opponent_id: formData.get('opponent_id') as string,
     venue: formData.get('venue') as string,
+    competition: formData.get('competition') as string,
     home_venue_id: homeVenueId || null,
     pitch_id: pitchId || null,
   }).eq('id', fixtureId)

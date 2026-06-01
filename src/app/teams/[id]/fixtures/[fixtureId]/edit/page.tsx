@@ -32,6 +32,7 @@ export default function EditFixturePage() {
   const [kickoffTime, setKickoffTime] = useState('')
   const [opponentId, setOpponentId] = useState('')
   const [venue, setVenue] = useState('home')
+  const [competition, setCompetition] = useState('friendly')
   const [homeVenueId, setHomeVenueId] = useState('')
   const [pitchId, setPitchId] = useState('')
 
@@ -55,6 +56,7 @@ export default function EditFixturePage() {
         setKickoffTime(fixture.kickoff_time ?? '')
         setOpponentId(fixture.opponent_id ?? '')
         setVenue(fixture.venue)
+        setCompetition(fixture.competition ?? 'friendly')
         setHomeVenueId(fixture.home_venue_id ?? '')
         setPitchId(fixture.pitch_id ?? '')
 
@@ -94,6 +96,7 @@ export default function EditFixturePage() {
     fd.set('kickoff_time', kickoffTime)
     fd.set('opponent_id', opponentId)
     fd.set('venue', venue)
+    fd.set('competition', competition)
     fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
     const result = await updateFixture(fixtureId, teamId, fd)
@@ -181,6 +184,20 @@ export default function EditFixturePage() {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              {/* Competition */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
+                <select
+                  value={competition}
+                  onChange={e => setCompetition(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                >
+                  <option value="friendly">Friendly</option>
+                  <option value="league">League</option>
+                  <option value="cup">Cup</option>
+                </select>
               </div>
 
               {/* Pitch assignment — admin only, home fixtures only */}

@@ -26,6 +26,7 @@ export default function AddFixturePage() {
   const [kickoffTime, setKickoffTime] = useState('')
   const [opponentId, setOpponentId] = useState('')
   const [venue, setVenue] = useState('home')
+  const [competition, setCompetition] = useState('friendly')
 
   useEffect(() => {
     async function load() {
@@ -54,6 +55,7 @@ export default function AddFixturePage() {
     fd.set('kickoff_time', kickoffTime)
     fd.set('opponent_id', opponentId)
     fd.set('venue', venue)
+    fd.set('competition', competition)
     const result = await addFixture(teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false) }
     else router.push(`/teams/${teamId}/fixtures`)
@@ -162,6 +164,20 @@ export default function AddFixturePage() {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              {/* Competition */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
+                <select
+                  value={competition}
+                  onChange={e => setCompetition(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                >
+                  <option value="friendly">Friendly</option>
+                  <option value="league">League</option>
+                  <option value="cup">Cup</option>
+                </select>
               </div>
 
               <div className="flex gap-3 pt-1">
