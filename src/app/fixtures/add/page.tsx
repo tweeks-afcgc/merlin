@@ -11,14 +11,59 @@ type Season = { id: string; name: string; start_date: string; is_current: boolea
 type Team = { id: string; name: string; type: string; founding_age_group: number | null; founding_season_id: string | null; age_group: number | null }
 type ClubTeam = { id: string; name: string; clubs: { name: string } }
 
-function teamDisplayName(team: Team, seasons: Season[]): string {
-  if (team.type === 'senior') return team.name
-  if (!team.founding_age_group || !team.founding_season_id) return team.name
-  const sorted = [...seasons].sort((a, b) => new Date(a.start_date as any).getTime() - new Date(b.start_date as any).getTime())
+// Senior teams in the desired fixed order
+const SENIOR_ORDER = ['First XI', 'Sunday XI', 'Vets XI', 'Women']
+const SQUAD_ORDER = ['Knights', 'Dukes', 'Roses']
+
+function computeAge(team: Team, seasons: Season[]): number {
+  if (!team.founding_age_group || !team.founding_season_id) return team.age_group ?? 0
+  const sorted = [...seasons].sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
   const foundingIdx = sorted.findIndex(s => s.id === team.founding_season_id)
   const currentIdx = sorted.findIndex(s => s.is_current)
-  if (foundingIdx === -1 || currentIdx === -1) return `Under ${team.founding_age_group} ${team.name}`
-  return `Under ${team.founding_age_group + (currentIdx - foundingIdx)} ${team.name}`
+  if (foundingIdx === -1 || currentIdx === -1) return team.founding_age_group
+  return team.founding_age_group + (currentIdx - foundingIdx)
+}
+
+function teamDisplayName(team: Team, seasons: Season[]): string {
+  if (team.type === 'senior') return team.name
+  const age = computeAge(team, seasons)
+  return `Under ${age} ${team.name}`
+}
+
+function sortedTeams(teams: Team[], seasons: Season[]): Team[] {
+  const senior = teams
+    .filter(t => t.type === 'senior')
+    .sort((a, b) => {
+      const ai = SENIOR_ORDER.indexOf(a.name)
+      const bi = SENIOR_ORDER.indexOf(b.name)
+      const av = ai === -1 ? 99 : ai
+      const bv = bi === -1 ? 99 : bi
+      return av !== bv ? av - bv : a.name.localeCompare(b.name)
+    })
+
+  const junior = teams
+    .filter(t => t.type === 'junior')
+    .sort((a, b) => {
+      const ageA = computeAge(a, seasons)
+      const ageB = computeAge(b, seasons)
+      if (ageB !== ageA) return ageB - ageA // older age groups first
+      const si = (name: string) => {
+        const idx = SQUAD_ORDER.findIndex(s => name.includes(s))
+        return idx === -1 ? 99 : idx
+      }
+      return si(a.name) - si(b.name)
+    })
+
+  return [...senior, ...junior]
+}
+
+function nextWeekday(dayOfWeek: number): string {
+  // dayOfWeek: 0=Sun, 6=Sat
+  const today = new Date()
+  const diff = (dayOfWeek - today.getDay() + 7) % 7 || 7
+  const result = new Date(today)
+  result.setDate(today.getDate() + diff)
+  return result.toISOString().split('T')[0]
 }
 
 export default function AddFixtureFromDashboardPage() {
@@ -45,15 +90,21 @@ export default function AddFixtureFromDashboardPage() {
   useEffect(() => {
     async function load() {
       const [{ data: teamsData }, { data: seasonsData }, { data: clubTeamsData }] = await Promise.all([
-        supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group').order('name'),
+        supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group'),
         supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: false }),
-        supabase.from('club_teams').select('id, name, clubs(name)').order('name'),
+        supabase.from('club_teams').select('id, name, clubs(name)'),
       ])
       const s = seasonsData ?? []
       setTeams(teamsData ?? [])
       setSeasons(s)
       setSeasonId(s.find(x => x.is_current)?.id ?? s[0]?.id ?? '')
-      setClubTeams((clubTeamsData ?? []) as any)
+
+      const sorted = ((clubTeamsData ?? []) as ClubTeam[]).sort((a, b) => {
+        const nameA = `${(a.clubs as any)?.name} ${a.name}`
+        const nameB = `${(b.clubs as any)?.name} ${b.name}`
+        return nameA.localeCompare(nameB)
+      })
+      setClubTeams(sorted)
       setLoading(false)
     }
     load()
@@ -77,6 +128,8 @@ export default function AddFixtureFromDashboardPage() {
     if (result?.error) { setError(result.error); setSaving(false) }
     else router.push('/fixtures')
   }
+
+  const orderedTeams = sortedTeams(teams, seasons)
 
   return (
     <AppShell>
@@ -103,7 +156,7 @@ export default function AddFixtureFromDashboardPage() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="">Select team...</option>
-                  {teams.map(t => (
+                  {orderedTeams.map(t => (
                     <option key={t.id} value={t.id}>{teamDisplayName(t, seasons)}</option>
                   ))}
                 </select>
@@ -134,6 +187,22 @@ export default function AddFixtureFromDashboardPage() {
                   onChange={e => setDate(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setDate(nextWeekday(6))}
+                    className="flex-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg py-1.5 transition"
+                  >
+                    Next Saturday
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDate(nextWeekday(0))}
+                    className="flex-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg py-1.5 transition"
+                  >
+                    Next Sunday
+                  </button>
+                </div>
               </div>
 
               {/* Kick off time */}
