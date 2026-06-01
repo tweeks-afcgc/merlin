@@ -59,9 +59,17 @@ export default async function FixturesDashboardPage() {
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin={isAdmin} isFixtureSecretary={isFS}>
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Fixtures</h1>
-          <p className="text-sm text-gray-400 mt-1">All fixtures in the next 14 days.</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Fixtures</h1>
+            <p className="text-sm text-gray-400 mt-1">All fixtures in the next 14 days.</p>
+          </div>
+          <Link
+            href="/fixtures/add"
+            className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
+          >
+            + Add fixture
+          </Link>
         </div>
 
         {!fixtures?.length ? (
