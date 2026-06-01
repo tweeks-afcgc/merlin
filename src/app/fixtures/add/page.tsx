@@ -99,7 +99,7 @@ export default function AddFixtureFromDashboardPage() {
       setSeasons(s)
       setSeasonId(s.find(x => x.is_current)?.id ?? s[0]?.id ?? '')
 
-      const sorted = ((clubTeamsData ?? []) as ClubTeam[]).sort((a, b) => {
+      const sorted = ((clubTeamsData ?? []) as unknown as ClubTeam[]).sort((a, b) => {
         const nameA = `${(a.clubs as any)?.name} ${a.name}`
         const nameB = `${(b.clubs as any)?.name} ${b.name}`
         return nameA.localeCompare(nameB)
