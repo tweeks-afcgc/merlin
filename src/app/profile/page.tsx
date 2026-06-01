@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
@@ -49,7 +50,7 @@ export default async function ProfilePage() {
             </div>
           </div>
 
-          <dl className="space-y-4">
+          <dl className="space-y-4 mb-6">
             <div>
               <dt className="text-xs font-medium text-gray-400 uppercase tracking-wide">Full name</dt>
               <dd className="mt-1 text-sm text-gray-900">{profile?.full_name ?? '—'}</dd>
@@ -63,6 +64,13 @@ export default async function ProfilePage() {
               <dd className="mt-1 text-sm text-gray-900">{formatDate(profile?.dob ?? null)}</dd>
             </div>
           </dl>
+
+          <Link
+            href="/profile/edit"
+            className="block w-full text-center border border-green-700 text-green-700 hover:bg-green-50 font-semibold py-2.5 rounded-lg text-sm transition"
+          >
+            Edit profile
+          </Link>
         </div>
       </div>
     </main>
