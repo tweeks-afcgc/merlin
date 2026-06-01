@@ -5,19 +5,9 @@ import { DeleteTeamButton } from './DeleteTeamButton'
 import AddTeamForm from './AddTeamForm'
 import { teamDisplayName } from '@/lib/teamUtils'
 import AppShell from '@/components/AppShell'
+import AdminNav from '@/components/AdminNav'
 
 export const dynamic = 'force-dynamic'
-
-function AdminNav() {
-  return (
-    <div className="flex gap-4 text-sm mb-8 border-b border-gray-200 pb-4">
-      <Link href="/admin" className="text-gray-400 hover:text-gray-600">Overview</Link>
-      <Link href="/admin/seasons" className="text-gray-400 hover:text-gray-600">Seasons</Link>
-      <Link href="/admin/teams" className="text-red-800 font-semibold border-b-2 border-red-800 pb-4 -mb-4">Teams</Link>
-      <Link href="/admin/users" className="text-gray-400 hover:text-gray-600">Users</Link>
-    </div>
-  )
-}
 
 export default async function AdminTeamsPage() {
   const supabase = await createClient()
@@ -71,6 +61,7 @@ export default async function AdminTeamsPage() {
                     </td>
                     <td className="py-3 text-right">
                       <div className="flex items-center justify-end gap-4">
+                        <Link href={`/teams/${team.id}/fixtures`} className="text-sm text-gray-500 hover:text-gray-900 hover:underline">Fixtures</Link>
                         <Link href={`/admin/teams/${team.id}/edit`} className="text-sm text-red-800 hover:underline">Edit</Link>
                         <DeleteTeamButton teamId={team.id} />
                       </div>

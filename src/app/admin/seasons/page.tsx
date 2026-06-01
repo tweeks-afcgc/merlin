@@ -4,19 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { addSeason } from './actions'
 import { SetCurrentButton } from './SeasonActions'
 import AppShell from '@/components/AppShell'
+import AdminNav from '@/components/AdminNav'
 
 export const dynamic = 'force-dynamic'
-
-function AdminNav() {
-  return (
-    <div className="flex gap-4 text-sm mb-8 border-b border-gray-200 pb-4">
-      <Link href="/admin" className="text-gray-400 hover:text-gray-600">Overview</Link>
-      <Link href="/admin/seasons" className="text-red-800 font-semibold border-b-2 border-red-800 pb-4 -mb-4">Seasons</Link>
-      <Link href="/admin/teams" className="text-gray-400 hover:text-gray-600">Teams</Link>
-      <Link href="/admin/users" className="text-gray-400 hover:text-gray-600">Users</Link>
-    </div>
-  )
-}
 
 export default async function AdminSeasonsPage() {
   const supabase = await createClient()
