@@ -22,7 +22,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, email, dob')
+    .select('full_name, email, dob, role')
     .eq('id', user.id)
     .single()
 
@@ -48,7 +48,9 @@ export default async function ProfilePage() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">{profile?.full_name ?? '—'}</h2>
-              <p className="text-sm text-gray-500">Member</p>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize">
+                {profile?.role ?? 'standard'}
+              </span>
             </div>
           </div>
 
@@ -65,14 +67,28 @@ export default async function ProfilePage() {
               <dt className="text-xs font-medium text-gray-400 uppercase tracking-wide">Date of birth</dt>
               <dd className="mt-1 text-sm text-gray-900">{formatDate(profile?.dob ?? null)}</dd>
             </div>
+            <div>
+              <dt className="text-xs font-medium text-gray-400 uppercase tracking-wide">Role</dt>
+              <dd className="mt-1 text-sm text-gray-900 capitalize">{profile?.role ?? 'standard'}</dd>
+            </div>
           </dl>
 
-          <Link
-            href="/profile/edit"
-            className="block w-full text-center border border-green-700 text-green-700 hover:bg-green-50 font-semibold py-2.5 rounded-lg text-sm transition"
-          >
-            Edit profile
-          </Link>
+          <div className="space-y-3">
+            <Link
+              href="/profile/edit"
+              className="block w-full text-center border border-green-700 text-green-700 hover:bg-green-50 font-semibold py-2.5 rounded-lg text-sm transition"
+            >
+              Edit profile
+            </Link>
+            {profile?.role === 'admin' && (
+              <Link
+                href="/admin/users"
+                className="block w-full text-center bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition"
+              >
+                Manage users
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </main>
