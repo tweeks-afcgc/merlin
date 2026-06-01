@@ -75,6 +75,7 @@ export default async function FixturesDashboardPage() {
               const team = f.teams as any
               const venueInfo = f.venues as any
               const pitchInfo = f.pitches as any
+              const needsTime = !f.kickoff_time
               const needsPitch = f.venue === 'home' && !f.pitch_id
               const fullTeamName = team ? teamDisplayName(team, seasons ?? []) : '—'
 
@@ -108,8 +109,10 @@ export default async function FixturesDashboardPage() {
                         {venueInfo ? ` · ${venueInfo.name}` : ''}
                         {pitchInfo ? ` · ${pitchInfo.name}` : ''}
                       </p>
-                      {/* Warning if home with no pitch */}
-                      {needsPitch && (
+                      {needsTime && (
+                        <p className="text-xs text-amber-600 font-medium mt-0.5">Kick off time TBC — cannot confirm</p>
+                      )}
+                      {!needsTime && needsPitch && (
                         <p className="text-xs text-amber-600 font-medium mt-0.5">No pitch assigned — cannot confirm</p>
                       )}
                     </div>
@@ -120,7 +123,7 @@ export default async function FixturesDashboardPage() {
                       <ConfirmToggle
                         fixtureId={f.id}
                         confirmed={f.confirmed}
-                        disabled={!f.confirmed && needsPitch}
+                        disabled={!f.confirmed && (needsTime || needsPitch)}
                       />
                     </div>
                   )}

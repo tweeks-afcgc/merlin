@@ -15,6 +15,11 @@ export async function confirmFixture(fixtureId: string): Promise<{ error?: strin
 
   if (!fixture) return { error: 'Fixture not found.' }
 
+  // Kick off time must be set (not TBC)
+  if (!fixture.kickoff_time) {
+    return { error: 'A kick off time must be set before a fixture can be confirmed.' }
+  }
+
   // Home fixtures must have a pitch assigned
   if (fixture.venue === 'home' && !fixture.pitch_id) {
     return { error: 'A pitch must be assigned before a home fixture can be confirmed.' }
