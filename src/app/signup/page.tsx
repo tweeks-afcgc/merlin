@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -22,7 +22,7 @@ export default function SignUpPage() {
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-700">Merlin</h1>
+          <h1 className="text-3xl font-bold text-red-800">Merlin</h1>
           <p className="text-gray-500 mt-1">Create your account</p>
         </div>
 
@@ -43,7 +43,7 @@ export default function SignUpPage() {
               type="text"
               required
               autoComplete="name"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             />
           </div>
 
@@ -57,7 +57,7 @@ export default function SignUpPage() {
               type="email"
               required
               autoComplete="email"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             />
           </div>
 
@@ -70,7 +70,7 @@ export default function SignUpPage() {
               name="dob"
               type="date"
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             />
           </div>
 
@@ -85,7 +85,7 @@ export default function SignUpPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             />
             <p className="text-xs text-gray-400 mt-1">Minimum 8 characters</p>
           </div>
@@ -93,15 +93,15 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+            className="w-full bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
           >
-            {loading ? 'Creating account…' : 'Create account'}
+            {loading ? 'Creating accountâ€¦' : 'Create account'}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Already have an account?{' '}
-          <Link href="/signin" className="text-green-700 font-medium hover:underline">
+          <Link href="/signin" className="text-red-800 font-medium hover:underline">
             Sign in
           </Link>
         </p>
@@ -109,3 +109,4 @@ export default function SignUpPage() {
     </main>
   )
 }
+

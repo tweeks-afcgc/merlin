@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+﻿import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
@@ -7,7 +7,7 @@ import { teamDisplayName } from '@/lib/teamUtils'
 export const dynamic = 'force-dynamic'
 
 function formatDate(dateStr: string | null) {
-  if (!dateStr) return '—'
+  if (!dateStr) return 'â€”'
   return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
@@ -30,12 +30,12 @@ export default async function ProfilePage() {
 
         <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8 mb-4">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold flex-shrink-0">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-red-800 text-xl font-bold flex-shrink-0">
               {profile?.full_name?.charAt(0)?.toUpperCase() ?? '?'}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">{profile?.full_name ?? '—'}</h2>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize">
+              <h2 className="text-lg font-semibold text-gray-900">{profile?.full_name ?? 'â€”'}</h2>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-900 capitalize">
                 {profile?.role ?? 'standard'}
               </span>
             </div>
@@ -44,11 +44,11 @@ export default async function ProfilePage() {
           <dl className="space-y-4 mb-6">
             <div>
               <dt className="text-xs font-medium text-gray-400 uppercase tracking-wide">Full name</dt>
-              <dd className="mt-1 text-sm text-gray-900">{profile?.full_name ?? '—'}</dd>
+              <dd className="mt-1 text-sm text-gray-900">{profile?.full_name ?? 'â€”'}</dd>
             </div>
             <div>
               <dt className="text-xs font-medium text-gray-400 uppercase tracking-wide">Email address</dt>
-              <dd className="mt-1 text-sm text-gray-900">{profile?.email ?? user.email ?? '—'}</dd>
+              <dd className="mt-1 text-sm text-gray-900">{profile?.email ?? user.email ?? 'â€”'}</dd>
             </div>
             <div>
               <dt className="text-xs font-medium text-gray-400 uppercase tracking-wide">Date of birth</dt>
@@ -62,7 +62,7 @@ export default async function ProfilePage() {
 
           <Link
             href="/profile/edit"
-            className="block w-full text-center border border-green-700 text-green-700 hover:bg-green-50 font-semibold py-2.5 rounded-lg text-sm transition"
+            className="block w-full text-center border border-red-800 text-red-800 hover:bg-red-50 font-semibold py-2.5 rounded-lg text-sm transition"
           >
             Edit profile
           </Link>
@@ -89,3 +89,4 @@ export default async function ProfilePage() {
     </AppShell>
   )
 }
+

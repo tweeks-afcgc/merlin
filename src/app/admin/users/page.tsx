@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+﻿import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import RoleSelect from './RoleSelect'
@@ -12,7 +12,7 @@ function AdminNav() {
       <Link href="/admin" className="text-gray-400 hover:text-gray-600">Overview</Link>
       <Link href="/admin/seasons" className="text-gray-400 hover:text-gray-600">Seasons</Link>
       <Link href="/admin/teams" className="text-gray-400 hover:text-gray-600">Teams</Link>
-      <Link href="/admin/users" className="text-green-700 font-semibold border-b-2 border-green-700 pb-4 -mb-4">Users</Link>
+      <Link href="/admin/users" className="text-red-800 font-semibold border-b-2 border-red-800 pb-4 -mb-4">Users</Link>
     </div>
   )
 }
@@ -46,8 +46,8 @@ export default async function AdminUsersPage() {
             <tbody className="divide-y divide-gray-50">
               {profiles?.map(p => (
                 <tr key={p.id}>
-                  <td className="py-3 pr-4 text-gray-900">{p.full_name ?? '—'}</td>
-                  <td className="py-3 pr-4 text-gray-600">{p.email ?? '—'}</td>
+                  <td className="py-3 pr-4 text-gray-900">{p.full_name ?? 'â€”'}</td>
+                  <td className="py-3 pr-4 text-gray-600">{p.email ?? 'â€”'}</td>
                   <td className="py-3">
                     <RoleSelect userId={p.id} currentRole={p.role} isSelf={p.id === user.id} />
                   </td>
@@ -60,3 +60,4 @@ export default async function AdminUsersPage() {
     </AppShell>
   )
 }
+

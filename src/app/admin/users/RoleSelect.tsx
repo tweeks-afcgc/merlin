@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -28,7 +28,7 @@ export default function RoleSelect({
 
   if (isSelf) {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-900">
         {role}
       </span>
     )
@@ -39,10 +39,11 @@ export default function RoleSelect({
       value={role}
       onChange={e => handleChange(e.target.value)}
       disabled={saving}
-      className="border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+      className="border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-700 disabled:opacity-50"
     >
       <option value="standard">Standard</option>
       <option value="admin">Admin</option>
     </select>
   )
 }
+

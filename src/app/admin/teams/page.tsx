@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+﻿import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { DeleteTeamButton } from './DeleteTeamButton'
@@ -13,7 +13,7 @@ function AdminNav() {
     <div className="flex gap-4 text-sm mb-8 border-b border-gray-200 pb-4">
       <Link href="/admin" className="text-gray-400 hover:text-gray-600">Overview</Link>
       <Link href="/admin/seasons" className="text-gray-400 hover:text-gray-600">Seasons</Link>
-      <Link href="/admin/teams" className="text-green-700 font-semibold border-b-2 border-green-700 pb-4 -mb-4">Teams</Link>
+      <Link href="/admin/teams" className="text-red-800 font-semibold border-b-2 border-red-800 pb-4 -mb-4">Teams</Link>
       <Link href="/admin/users" className="text-gray-400 hover:text-gray-600">Users</Link>
     </div>
   )
@@ -71,7 +71,7 @@ export default async function AdminTeamsPage() {
                     </td>
                     <td className="py-3 text-right">
                       <div className="flex items-center justify-end gap-4">
-                        <Link href={`/admin/teams/${team.id}/edit`} className="text-sm text-green-700 hover:underline">Edit</Link>
+                        <Link href={`/admin/teams/${team.id}/edit`} className="text-sm text-red-800 hover:underline">Edit</Link>
                         <DeleteTeamButton teamId={team.id} />
                       </div>
                     </td>
@@ -85,3 +85,4 @@ export default async function AdminTeamsPage() {
     </AppShell>
   )
 }
+

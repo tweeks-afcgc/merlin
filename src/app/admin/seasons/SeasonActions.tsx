@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { setCurrentSeason } from './actions'
@@ -10,7 +10,7 @@ export function SetCurrentButton({ seasonId, isCurrent }: { seasonId: string; is
 
   if (isCurrent) {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-900">
         Current
       </span>
     )
@@ -31,9 +31,10 @@ export function SetCurrentButton({ seasonId, isCurrent }: { seasonId: string; is
     <button
       onClick={handle}
       disabled={loading}
-      className="text-sm text-green-700 hover:underline disabled:opacity-50"
+      className="text-sm text-red-800 hover:underline disabled:opacity-50"
     >
-      {loading ? 'Setting…' : 'Set as current'}
+      {loading ? 'Settingâ€¦' : 'Set as current'}
     </button>
   )
 }
+

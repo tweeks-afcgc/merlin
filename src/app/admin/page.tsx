@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+﻿import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
@@ -40,52 +40,52 @@ export default async function AdminDashboardPage() {
           {/* Current season */}
           <Link
             href="/admin/seasons"
-            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-green-200 transition"
+            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-red-200 transition"
           >
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
               Current season
             </p>
-            <p className="text-2xl font-bold text-gray-900 group-hover:text-green-700 transition leading-tight">
-              {currentSeason?.name ?? '—'}
+            <p className="text-2xl font-bold text-gray-900 group-hover:text-red-800 transition leading-tight">
+              {currentSeason?.name ?? 'â€”'}
             </p>
             {currentSeason && (
               <p className="text-xs text-gray-400 mt-1">
                 Ends {new Date(currentSeason.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
             )}
-            <p className="text-xs text-green-600 font-medium mt-4">Manage seasons →</p>
+            <p className="text-xs text-red-700 font-medium mt-4">Manage seasons â†’</p>
           </Link>
 
           {/* Teams */}
           <Link
             href="/admin/teams"
-            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-green-200 transition"
+            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-red-200 transition"
           >
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
               Teams
             </p>
-            <p className="text-2xl font-bold text-gray-900 group-hover:text-green-700 transition">
+            <p className="text-2xl font-bold text-gray-900 group-hover:text-red-800 transition">
               {(teams?.length ?? 0)}
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              {seniorCount} senior · {juniorCount} junior
+              {seniorCount} senior Â· {juniorCount} junior
             </p>
-            <p className="text-xs text-green-600 font-medium mt-4">Add / edit teams →</p>
+            <p className="text-xs text-red-700 font-medium mt-4">Add / edit teams â†’</p>
           </Link>
 
           {/* Users */}
           <Link
             href="/admin/users"
-            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-green-200 transition"
+            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-red-200 transition"
           >
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
               Users
             </p>
-            <p className="text-2xl font-bold text-gray-900 group-hover:text-green-700 transition">
-              {userCount ?? '—'}
+            <p className="text-2xl font-bold text-gray-900 group-hover:text-red-800 transition">
+              {userCount ?? 'â€”'}
             </p>
             <p className="text-xs text-gray-400 mt-1">Registered members</p>
-            <p className="text-xs text-green-600 font-medium mt-4">Manage users →</p>
+            <p className="text-xs text-red-700 font-medium mt-4">Manage users â†’</p>
           </Link>
 
         </div>
@@ -93,3 +93,4 @@ export default async function AdminDashboardPage() {
     </AppShell>
   )
 }
+

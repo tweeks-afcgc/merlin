@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -53,7 +53,7 @@ export default function EditProfilePage() {
         <h1 className="text-xl font-bold text-gray-900 mb-6">Edit profile</h1>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Loading…</p>
+          <p className="text-sm text-gray-400">Loadingâ€¦</p>
         ) : (
           <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -65,7 +65,7 @@ export default function EditProfilePage() {
                 <input
                   id="full_name" type="text" required
                   value={fullName} onChange={e => setFullName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
               </div>
               <div>
@@ -73,7 +73,7 @@ export default function EditProfilePage() {
                 <input
                   id="dob" type="date"
                   value={dob} onChange={e => setDob(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
               </div>
               <div className="flex gap-3 pt-1">
@@ -85,9 +85,9 @@ export default function EditProfilePage() {
                 </button>
                 <button
                   type="submit" disabled={saving}
-                  className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+                  className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
                 >
-                  {saving ? 'Saving…' : 'Save changes'}
+                  {saving ? 'Savingâ€¦' : 'Save changes'}
                 </button>
               </div>
             </form>
@@ -97,3 +97,4 @@ export default function EditProfilePage() {
     </AppShell>
   )
 }
+

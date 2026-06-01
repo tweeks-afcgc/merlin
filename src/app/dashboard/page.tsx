@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+﻿import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
@@ -35,15 +35,14 @@ export default async function DashboardPage() {
           <p className="text-sm text-gray-400 mt-1">Here's your Merlin dashboard.</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Today</p>
-            <p className="text-sm font-semibold text-gray-900">{today}</p>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Season</p>
-            <p className="text-sm font-semibold text-gray-900">{currentSeason?.name ?? '—'}</p>
-          </div>
+        <div className=”flex items-center gap-3 text-sm text-gray-400 mb-8”>
+          <span>{today}</span>
+          {currentSeason && (
+            <>
+              <span className=”text-gray-300”>·</span>
+              <span>{currentSeason.name} season</span>
+            </>
+          )}
         </div>
 
         {managedTeams.length > 0 ? (
@@ -56,9 +55,9 @@ export default async function DashboardPage() {
                 <Link
                   key={team.id}
                   href={`/teams/${team.id}`}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-green-200 transition group"
+                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-red-200 transition group"
                 >
-                  <p className="font-semibold text-gray-900 text-base group-hover:text-green-700 transition">
+                  <p className="font-semibold text-gray-900 text-base group-hover:text-red-800 transition">
                     {teamDisplayName(team, seasons ?? [])}
                   </p>
                   <span className={`mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -82,3 +81,4 @@ export default async function DashboardPage() {
     </AppShell>
   )
 }
+

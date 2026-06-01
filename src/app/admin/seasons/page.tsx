@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+﻿import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { addSeason } from './actions'
@@ -11,7 +11,7 @@ function AdminNav() {
   return (
     <div className="flex gap-4 text-sm mb-8 border-b border-gray-200 pb-4">
       <Link href="/admin" className="text-gray-400 hover:text-gray-600">Overview</Link>
-      <Link href="/admin/seasons" className="text-green-700 font-semibold border-b-2 border-green-700 pb-4 -mb-4">Seasons</Link>
+      <Link href="/admin/seasons" className="text-red-800 font-semibold border-b-2 border-red-800 pb-4 -mb-4">Seasons</Link>
       <Link href="/admin/teams" className="text-gray-400 hover:text-gray-600">Teams</Link>
       <Link href="/admin/users" className="text-gray-400 hover:text-gray-600">Users</Link>
     </div>
@@ -43,13 +43,13 @@ export default async function AdminSeasonsPage() {
           <h2 className="text-base font-semibold text-gray-900 mb-4">Add season</h2>
           <form action={handleAdd} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <input name="name" placeholder="e.g. 2026/2027" required
-              className="sm:col-span-2 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              className="sm:col-span-2 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
             <input name="start_date" type="date" required
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
             <input name="end_date" type="date" required
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
             <button type="submit"
-              className="sm:col-span-4 bg-green-700 hover:bg-green-800 text-white font-semibold py-2 rounded-lg text-sm transition">
+              className="sm:col-span-4 bg-red-800 hover:bg-red-900 text-white font-semibold py-2 rounded-lg text-sm transition">
               Add season
             </button>
           </form>
@@ -86,3 +86,4 @@ export default async function AdminSeasonsPage() {
     </AppShell>
   )
 }
+

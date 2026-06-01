@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { addTeam } from './actions'
@@ -50,7 +50,7 @@ export default function AddTeamForm({ currentSeason }: { currentSeason: Season |
               name="type"
               value={type}
               onChange={e => setType(e.target.value as 'senior' | 'junior')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             >
               <option value="senior">Senior</option>
               <option value="junior">Junior</option>
@@ -70,7 +70,7 @@ export default function AddTeamForm({ currentSeason }: { currentSeason: Season |
                   max={18}
                   required
                   placeholder="12"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
               </div>
               <div className="col-span-2">
@@ -82,7 +82,7 @@ export default function AddTeamForm({ currentSeason }: { currentSeason: Season |
                   type="text"
                   required
                   placeholder="Knights"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
               </div>
               {/* Hidden: records which season this age group belongs to */}
@@ -96,7 +96,7 @@ export default function AddTeamForm({ currentSeason }: { currentSeason: Season |
                 type="text"
                 required
                 placeholder="First XI"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
               />
             </div>
           )}
@@ -105,11 +105,12 @@ export default function AddTeamForm({ currentSeason }: { currentSeason: Season |
         <button
           type="submit"
           disabled={loading || (type === 'junior' && !currentSeason)}
-          className="w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-2 rounded-lg text-sm transition disabled:opacity-60"
+          className="w-full bg-red-800 hover:bg-red-900 text-white font-semibold py-2 rounded-lg text-sm transition disabled:opacity-60"
         >
-          {loading ? 'Adding…' : 'Add team'}
+          {loading ? 'Addingâ€¦' : 'Add team'}
         </button>
       </form>
     </div>
   )
 }
+

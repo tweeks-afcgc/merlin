@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -22,7 +22,7 @@ export default function SignInPage() {
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-700">Merlin</h1>
+          <h1 className="text-3xl font-bold text-red-800">Merlin</h1>
           <p className="text-gray-500 mt-1">Sign in to your account</p>
         </div>
 
@@ -43,7 +43,7 @@ export default function SignInPage() {
               type="email"
               required
               autoComplete="email"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             />
           </div>
 
@@ -57,22 +57,22 @@ export default function SignInPage() {
               type="password"
               required
               autoComplete="current-password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+            className="w-full bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Signing inâ€¦' : 'Sign in'}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-green-700 font-medium hover:underline">
+          <Link href="/signup" className="text-red-800 font-medium hover:underline">
             Sign up
           </Link>
         </p>
@@ -80,3 +80,4 @@ export default function SignInPage() {
     </main>
   )
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -96,7 +96,7 @@ export default function EditTeamPage() {
                   </label>
                   <input
                     type="text" required value={name} onChange={e => setName(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 </div>
                 {type === 'junior' && (
@@ -107,7 +107,7 @@ export default function EditTeamPage() {
                     <input
                       type="number" min={5} max={18} required
                       value={foundingAgeGroup} onChange={e => setFoundingAgeGroup(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                     />
                     <p className="text-xs text-gray-400 mt-1">
                       Age group in the founding season — all other seasons are calculated from this.
@@ -120,7 +120,7 @@ export default function EditTeamPage() {
                     Cancel
                   </button>
                   <button type="submit" disabled={saving}
-                    className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60">
+                    className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60">
                     {saving ? 'Saving…' : 'Save changes'}
                   </button>
                 </div>
@@ -146,8 +146,8 @@ export default function EditTeamPage() {
                         disabled={isToggling}
                         className={`text-xs font-semibold px-3 py-1.5 rounded-full transition disabled:opacity-50 ${
                           isManager
-                            ? 'bg-green-100 text-green-800 hover:bg-red-100 hover:text-red-700'
-                            : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-800'
+                            ? 'bg-red-100 text-red-900 hover:bg-red-100 hover:text-red-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-900'
                         }`}
                       >
                         {isToggling ? '…' : isManager ? 'Manager' : 'Add'}
