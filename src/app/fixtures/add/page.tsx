@@ -7,7 +7,7 @@ import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { addFixture } from '@/app/teams/[id]/fixtures/actions'
 
-type Season = { id: string; name: string; is_current: boolean }
+type Season = { id: string; name: string; start_date: string; is_current: boolean }
 type Team = { id: string; name: string; type: string; founding_age_group: number | null; founding_season_id: string | null; age_group: number | null }
 type ClubTeam = { id: string; name: string; clubs: { name: string } }
 
