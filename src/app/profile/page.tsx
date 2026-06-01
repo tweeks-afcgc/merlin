@@ -1,24 +1,19 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { signOut } from '@/app/auth/actions'
+import AppShell from '@/components/AppShell'
 import { teamDisplayName } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/signin')
 
   const [{ data: profile }, { data: managedTeamLinks }, { data: seasons }] = await Promise.all([
@@ -30,24 +25,12 @@ export default async function ProfilePage() {
   const managedTeams = (managedTeamLinks ?? []).map((row: any) => row.teams).filter(Boolean)
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-green-700">Merlin</h1>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="text-sm text-gray-500 hover:text-red-600 transition"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
+    <AppShell userName={profile?.full_name ?? null} isAdmin={profile?.role === 'admin'}>
+      <div className="max-w-md mx-auto px-4 py-8">
 
-        {/* Profile card */}
-        <div className="bg-white shadow rounded-xl p-8 mb-4">
+        <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8 mb-4">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold">
+            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold flex-shrink-0">
               {profile?.full_name?.charAt(0)?.toUpperCase() ?? '?'}
             </div>
             <div>
@@ -77,34 +60,21 @@ export default async function ProfilePage() {
             </div>
           </dl>
 
-          <div className="space-y-3">
-            <Link
-              href="/profile/edit"
-              className="block w-full text-center border border-green-700 text-green-700 hover:bg-green-50 font-semibold py-2.5 rounded-lg text-sm transition"
-            >
-              Edit profile
-            </Link>
-            {profile?.role === 'admin' && (
-              <Link
-                href="/admin/seasons"
-                className="block w-full text-center bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition"
-              >
-                Admin
-              </Link>
-            )}
-          </div>
+          <Link
+            href="/profile/edit"
+            className="block w-full text-center border border-green-700 text-green-700 hover:bg-green-50 font-semibold py-2.5 rounded-lg text-sm transition"
+          >
+            Edit profile
+          </Link>
         </div>
 
-        {/* Managed teams */}
         {managedTeams.length > 0 && (
-          <div className="bg-white shadow rounded-xl p-8">
+          <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
             <h3 className="text-sm font-semibold text-gray-900 mb-4">Teams managed</h3>
             <ul className="space-y-2">
               {managedTeams.map((team: any) => (
                 <li key={team.id} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-900">
-                    {teamDisplayName(team, seasons ?? [])}
-                  </span>
+                  <span className="text-sm text-gray-900">{teamDisplayName(team, seasons ?? [])}</span>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                     team.type === 'senior' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
                   }`}>
@@ -116,6 +86,6 @@ export default async function ProfilePage() {
           </div>
         )}
       </div>
-    </main>
+    </AppShell>
   )
 }

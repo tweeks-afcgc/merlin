@@ -15,7 +15,7 @@ export async function signIn(formData: FormData) {
   if (error) return { error: error.message }
 
   revalidatePath('/', 'layout')
-  redirect('/profile')
+  redirect('/dashboard')
 }
 
 export async function signUp(formData: FormData) {
@@ -47,7 +47,7 @@ export async function signUp(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/profile')
+  redirect('/dashboard')
 }
 
 export async function signOut() {

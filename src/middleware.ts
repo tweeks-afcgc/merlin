@@ -28,13 +28,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Redirect unauthenticated users away from protected routes
-  if (!user && pathname.startsWith('/profile')) {
+  const protectedPaths = ['/profile', '/dashboard', '/admin', '/teams']
+  if (!user && protectedPaths.some(p => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL('/signin', request.url))
   }
 
   // Redirect authenticated users away from auth pages
   if (user && (pathname === '/signin' || pathname === '/signup')) {
-    return NextResponse.redirect(new URL('/profile', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return supabaseResponse

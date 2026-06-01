@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import Link from 'next/link'
+import AppShell from '@/components/AppShell'
 import { createClient } from '@/lib/supabase/client'
 
 type Profile = { id: string; full_name: string | null; email: string | null }
@@ -40,8 +40,7 @@ export default function EditTeamPage() {
       setManagerIds(new Set((managers ?? []).map((m: { user_id: string }) => m.user_id)))
 
       if (team.founding_season_id) {
-        const { data: season } = await supabase
-          .from('seasons').select('name').eq('id', team.founding_season_id).single()
+        const { data: season } = await supabase.from('seasons').select('name').eq('id', team.founding_season_id).single()
         setFoundingSeasonName(season?.name ?? '')
       }
 
@@ -60,12 +59,8 @@ export default function EditTeamPage() {
 
     const { error } = await supabase.from('teams').update(updates).eq('id', id)
 
-    if (error) {
-      setError(error.message)
-      setSaving(false)
-    } else {
-      router.push('/admin/teams')
-    }
+    if (error) { setError(error.message); setSaving(false) }
+    else router.push('/admin/teams')
   }
 
   async function toggleManager(userId: string) {
@@ -80,110 +75,91 @@ export default function EditTeamPage() {
     setTogglingId(null)
   }
 
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-400 text-sm">Loading…</p>
-      </main>
-    )
-  }
-
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-green-700">Merlin</h1>
-          <Link href="/admin/teams" className="text-sm text-gray-500 hover:text-gray-700">
-            Cancel
-          </Link>
-        </div>
+    <AppShell>
+      <div className="max-w-md mx-auto px-4 py-8">
+        <h1 className="text-xl font-bold text-gray-900 mb-6">Edit team</h1>
 
-        {/* Team details */}
-        <div className="bg-white shadow rounded-xl p-8 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Edit team</h2>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {type === 'junior' ? 'Team nickname' : 'Team name'}
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={e => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+        {loading ? (
+          <p className="text-sm text-gray-400">Loading…</p>
+        ) : (
+          <>
+            {/* Team details */}
+            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8 mb-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{error}</div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {type === 'junior' ? 'Team nickname' : 'Team name'}
+                  </label>
+                  <input
+                    type="text" required value={name} onChange={e => setName(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                {type === 'junior' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Age group in {foundingSeasonName || 'founding season'}
+                    </label>
+                    <input
+                      type="number" min={5} max={18} required
+                      value={foundingAgeGroup} onChange={e => setFoundingAgeGroup(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Age group in the founding season — all other seasons are calculated from this.
+                    </p>
+                  </div>
+                )}
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => router.push('/admin/teams')}
+                    className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={saving}
+                    className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60">
+                    {saving ? 'Saving…' : 'Save changes'}
+                  </button>
+                </div>
+              </form>
             </div>
 
-            {type === 'junior' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Age group in {foundingSeasonName || 'founding season'}
-                </label>
-                <input
-                  type="number"
-                  min={5}
-                  max={18}
-                  required
-                  value={foundingAgeGroup}
-                  onChange={e => setFoundingAgeGroup(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Age group in the founding season — all other seasons are calculated from this.
-                </p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
-            >
-              {saving ? 'Saving…' : 'Save changes'}
-            </button>
-          </form>
-        </div>
-
-        {/* Managers */}
-        <div className="bg-white shadow rounded-xl p-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Managers</h2>
-          <p className="text-sm text-gray-400 mb-5">Select one or more managers for this team.</p>
-
-          <ul className="divide-y divide-gray-50">
-            {allUsers.map(user => {
-              const isManager = managerIds.has(user.id)
-              const isToggling = togglingId === user.id
-              return (
-                <li key={user.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{user.full_name ?? '—'}</p>
-                    <p className="text-xs text-gray-400">{user.email ?? ''}</p>
-                  </div>
-                  <button
-                    onClick={() => toggleManager(user.id)}
-                    disabled={isToggling}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-full transition disabled:opacity-50 ${
-                      isManager
-                        ? 'bg-green-100 text-green-800 hover:bg-red-100 hover:text-red-700'
-                        : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-800'
-                    }`}
-                  >
-                    {isToggling ? '…' : isManager ? 'Manager' : 'Add'}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
+            {/* Managers */}
+            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
+              <h2 className="text-base font-semibold text-gray-900 mb-1">Managers</h2>
+              <p className="text-sm text-gray-400 mb-5">Select one or more managers for this team.</p>
+              <ul className="divide-y divide-gray-50">
+                {allUsers.map(user => {
+                  const isManager = managerIds.has(user.id)
+                  const isToggling = togglingId === user.id
+                  return (
+                    <li key={user.id} className="flex items-center justify-between py-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{user.full_name ?? '—'}</p>
+                        <p className="text-xs text-gray-400">{user.email ?? ''}</p>
+                      </div>
+                      <button
+                        onClick={() => toggleManager(user.id)}
+                        disabled={isToggling}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-full transition disabled:opacity-50 ${
+                          isManager
+                            ? 'bg-green-100 text-green-800 hover:bg-red-100 hover:text-red-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-800'
+                        }`}
+                      >
+                        {isToggling ? '…' : isManager ? 'Manager' : 'Add'}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          </>
+        )}
       </div>
-    </main>
+    </AppShell>
   )
 }

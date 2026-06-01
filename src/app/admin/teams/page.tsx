@@ -4,15 +4,17 @@ import { createClient } from '@/lib/supabase/server'
 import { DeleteTeamButton } from './DeleteTeamButton'
 import AddTeamForm from './AddTeamForm'
 import { teamDisplayName } from '@/lib/teamUtils'
+import AppShell from '@/components/AppShell'
 
 export const dynamic = 'force-dynamic'
 
 function AdminNav() {
   return (
-    <div className="flex gap-4 text-sm mb-8">
-      <Link href="/admin/seasons" className="text-gray-500 hover:text-gray-700">Seasons</Link>
-      <Link href="/admin/teams" className="text-green-700 font-semibold border-b-2 border-green-700 pb-0.5">Teams</Link>
-      <Link href="/admin/users" className="text-gray-500 hover:text-gray-700">Users</Link>
+    <div className="flex gap-4 text-sm mb-8 border-b border-gray-200 pb-4">
+      <Link href="/admin" className="text-gray-400 hover:text-gray-600">Overview</Link>
+      <Link href="/admin/seasons" className="text-gray-400 hover:text-gray-600">Seasons</Link>
+      <Link href="/admin/teams" className="text-green-700 font-semibold border-b-2 border-green-700 pb-4 -mb-4">Teams</Link>
+      <Link href="/admin/users" className="text-gray-400 hover:text-gray-600">Users</Link>
     </div>
   )
 }
@@ -22,40 +24,27 @@ export default async function AdminTeamsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/signin')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') redirect('/profile')
+  const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const { data: teams } = await supabase
-    .from('teams')
-    .select('*')
-    .order('type', { ascending: false })
-    .order('name', { ascending: true })
-
-  const { data: seasons } = await supabase
-    .from('seasons')
-    .select('id, name, start_date, is_current')
-    .order('start_date', { ascending: true })
+  const [{ data: teams }, { data: seasons }] = await Promise.all([
+    supabase.from('teams').select('*').order('type', { ascending: false }).order('name', { ascending: true }),
+    supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
+  ])
 
   const currentSeason = seasons?.find(s => s.is_current) ?? null
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-green-700">Merlin</h1>
-          <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-700">Back to profile</Link>
-        </div>
-
+    <AppShell userName={profile?.full_name ?? null} isAdmin>
+      <div className="max-w-3xl mx-auto px-4 py-8">
         <AdminNav />
 
         <AddTeamForm currentSeason={currentSeason} />
 
-        <div className="bg-white shadow rounded-xl p-6">
+        <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-gray-900">Teams</h2>
-            {currentSeason && (
-              <span className="text-xs text-gray-400">Season: {currentSeason.name}</span>
-            )}
+            {currentSeason && <span className="text-xs text-gray-400">Season: {currentSeason.name}</span>}
           </div>
 
           {!teams?.length ? (
@@ -72,9 +61,7 @@ export default async function AdminTeamsPage() {
               <tbody className="divide-y divide-gray-50">
                 {teams.map(team => (
                   <tr key={team.id}>
-                    <td className="py-3 pr-4 font-medium text-gray-900">
-                      {teamDisplayName(team, seasons ?? [])}
-                    </td>
+                    <td className="py-3 pr-4 font-medium text-gray-900">{teamDisplayName(team, seasons ?? [])}</td>
                     <td className="py-3 pr-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                         team.type === 'senior' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
@@ -84,12 +71,7 @@ export default async function AdminTeamsPage() {
                     </td>
                     <td className="py-3 text-right">
                       <div className="flex items-center justify-end gap-4">
-                        <Link
-                          href={`/admin/teams/${team.id}/edit`}
-                          className="text-sm text-green-700 hover:underline"
-                        >
-                          Edit
-                        </Link>
+                        <Link href={`/admin/teams/${team.id}/edit`} className="text-sm text-green-700 hover:underline">Edit</Link>
                         <DeleteTeamButton teamId={team.id} />
                       </div>
                     </td>
@@ -100,6 +82,6 @@ export default async function AdminTeamsPage() {
           )}
         </div>
       </div>
-    </main>
+    </AppShell>
   )
 }
