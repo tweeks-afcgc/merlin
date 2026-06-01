@@ -5,6 +5,16 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
+function AdminNav() {
+  return (
+    <div className="flex gap-4 text-sm mb-8">
+      <Link href="/admin/seasons" className="text-gray-500 hover:text-gray-700">Seasons</Link>
+      <Link href="/admin/teams" className="text-gray-500 hover:text-gray-700">Teams</Link>
+      <Link href="/admin/users" className="text-green-700 font-semibold border-b-2 border-green-700 pb-0.5">Users</Link>
+    </div>
+  )
+}
+
 export default async function AdminUsersPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -33,6 +43,8 @@ export default async function AdminUsersPage() {
             Back to profile
           </Link>
         </div>
+
+        <AdminNav />
 
         <div className="bg-white shadow rounded-xl p-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">User management</h2>
