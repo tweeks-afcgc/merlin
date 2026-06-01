@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+type Profile = { id: string; full_name: string | null; email: string | null }
+
 export default function EditTeamPage() {
   const router = useRouter()
   const { id } = useParams<{ id: string }>()
@@ -16,24 +18,31 @@ export default function EditTeamPage() {
   const [type, setType] = useState<'senior' | 'junior'>('senior')
   const [name, setName] = useState('')
   const [foundingAgeGroup, setFoundingAgeGroup] = useState('')
-  const [currentSeasonName, setCurrentSeasonName] = useState('')
+  const [foundingSeasonName, setFoundingSeasonName] = useState('')
+  const [allUsers, setAllUsers] = useState<Profile[]>([])
+  const [managerIds, setManagerIds] = useState<Set<string>>(new Set())
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
-      const { data: team } = await supabase.from('teams').select('*').eq('id', id).single()
+      const [{ data: team }, { data: users }, { data: managers }] = await Promise.all([
+        supabase.from('teams').select('*').eq('id', id).single(),
+        supabase.from('profiles').select('id, full_name, email').order('full_name'),
+        supabase.from('team_managers').select('user_id').eq('team_id', id),
+      ])
+
       if (!team) { router.push('/admin/teams'); return }
 
       setType(team.type)
       setName(team.name)
       setFoundingAgeGroup(team.founding_age_group?.toString() ?? '')
+      setAllUsers(users ?? [])
+      setManagerIds(new Set((managers ?? []).map((m: { user_id: string }) => m.user_id)))
 
       if (team.founding_season_id) {
         const { data: season } = await supabase
-          .from('seasons')
-          .select('name')
-          .eq('id', team.founding_season_id)
-          .single()
-        setCurrentSeasonName(season?.name ?? '')
+          .from('seasons').select('name').eq('id', team.founding_season_id).single()
+        setFoundingSeasonName(season?.name ?? '')
       }
 
       setLoading(false)
@@ -47,9 +56,7 @@ export default function EditTeamPage() {
     setError(null)
 
     const updates: Record<string, unknown> = { name }
-    if (type === 'junior') {
-      updates.founding_age_group = parseInt(foundingAgeGroup)
-    }
+    if (type === 'junior') updates.founding_age_group = parseInt(foundingAgeGroup)
 
     const { error } = await supabase.from('teams').update(updates).eq('id', id)
 
@@ -59,6 +66,18 @@ export default function EditTeamPage() {
     } else {
       router.push('/admin/teams')
     }
+  }
+
+  async function toggleManager(userId: string) {
+    setTogglingId(userId)
+    if (managerIds.has(userId)) {
+      await supabase.from('team_managers').delete().eq('team_id', id).eq('user_id', userId)
+      setManagerIds(prev => { const next = new Set(prev); next.delete(userId); return next })
+    } else {
+      await supabase.from('team_managers').insert({ team_id: id, user_id: userId })
+      setManagerIds(prev => new Set(prev).add(userId))
+    }
+    setTogglingId(null)
   }
 
   if (loading) {
@@ -79,7 +98,8 @@ export default function EditTeamPage() {
           </Link>
         </div>
 
-        <div className="bg-white shadow rounded-xl p-8">
+        {/* Team details */}
+        <div className="bg-white shadow rounded-xl p-8 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Edit team</h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -105,7 +125,7 @@ export default function EditTeamPage() {
             {type === 'junior' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Age group in {currentSeasonName || 'founding season'}
+                  Age group in {foundingSeasonName || 'founding season'}
                 </label>
                 <input
                   type="number"
@@ -117,7 +137,7 @@ export default function EditTeamPage() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <p className="text-xs text-gray-400 mt-1">
-                  This is the age group in the founding season — all other seasons are calculated from this.
+                  Age group in the founding season — all other seasons are calculated from this.
                 </p>
               </div>
             )}
@@ -130,6 +150,38 @@ export default function EditTeamPage() {
               {saving ? 'Saving…' : 'Save changes'}
             </button>
           </form>
+        </div>
+
+        {/* Managers */}
+        <div className="bg-white shadow rounded-xl p-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Managers</h2>
+          <p className="text-sm text-gray-400 mb-5">Select one or more managers for this team.</p>
+
+          <ul className="divide-y divide-gray-50">
+            {allUsers.map(user => {
+              const isManager = managerIds.has(user.id)
+              const isToggling = togglingId === user.id
+              return (
+                <li key={user.id} className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{user.full_name ?? '—'}</p>
+                    <p className="text-xs text-gray-400">{user.email ?? ''}</p>
+                  </div>
+                  <button
+                    onClick={() => toggleManager(user.id)}
+                    disabled={isToggling}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full transition disabled:opacity-50 ${
+                      isManager
+                        ? 'bg-green-100 text-green-800 hover:bg-red-100 hover:text-red-700'
+                        : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-800'
+                    }`}
+                  >
+                    {isToggling ? '…' : isManager ? 'Manager' : 'Add'}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
         </div>
       </div>
     </main>

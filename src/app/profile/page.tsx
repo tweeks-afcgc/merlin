@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
+import { teamDisplayName } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,11 +21,13 @@ export default async function ProfilePage() {
 
   if (!user) redirect('/signin')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, email, dob, role')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { data: managedTeamLinks }, { data: seasons }] = await Promise.all([
+    supabase.from('profiles').select('full_name, email, dob, role').eq('id', user.id).single(),
+    supabase.from('team_managers').select('team_id, teams(*)').eq('user_id', user.id),
+    supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
+  ])
+
+  const managedTeams = (managedTeamLinks ?? []).map((row: any) => row.teams).filter(Boolean)
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10">
@@ -41,7 +44,8 @@ export default async function ProfilePage() {
           </form>
         </div>
 
-        <div className="bg-white shadow rounded-xl p-8">
+        {/* Profile card */}
+        <div className="bg-white shadow rounded-xl p-8 mb-4">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold">
               {profile?.full_name?.charAt(0)?.toUpperCase() ?? '?'}
@@ -90,6 +94,27 @@ export default async function ProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Managed teams */}
+        {managedTeams.length > 0 && (
+          <div className="bg-white shadow rounded-xl p-8">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Teams managed</h3>
+            <ul className="space-y-2">
+              {managedTeams.map((team: any) => (
+                <li key={team.id} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-900">
+                    {teamDisplayName(team, seasons ?? [])}
+                  </span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    team.type === 'senior' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+                  }`}>
+                    {team.type === 'senior' ? 'Senior' : 'Junior'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </main>
   )
