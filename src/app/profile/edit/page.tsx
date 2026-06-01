@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -53,7 +53,7 @@ export default function EditProfilePage() {
         <h1 className="text-xl font-bold text-gray-900 mb-6">Edit profile</h1>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Loadingâ€¦</p>
+          <p className="text-sm text-gray-400">Loading…</p>
         ) : (
           <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -87,7 +87,7 @@ export default function EditProfilePage() {
                   type="submit" disabled={saving}
                   className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
                 >
-                  {saving ? 'Savingâ€¦' : 'Save changes'}
+                  {saving ? 'Saving…' : 'Save changes'}
                 </button>
               </div>
             </form>
@@ -97,4 +97,3 @@ export default function EditProfilePage() {
     </AppShell>
   )
 }
-

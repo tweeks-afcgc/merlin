@@ -1,4 +1,4 @@
-﻿import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { teamDisplayName } from '@/lib/teamUtils'
@@ -82,4 +82,3 @@ export default async function TeamsPage() {
     </main>
   )
 }
-

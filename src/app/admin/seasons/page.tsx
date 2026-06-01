@@ -1,4 +1,4 @@
-﻿import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { addSeason } from './actions'
@@ -86,4 +86,3 @@ export default async function AdminSeasonsPage() {
     </AppShell>
   )
 }
-

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { setCurrentSeason } from './actions'
@@ -33,8 +33,7 @@ export function SetCurrentButton({ seasonId, isCurrent }: { seasonId: string; is
       disabled={loading}
       className="text-sm text-red-800 hover:underline disabled:opacity-50"
     >
-      {loading ? 'Settingâ€¦' : 'Set as current'}
+      {loading ? 'Setting…' : 'Set as current'}
     </button>
   )
 }
-

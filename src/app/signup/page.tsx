@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -95,7 +95,7 @@ export default function SignUpPage() {
             disabled={loading}
             className="w-full bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
           >
-            {loading ? 'Creating accountâ€¦' : 'Create account'}
+            {loading ? 'Creating account…' : 'Create account'}
           </button>
         </form>
 
@@ -109,4 +109,3 @@ export default function SignUpPage() {
     </main>
   )
 }
-

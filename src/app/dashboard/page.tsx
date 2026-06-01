@@ -1,4 +1,4 @@
-﻿import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
@@ -28,21 +28,13 @@ export default async function DashboardPage() {
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin={profile?.role === 'admin'}>
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
             {firstName ? `Welcome, ${firstName}` : 'Welcome'}
           </h1>
-          <p className="text-sm text-gray-400 mt-1">Here's your Merlin dashboard.</p>
-        </div>
-
-        <div className=”flex items-center gap-3 text-sm text-gray-400 mb-8”>
-          <span>{today}</span>
-          {currentSeason && (
-            <>
-              <span className=”text-gray-300”>·</span>
-              <span>{currentSeason.name} season</span>
-            </>
-          )}
+          <p className="text-sm text-gray-400 mt-1">
+            {today}{currentSeason ? ` · ${currentSeason.name} season` : ''}
+          </p>
         </div>
 
         {managedTeams.length > 0 ? (
@@ -81,4 +73,3 @@ export default async function DashboardPage() {
     </AppShell>
   )
 }
-

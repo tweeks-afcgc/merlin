@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -85,7 +85,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* â”€â”€ Top bar â”€â”€ */}
+      {/* ── Top bar ── */}
       <header className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-100 z-40 flex items-center px-4 gap-3">
 
         {/* Desktop hamburger */}
@@ -130,7 +130,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
         <div className="md:hidden w-9" />
       </header>
 
-      {/* â”€â”€ Desktop sidebar (slides in) â”€â”€ */}
+      {/* ── Desktop sidebar (slides in) ── */}
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-30 hidden md:block" onClick={() => setMenuOpen(false)} />
@@ -152,7 +152,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
         </>
       )}
 
-      {/* â”€â”€ Mobile full-screen menu overlay â”€â”€ */}
+      {/* ── Mobile full-screen menu overlay ── */}
       {menuOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col md:hidden">
           {/* Header */}
@@ -206,12 +206,12 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
         </div>
       )}
 
-      {/* â”€â”€ Page content â”€â”€ */}
+      {/* ── Page content ── */}
       <main className="pt-14 pb-20 md:pb-8 min-h-screen">
         {children}
       </main>
 
-      {/* â”€â”€ Mobile bottom bar with centred menu button â”€â”€ */}
+      {/* ── Mobile bottom bar with centred menu button ── */}
       <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-100 flex items-center justify-center md:hidden z-30">
         <button
           onClick={() => setMenuOpen(o => !o)}
@@ -225,4 +225,3 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
     </div>
   )
 }
-
