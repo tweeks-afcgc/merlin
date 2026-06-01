@@ -83,7 +83,15 @@ export default async function AdminTeamsPage() {
                       </span>
                     </td>
                     <td className="py-3 text-right">
-                      <DeleteTeamButton teamId={team.id} />
+                      <div className="flex items-center justify-end gap-4">
+                        <Link
+                          href={`/admin/teams/${team.id}/edit`}
+                          className="text-sm text-green-700 hover:underline"
+                        >
+                          Edit
+                        </Link>
+                        <DeleteTeamButton teamId={team.id} />
+                      </div>
                     </td>
                   </tr>
                 ))}
