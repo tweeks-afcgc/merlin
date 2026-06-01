@@ -74,14 +74,6 @@ export default async function ProfilePage() {
           </dl>
 
           <div className="space-y-3">
-            {profile?.role === 'admin' && (
-              <Link
-                href="/teams"
-                className="block w-full text-center border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition"
-              >
-                View teams
-              </Link>
-            )}
             <Link
               href="/profile/edit"
               className="block w-full text-center border border-green-700 text-green-700 hover:bg-green-50 font-semibold py-2.5 rounded-lg text-sm transition"
