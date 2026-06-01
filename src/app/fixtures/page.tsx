@@ -87,7 +87,7 @@ export default async function FixturesDashboardPage() {
                   }`}
                 >
                   <Link
-                    href={`/teams/${f.team_id}/fixtures/${f.id}/edit`}
+                    href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`}
                     className="flex items-center gap-4 min-w-0 flex-1 px-5 py-4 hover:bg-gray-50 rounded-l-xl transition"
                   >
                     {/* Status dot */}

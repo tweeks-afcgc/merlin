@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
@@ -14,6 +14,8 @@ type Pitch = { id: string; name: string; venue_id: string }
 export default function EditFixturePage() {
   const { id: teamId, fixtureId } = useParams<{ id: string; fixtureId: string }>()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('from') ?? `/teams/${teamId}/fixtures`
   const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
@@ -96,7 +98,7 @@ export default function EditFixturePage() {
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
     const result = await updateFixture(fixtureId, teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false) }
-    else router.push(`/teams/${teamId}/fixtures`)
+    else router.push(returnTo)
   }
 
   return (
@@ -225,7 +227,7 @@ export default function EditFixturePage() {
               <div className="flex gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => router.back()}
+                  onClick={() => router.push(returnTo)}
                   className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition"
                 >
                   Cancel
