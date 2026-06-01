@@ -18,6 +18,11 @@ export default async function DashboardPage() {
 
   const managedTeams = (managedTeamLinks ?? []).map((r: any) => r.teams).filter(Boolean)
   const firstName = profile?.full_name?.split(' ')[0] ?? null
+  const currentSeason = seasons?.find(s => s.is_current) ?? null
+
+  const today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
 
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin={profile?.role === 'admin'}>
@@ -27,6 +32,17 @@ export default async function DashboardPage() {
             {firstName ? `Welcome, ${firstName}` : 'Welcome'}
           </h1>
           <p className="text-sm text-gray-400 mt-1">Here's your Merlin dashboard.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Today</p>
+            <p className="text-sm font-semibold text-gray-900">{today}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Season</p>
+            <p className="text-sm font-semibold text-gray-900">{currentSeason?.name ?? '—'}</p>
+          </div>
         </div>
 
         {managedTeams.length > 0 ? (
