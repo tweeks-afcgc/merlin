@@ -2,20 +2,10 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
-import ConfirmToggle from './ConfirmToggle'
+import FixturesList from './FixturesList'
 import { teamDisplayName } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
-
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-}
-
-function formatTime(t: string | null) {
-  if (!t) return 'TBC'
-  const [h, m] = t.split(':')
-  return `${h}:${m}`
-}
 
 export default async function FixturesDashboardPage() {
   const supabase = await createClient()
@@ -36,7 +26,7 @@ export default async function FixturesDashboardPage() {
   const todayStr = today.toISOString().split('T')[0]
   const in14Str = in14Days.toISOString().split('T')[0]
 
-  const [{ data: fixtures }, { data: seasons }] = await Promise.all([
+  const [{ data: rawFixtures }, { data: seasons }] = await Promise.all([
     supabase
       .from('fixtures')
       .select(`
@@ -54,12 +44,29 @@ export default async function FixturesDashboardPage() {
     supabase.from('seasons').select('id, name, start_date, is_current'),
   ])
 
-  const canConfirm = isAdmin || isFS
+  const fixtures = (rawFixtures ?? []).map(f => {
+    const team = f.teams as any
+    const opponent = f.club_teams as any
+    return {
+      id: f.id,
+      date: f.date,
+      kickoff_time: f.kickoff_time,
+      venue: f.venue,
+      confirmed: f.confirmed,
+      pitch_id: f.pitch_id,
+      team_id: f.team_id,
+      teamName: team ? teamDisplayName(team, seasons ?? []) : '—',
+      teamType: team?.type ?? 'senior',
+      opponentName: opponent ? `${opponent.clubs?.name} ${opponent.name}` : 'Unknown opponent',
+      venueName: (f.venues as any)?.name ?? null,
+      pitchName: (f.pitches as any)?.name ?? null,
+    }
+  })
 
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin={isAdmin} isFixtureSecretary={isFS}>
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Fixtures</h1>
             <p className="text-sm text-gray-400 mt-1">All fixtures in the next 14 days.</p>
@@ -72,73 +79,12 @@ export default async function FixturesDashboardPage() {
           </Link>
         </div>
 
-        {!fixtures?.length ? (
+        {fixtures.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-10 text-center">
             <p className="text-gray-400 text-sm">No fixtures in the next 14 days.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {fixtures.map(f => {
-              const opponent = f.club_teams as any
-              const team = f.teams as any
-              const venueInfo = f.venues as any
-              const pitchInfo = f.pitches as any
-              const needsTime = !f.kickoff_time
-              const needsPitch = f.venue === 'home' && !f.pitch_id
-              const fullTeamName = team ? teamDisplayName(team, seasons ?? []) : '—'
-
-              return (
-                <div
-                  key={f.id}
-                  className={`bg-white rounded-xl border shadow-sm flex items-center justify-between gap-4 ${
-                    f.confirmed ? 'border-green-200' : 'border-red-200'
-                  }`}
-                >
-                  <Link
-                    href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`}
-                    className="flex items-center gap-4 min-w-0 flex-1 px-5 py-4 hover:bg-gray-50 rounded-l-xl transition"
-                  >
-                    {/* Status dot */}
-                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${f.confirmed ? 'bg-green-500' : 'bg-red-500'}`} />
-
-                    <div className="min-w-0">
-                      {/* Team name */}
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide truncate">
-                        {fullTeamName}
-                      </p>
-                      {/* Opponent */}
-                      <p className="text-sm font-semibold text-gray-900 truncate">
-                        vs {opponent ? `${opponent.clubs?.name} ${opponent.name}` : 'Unknown opponent'}
-                      </p>
-                      {/* Date · time · venue */}
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {formatDate(f.date)} · {formatTime(f.kickoff_time)} ·{' '}
-                        {f.venue === 'home' ? 'Home' : f.venue === 'away' ? 'Away' : 'Neutral'}
-                        {venueInfo ? ` · ${venueInfo.name}` : ''}
-                        {pitchInfo ? ` · ${pitchInfo.name}` : ''}
-                      </p>
-                      {needsTime && (
-                        <p className="text-xs text-amber-600 font-medium mt-0.5">Kick off time TBC — cannot confirm</p>
-                      )}
-                      {!needsTime && needsPitch && (
-                        <p className="text-xs text-amber-600 font-medium mt-0.5">No pitch assigned — cannot confirm</p>
-                      )}
-                    </div>
-                  </Link>
-
-                  {canConfirm && (
-                    <div className="flex-shrink-0 pr-5">
-                      <ConfirmToggle
-                        fixtureId={f.id}
-                        confirmed={f.confirmed}
-                        disabled={!f.confirmed && (needsTime || needsPitch)}
-                      />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <FixturesList fixtures={fixtures} canConfirm={isAdmin || isFS} />
         )}
       </div>
     </AppShell>
