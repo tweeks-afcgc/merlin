@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/client'
 import { updateFixture } from '../../actions'
 
 type ClubTeam = { id: string; name: string; clubs: { name: string } }
+type Venue = { id: string; name: string }
+type Pitch = { id: string; name: string; venue_id: string }
 
 export default function EditFixturePage() {
   const { id: teamId, fixtureId } = useParams<{ id: string; fixtureId: string }>()
@@ -17,20 +19,33 @@ export default function EditFixturePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+
   const [clubTeams, setClubTeams] = useState<ClubTeam[]>([])
+  const [venues, setVenues] = useState<Venue[]>([])
+  const [pitches, setPitches] = useState<Pitch[]>([])
 
   const [date, setDate] = useState('')
   const [tbc, setTbc] = useState(false)
   const [kickoffTime, setKickoffTime] = useState('')
   const [opponentId, setOpponentId] = useState('')
   const [venue, setVenue] = useState('home')
+  const [homeVenueId, setHomeVenueId] = useState('')
+  const [pitchId, setPitchId] = useState('')
 
   useEffect(() => {
     async function load() {
-      const [{ data: fixture }, { data: teamsData }] = await Promise.all([
+      const [{ data: { user } }, { data: fixture }, { data: teamsData }, { data: venuesData }] = await Promise.all([
+        supabase.auth.getUser(),
         supabase.from('fixtures').select('*').eq('id', fixtureId).single(),
         supabase.from('club_teams').select('id, name, clubs(name)').order('name'),
+        supabase.from('venues').select('id, name').order('name'),
       ])
+
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+        setIsAdmin(profile?.role === 'admin')
+      }
 
       if (fixture) {
         setDate(fixture.date)
@@ -38,12 +53,33 @@ export default function EditFixturePage() {
         setKickoffTime(fixture.kickoff_time ?? '')
         setOpponentId(fixture.opponent_id ?? '')
         setVenue(fixture.venue)
+        setHomeVenueId(fixture.home_venue_id ?? '')
+        setPitchId(fixture.pitch_id ?? '')
+
+        if (fixture.home_venue_id) {
+          const { data: pitchData } = await supabase
+            .from('pitches').select('id, name, venue_id').eq('venue_id', fixture.home_venue_id)
+          setPitches(pitchData ?? [])
+        }
       }
+
       setClubTeams((teamsData ?? []) as any)
+      setVenues(venuesData ?? [])
       setLoading(false)
     }
     load()
   }, [])
+
+  async function handleVenueChange(id: string) {
+    setHomeVenueId(id)
+    setPitchId('')
+    if (id) {
+      const { data } = await supabase.from('pitches').select('id, name, venue_id').eq('venue_id', id)
+      setPitches(data ?? [])
+    } else {
+      setPitches([])
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -56,6 +92,8 @@ export default function EditFixturePage() {
     fd.set('kickoff_time', kickoffTime)
     fd.set('opponent_id', opponentId)
     fd.set('venue', venue)
+    fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
+    fd.set('pitch_id', venue === 'home' ? pitchId : '')
     const result = await updateFixture(fixtureId, teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false) }
     else router.push(`/teams/${teamId}/fixtures`)
@@ -142,6 +180,47 @@ export default function EditFixturePage() {
                   ))}
                 </div>
               </div>
+
+              {/* Pitch assignment — admin only, home fixtures only */}
+              {isAdmin && venue === 'home' && (
+                <div className="border-t border-gray-100 pt-5 space-y-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Pitch assignment</p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Home venue</label>
+                    <select
+                      value={homeVenueId}
+                      onChange={e => handleVenueChange(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    >
+                      <option value="">Not assigned</option>
+                      {venues.map(v => (
+                        <option key={v.id} value={v.id}>{v.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {homeVenueId && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Pitch</label>
+                      {pitches.length === 0 ? (
+                        <p className="text-sm text-gray-400">No pitches added for this venue yet.</p>
+                      ) : (
+                        <select
+                          value={pitchId}
+                          onChange={e => setPitchId(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        >
+                          <option value="">Not assigned</option>
+                          {pitches.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-3 pt-1">
                 <button

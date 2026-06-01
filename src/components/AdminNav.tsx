@@ -8,6 +8,7 @@ const tabs = [
   { href: '/admin/seasons', label: 'Seasons' },
   { href: '/admin/teams', label: 'Teams' },
   { href: '/admin/clubs', label: 'Clubs' },
+  { href: '/admin/venues', label: 'Venues' },
   { href: '/admin/users', label: 'Users' },
 ]
 

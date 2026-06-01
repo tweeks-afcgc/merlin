@@ -70,7 +70,7 @@ export default async function FixturesPage({
 
   const { data: fixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, opponent_id, club_teams(id, name, clubs(name))')
+    .select('id, date, kickoff_time, venue, opponent_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
@@ -133,6 +133,7 @@ export default async function FixturesPage({
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Kick off</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Opponent</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Venue</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Pitch</th>
                   <th className="px-3 py-3"></th>
                 </tr>
               </thead>
@@ -148,6 +149,12 @@ export default async function FixturesPage({
                         {opponent ? `${opponent.clubs?.name} ${opponent.name}` : '—'}
                       </td>
                       <td className="px-3 py-3">{venueBadge(f.venue)}</td>
+                      <td className="px-3 py-3 text-xs text-gray-500">
+                        {f.venue === 'home' && (f as any).venues
+                          ? <span>{(f as any).venues.name}{(f as any).pitches ? ` · ${(f as any).pitches.name}` : ''}</span>
+                          : <span className="text-gray-300">—</span>
+                        }
+                      </td>
                       <td className="px-3 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">
                           <Link href={`/teams/${teamId}/fixtures/${f.id}/edit`} className="text-xs text-gray-400 hover:text-gray-700 transition">Edit</Link>
