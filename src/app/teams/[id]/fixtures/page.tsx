@@ -149,7 +149,10 @@ export default async function FixturesPage({
                       </td>
                       <td className="px-3 py-3">{venueBadge(f.venue)}</td>
                       <td className="px-3 py-3 text-right">
-                        <DeleteFixtureButton fixtureId={f.id} teamId={teamId} />
+                        <div className="flex items-center justify-end gap-3">
+                          <Link href={`/teams/${teamId}/fixtures/${f.id}/edit`} className="text-xs text-gray-400 hover:text-gray-700 transition">Edit</Link>
+                          <DeleteFixtureButton fixtureId={f.id} teamId={teamId} />
+                        </div>
                       </td>
                     </tr>
                   )
