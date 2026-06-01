@@ -54,6 +54,7 @@ export async function confirmFixture(fixtureId: string): Promise<{ error?: strin
 
   revalidatePath('/fixtures')
   revalidatePath(`/teams/${fixture.team_id}/fixtures`)
+  return {}
 }
 
 export async function unconfirmFixture(fixtureId: string): Promise<{ error?: string }> {
