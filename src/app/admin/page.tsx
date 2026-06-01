@@ -19,11 +19,13 @@ export default async function AdminDashboardPage() {
     { data: teams },
     { count: userCount },
     { count: clubCount },
+    { count: venueCount },
   ] = await Promise.all([
     supabase.from('seasons').select('*').eq('is_current', true).maybeSingle(),
     supabase.from('teams').select('id, type'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('clubs').select('*', { count: 'exact', head: true }),
+    supabase.from('venues').select('*', { count: 'exact', head: true }),
   ])
 
   const seniorCount = teams?.filter(t => t.type === 'senior').length ?? 0
@@ -103,6 +105,21 @@ export default async function AdminDashboardPage() {
             </p>
             <p className="text-xs text-gray-400 mt-1">Opponent clubs</p>
             <p className="text-xs text-red-700 font-medium mt-4">Manage clubs →</p>
+          </Link>
+
+          {/* Venues */}
+          <Link
+            href="/admin/venues"
+            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-red-200 transition"
+          >
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              Venues
+            </p>
+            <p className="text-2xl font-bold text-gray-900 group-hover:text-red-800 transition">
+              {venueCount ?? '—'}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">Home grounds &amp; pitches</p>
+            <p className="text-xs text-red-700 font-medium mt-4">Manage venues →</p>
           </Link>
 
         </div>
