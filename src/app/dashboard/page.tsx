@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import { teamDisplayName } from '@/lib/teamUtils'
@@ -52,11 +53,12 @@ export default async function DashboardPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {managedTeams.map((team: any) => (
-                <div
+                <Link
                   key={team.id}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5"
+                  href={`/teams/${team.id}`}
+                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-green-200 transition group"
                 >
-                  <p className="font-semibold text-gray-900 text-base">
+                  <p className="font-semibold text-gray-900 text-base group-hover:text-green-700 transition">
                     {teamDisplayName(team, seasons ?? [])}
                   </p>
                   <span className={`mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -66,7 +68,7 @@ export default async function DashboardPage() {
                   }`}>
                     {team.type === 'senior' ? 'Senior' : 'Junior'}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
