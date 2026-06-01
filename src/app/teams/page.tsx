@@ -1,13 +1,9 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { teamDisplayName } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
-
-function teamDisplayName(team: { type: string; name: string; age_group: number | null }) {
-  if (team.type === 'junior') return `Under ${team.age_group} ${team.name}`
-  return team.name
-}
 
 export default async function TeamsPage() {
   const supabase = await createClient()
@@ -20,11 +16,12 @@ export default async function TeamsPage() {
     .order('type', { ascending: false })
     .order('name', { ascending: true })
 
-  const { data: currentSeason } = await supabase
+  const { data: seasons } = await supabase
     .from('seasons')
-    .select('name')
-    .eq('is_current', true)
-    .single()
+    .select('id, name, start_date, is_current')
+    .order('start_date', { ascending: true })
+
+  const currentSeason = seasons?.find(s => s.is_current)
 
   const seniorTeams = teams?.filter(t => t.type === 'senior') ?? []
   const juniorTeams = teams?.filter(t => t.type === 'junior') ?? []
@@ -56,7 +53,7 @@ export default async function TeamsPage() {
             <div className="space-y-2">
               {seniorTeams.map(team => (
                 <div key={team.id} className="bg-white shadow-sm rounded-xl px-5 py-4 flex items-center justify-between">
-                  <span className="font-medium text-gray-900">{teamDisplayName(team)}</span>
+                  <span className="font-medium text-gray-900">{teamDisplayName(team, seasons ?? [])}</span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     Senior
                   </span>
@@ -72,7 +69,7 @@ export default async function TeamsPage() {
             <div className="space-y-2">
               {juniorTeams.map(team => (
                 <div key={team.id} className="bg-white shadow-sm rounded-xl px-5 py-4 flex items-center justify-between">
-                  <span className="font-medium text-gray-900">{teamDisplayName(team)}</span>
+                  <span className="font-medium text-gray-900">{teamDisplayName(team, seasons ?? [])}</span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                     Junior
                   </span>

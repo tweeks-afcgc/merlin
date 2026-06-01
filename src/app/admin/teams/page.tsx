@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { addTeam } from './actions'
 import { DeleteTeamButton } from './DeleteTeamButton'
 import AddTeamForm from './AddTeamForm'
+import { teamDisplayName } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,11 +15,6 @@ function AdminNav() {
       <Link href="/admin/users" className="text-gray-500 hover:text-gray-700">Users</Link>
     </div>
   )
-}
-
-function teamDisplayName(team: { type: string; name: string; age_group: number | null }) {
-  if (team.type === 'junior') return `Under ${team.age_group} ${team.name}`
-  return team.name
 }
 
 export default async function AdminTeamsPage() {
@@ -36,11 +31,12 @@ export default async function AdminTeamsPage() {
     .order('type', { ascending: false })
     .order('name', { ascending: true })
 
-  const { data: currentSeason } = await supabase
+  const { data: seasons } = await supabase
     .from('seasons')
-    .select('name')
-    .eq('is_current', true)
-    .single()
+    .select('id, name, start_date, is_current')
+    .order('start_date', { ascending: true })
+
+  const currentSeason = seasons?.find(s => s.is_current) ?? null
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10">
@@ -52,7 +48,7 @@ export default async function AdminTeamsPage() {
 
         <AdminNav />
 
-        <AddTeamForm />
+        <AddTeamForm currentSeason={currentSeason} />
 
         <div className="bg-white shadow rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
@@ -76,12 +72,12 @@ export default async function AdminTeamsPage() {
               <tbody className="divide-y divide-gray-50">
                 {teams.map(team => (
                   <tr key={team.id}>
-                    <td className="py-3 pr-4 font-medium text-gray-900">{teamDisplayName(team)}</td>
+                    <td className="py-3 pr-4 font-medium text-gray-900">
+                      {teamDisplayName(team, seasons ?? [])}
+                    </td>
                     <td className="py-3 pr-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        team.type === 'senior'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-orange-100 text-orange-800'
+                        team.type === 'senior' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
                       }`}>
                         {team.type === 'senior' ? 'Senior' : 'Junior'}
                       </span>

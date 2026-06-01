@@ -9,11 +9,14 @@ export async function addTeam(formData: FormData) {
   const type = formData.get('type') as string
   const name = formData.get('name') as string
   const ageGroupRaw = formData.get('age_group') as string
+  const foundingSeasonId = formData.get('founding_season_id') as string
 
   const { error } = await supabase.from('teams').insert({
     type,
     name,
     age_group: type === 'junior' ? parseInt(ageGroupRaw) : null,
+    founding_age_group: type === 'junior' ? parseInt(ageGroupRaw) : null,
+    founding_season_id: type === 'junior' ? foundingSeasonId : null,
   })
 
   if (error) return { error: error.message }
