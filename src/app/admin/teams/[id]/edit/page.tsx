@@ -19,6 +19,9 @@ export default function EditTeamPage() {
   const [name, setName] = useState('')
   const [foundingAgeGroup, setFoundingAgeGroup] = useState('')
   const [foundingSeasonName, setFoundingSeasonName] = useState('')
+  const [kitJersey, setKitJersey] = useState('')
+  const [kitShorts, setKitShorts] = useState('')
+  const [kitSocks, setKitSocks] = useState('')
   const [allUsers, setAllUsers] = useState<Profile[]>([])
   const [managerIds, setManagerIds] = useState<Set<string>>(new Set())
   const [togglingId, setTogglingId] = useState<string | null>(null)
@@ -36,6 +39,9 @@ export default function EditTeamPage() {
       setType(team.type)
       setName(team.name)
       setFoundingAgeGroup(team.founding_age_group?.toString() ?? '')
+      setKitJersey(team.kit_jersey ?? '')
+      setKitShorts(team.kit_shorts ?? '')
+      setKitSocks(team.kit_socks ?? '')
       setAllUsers(users ?? [])
       setManagerIds(new Set((managers ?? []).map((m: { user_id: string }) => m.user_id)))
 
@@ -54,7 +60,12 @@ export default function EditTeamPage() {
     setSaving(true)
     setError(null)
 
-    const updates: Record<string, unknown> = { name }
+    const updates: Record<string, unknown> = {
+      name,
+      kit_jersey: kitJersey.trim() || null,
+      kit_shorts: kitShorts.trim() || null,
+      kit_socks: kitSocks.trim() || null,
+    }
     if (type === 'junior') updates.founding_age_group = parseInt(foundingAgeGroup)
 
     const { error } = await supabase.from('teams').update(updates).eq('id', id)
@@ -114,6 +125,30 @@ export default function EditTeamPage() {
                     </p>
                   </div>
                 )}
+
+                {/* Kit colours */}
+                <div className="border-t border-gray-100 pt-5">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Kit colours</p>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Jersey', value: kitJersey, set: setKitJersey, placeholder: 'e.g. Red & Black Stripes' },
+                      { label: 'Shorts', value: kitShorts, set: setKitShorts, placeholder: 'e.g. Black' },
+                      { label: 'Socks',  value: kitSocks,  set: setKitSocks,  placeholder: 'e.g. Red' },
+                    ].map(({ label, value, set, placeholder }) => (
+                      <div key={label} className="flex items-center gap-3">
+                        <span className="w-14 text-sm text-gray-500 flex-shrink-0">{label}</span>
+                        <input
+                          type="text"
+                          value={value}
+                          onChange={e => set(e.target.value)}
+                          placeholder={placeholder}
+                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-1">
                   <button type="button" onClick={() => router.push('/admin/teams')}
                     className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition">
