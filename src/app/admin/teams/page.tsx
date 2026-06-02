@@ -17,12 +17,33 @@ export default async function AdminTeamsPage() {
   const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const [{ data: teams }, { data: seasons }] = await Promise.all([
-    supabase.from('teams').select('*').order('type', { ascending: false }).order('name', { ascending: true }),
+  const [{ data: rawTeams }, { data: seasons }] = await Promise.all([
+    supabase.from('teams').select('*'),
     supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
   ])
 
   const currentSeason = seasons?.find(s => s.is_current) ?? null
+
+  const SENIOR_ORDER = ['First XI', 'Sunday XI', 'Vets XI', 'Women']
+
+  const sortedSeasons = [...(seasons ?? [])].sort(
+    (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+  )
+  const currentIdx = sortedSeasons.findIndex(s => s.is_current)
+
+  function teamSortKey(team: typeof rawTeams extends (infer T)[] | null ? T : never) {
+    if (!team) return ''
+    if ((team as any).type === 'senior') {
+      const idx = SENIOR_ORDER.indexOf((team as any).name)
+      return `0_${idx === -1 ? 9 : idx}_${(team as any).name}`
+    }
+    const foundingAge = (team as any).founding_age_group ?? 0
+    const foundingIdx = sortedSeasons.findIndex(s => s.id === (team as any).founding_season_id)
+    const age = foundingIdx === -1 || currentIdx === -1 ? foundingAge : foundingAge + (currentIdx - foundingIdx)
+    return `1_${String(999 - age).padStart(4, '0')}_${(team as any).name}`
+  }
+
+  const teams = [...(rawTeams ?? [])].sort((a, b) => teamSortKey(a).localeCompare(teamSortKey(b)))
 
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin>
