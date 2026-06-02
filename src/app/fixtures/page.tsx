@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import FixturesList from './FixturesList'
-import { teamDisplayName } from '@/lib/teamUtils'
+import { teamDisplayName, computeAgeGroup } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,9 +44,25 @@ export default async function FixturesDashboardPage() {
     supabase.from('seasons').select('id, name, start_date, is_current'),
   ])
 
+  const SENIOR_ORDER = ['First XI', 'Sunday XI', 'Vets XI', 'Women']
+
   const fixtures = (rawFixtures ?? []).map(f => {
     const team = f.teams as any
     const opponent = f.club_teams as any
+
+    // Build a sort key for team view ordering
+    let teamSortKey = ''
+    if (team) {
+      if (team.type === 'senior') {
+        const idx = SENIOR_ORDER.indexOf(team.name)
+        teamSortKey = `0_${idx === -1 ? 9 : idx}_${team.name}`
+      } else {
+        const age = computeAgeGroup(team, seasons ?? []) ?? 0
+        // Higher age = older = should come first, so invert with 999-age
+        teamSortKey = `1_${String(999 - age).padStart(4, '0')}_${team.name}`
+      }
+    }
+
     return {
       id: f.id,
       date: f.date,
@@ -57,6 +73,7 @@ export default async function FixturesDashboardPage() {
       team_id: f.team_id,
       teamName: team ? teamDisplayName(team, seasons ?? []) : '—',
       teamType: team?.type ?? 'senior',
+      teamSortKey,
       opponentName: opponent ? `${opponent.clubs?.name} ${opponent.name}` : 'Unknown opponent',
       venueName: (f.venues as any)?.name ?? null,
       pitchName: (f.pitches as any)?.name ?? null,
