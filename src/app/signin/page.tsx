@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { signIn } from '@/app/auth/actions'
 
 export default function SignInPage() {
@@ -19,14 +20,21 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <main className="min-h-screen flex items-center justify-center bg-red-800 px-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-red-800">Merlin</h1>
-          <p className="text-gray-500 mt-1">Sign in to your account</p>
+        <div className="flex flex-col items-center mb-8">
+          <Image
+            src="/logo.png"
+            alt="Merlin"
+            width={160}
+            height={160}
+            className="mb-2"
+            priority
+          />
+          <p className="text-red-200 mt-1 text-sm">Sign in to your account</p>
         </div>
 
-        <form action={handleSubmit} className="bg-white shadow rounded-xl p-8 space-y-5">
+        <form action={handleSubmit} className="bg-white shadow-xl rounded-xl p-8 space-y-5">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
               {error}
@@ -70,9 +78,9 @@ export default function SignInPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
+        <p className="text-center text-sm text-red-200 mt-4">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-red-800 font-medium hover:underline">
+          <Link href="/signup" className="text-white font-medium hover:underline">
             Sign up
           </Link>
         </p>
