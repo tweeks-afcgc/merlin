@@ -6,6 +6,7 @@ type Fixture = {
   date: string
   kickoff_time: string | null
   teamName: string
+  teamShortName: string
   ageGroupLabel: string
   opponentName: string
   venueName: string | null
@@ -80,19 +81,29 @@ function buildEmailText(f: Fixture): string {
   return lines.join('\n')
 }
 
+function buildEmailTitle(f: Fixture): string {
+  return `${f.ageGroupLabel} Fixture vs AFC Green Court ${f.teamShortName}`
+}
+
 export default function EmailModal({ fixture }: { fixture: Fixture }) {
   const [open, setOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [copiedTitle, setCopiedTitle] = useState(false)
+  const [copiedBody, setCopiedBody] = useState(false)
 
+  const title = buildEmailTitle(fixture)
   const text = buildEmailText(fixture)
-
-  // Plain text for clipboard: strip ** markers
   const plainText = text.replace(/\*\*(.+?):\*\*/g, '$1:')
 
-  async function handleCopy() {
+  async function handleCopyTitle() {
+    await navigator.clipboard.writeText(title)
+    setCopiedTitle(true)
+    setTimeout(() => setCopiedTitle(false), 2000)
+  }
+
+  async function handleCopyBody() {
     await navigator.clipboard.writeText(plainText)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setCopiedBody(true)
+    setTimeout(() => setCopiedBody(false), 2000)
   }
 
   return (
@@ -120,20 +131,42 @@ export default function EmailModal({ fixture }: { fixture: Fixture }) {
                 </svg>
               </button>
             </div>
-            <div className="px-6 py-4">
-              <div className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-xl p-4 border border-gray-100 max-h-80 overflow-y-auto space-y-1">
-                {text.split('\n').map((line, i) => <EmailLine key={i} line={line} />)}
+            <div className="px-6 py-4 space-y-4">
+              {/* Title */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Email title</p>
+                  <button
+                    onClick={handleCopyTitle}
+                    className={`text-xs font-semibold px-3 py-1 rounded-lg transition ${copiedTitle ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    {copiedTitle ? 'Copied!' : 'Copy title'}
+                  </button>
+                </div>
+                <div className="text-sm text-gray-700 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100 font-medium">
+                  {title}
+                </div>
+              </div>
+
+              {/* Body */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Email body</p>
+                  <button
+                    onClick={handleCopyBody}
+                    className={`text-xs font-semibold px-3 py-1 rounded-lg transition ${copiedBody ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    {copiedBody ? 'Copied!' : 'Copy body'}
+                  </button>
+                </div>
+                <div className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-xl p-4 border border-gray-100 max-h-72 overflow-y-auto space-y-1">
+                  {text.split('\n').map((line, i) => <EmailLine key={i} line={line} />)}
+                </div>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
               <button onClick={() => setOpen(false)} className="border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4 py-2 rounded-lg text-sm transition">
                 Close
-              </button>
-              <button
-                onClick={handleCopy}
-                className={`font-semibold px-4 py-2 rounded-lg text-sm transition ${copied ? 'bg-green-600 text-white' : 'bg-red-800 hover:bg-red-900 text-white'}`}
-              >
-                {copied ? 'Copied!' : 'Copy to clipboard'}
               </button>
             </div>
           </div>

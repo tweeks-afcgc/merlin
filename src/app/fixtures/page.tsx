@@ -90,6 +90,7 @@ export default async function FixturesDashboardPage() {
       teamType: team?.type ?? 'senior',
       teamSortKey,
       ageGroupLabel,
+      teamShortName: team?.name ?? '',
       opponentName: opponent ? `${opponent.clubs?.name} ${opponent.name}` : 'Unknown opponent',
       venueName: venueData?.name ?? null,
       venueAddress: venueData?.address ?? null,
