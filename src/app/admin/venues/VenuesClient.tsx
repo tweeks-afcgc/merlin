@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { addVenue, deleteVenue, addPitch, deletePitch, updateVenue } from './actions'
 
-type Pitch = { id: string; name: string }
+type Pitch = { id: string; name: string; pitch_type: string }
 type Venue = { id: string; name: string; address: string | null; pitches: Pitch[] }
 
 export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
@@ -11,6 +11,7 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
   const [venueName, setVenueName] = useState('')
   const [venueAddress, setVenueAddress] = useState('')
   const [pitchNames, setPitchNames] = useState<Record<string, string>>({})
+  const [pitchTypes, setPitchTypes] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -68,8 +69,10 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
     if (!name.trim()) return
     const fd = new FormData()
     fd.set('name', name)
+    fd.set('pitch_type', pitchTypes[venueId] ?? 'grass')
     await addPitch(venueId, fd)
     setPitchNames(p => ({ ...p, [venueId]: '' }))
+    setPitchTypes(p => ({ ...p, [venueId]: 'grass' }))
     window.location.reload()
   }
 
@@ -167,7 +170,12 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
                 <ul className="mb-4 divide-y divide-gray-50">
                   {venue.pitches.map(pitch => (
                     <li key={pitch.id} className="flex items-center justify-between py-2">
-                      <span className="text-sm text-gray-700">{pitch.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-700">{pitch.name}</span>
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${pitch.pitch_type === '3g' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                          {pitch.pitch_type === '3g' ? '3G' : 'Grass'}
+                        </span>
+                      </div>
                       <button onClick={() => handleDeletePitch(pitch.id, venue.id)} className="text-xs text-gray-400 hover:text-red-600 transition">
                         Remove
                       </button>
@@ -177,7 +185,7 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
               )}
 
               {/* Add pitch */}
-              <form onSubmit={e => handleAddPitch(venue.id, e)} className="flex gap-3 mt-2">
+              <form onSubmit={e => handleAddPitch(venue.id, e)} className="flex gap-2 mt-2">
                 <input
                   value={pitchNames[venue.id] ?? ''}
                   onChange={e => setPitchNames(p => ({ ...p, [venue.id]: e.target.value }))}
@@ -185,7 +193,15 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
                   required
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
-                <button type="submit" className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg text-sm transition">
+                <select
+                  value={pitchTypes[venue.id] ?? 'grass'}
+                  onChange={e => setPitchTypes(p => ({ ...p, [venue.id]: e.target.value }))}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                >
+                  <option value="grass">Grass</option>
+                  <option value="3g">3G</option>
+                </select>
+                <button type="submit" className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg text-sm transition whitespace-nowrap">
                   + Add pitch
                 </button>
               </form>

@@ -16,7 +16,7 @@ export default async function AdminVenuesPage() {
 
   const { data: venuesRaw } = await supabase
     .from('venues')
-    .select('id, name, address, pitches(id, name)')
+    .select('id, name, address, pitches(id, name, pitch_type)')
     .order('name', { ascending: true })
 
   const venues = (venuesRaw ?? []).map(v => ({

@@ -33,7 +33,8 @@ export async function addPitch(venueId: string, formData: FormData) {
   const supabase = await createClient()
   const name = (formData.get('name') as string).trim()
   if (!name) return { error: 'Name is required' }
-  const { error } = await supabase.from('pitches').insert({ venue_id: venueId, name })
+  const pitch_type = (formData.get('pitch_type') as string) || 'grass'
+  const { error } = await supabase.from('pitches').insert({ venue_id: venueId, name, pitch_type })
   if (error) return { error: error.message }
   revalidatePath('/admin/venues')
 }
