@@ -26,31 +26,42 @@ export default async function FixturesDashboardPage() {
   const todayStr = today.toISOString().split('T')[0]
   const in14Str = in14Days.toISOString().split('T')[0]
 
-  const [{ data: rawFixtures }, { data: seasons }] = await Promise.all([
+  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }] = await Promise.all([
     supabase
       .from('fixtures')
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id,
         team_id,
-        teams(id, name, type, founding_age_group, founding_season_id, age_group),
+        teams(id, name, type, founding_age_group, founding_season_id, age_group, kit_jersey, kit_shorts, kit_socks),
         club_teams(id, name, clubs(name)),
-        venues(name),
-        pitches(name)
+        venues(name, address),
+        pitches(name, pitch_type)
       `)
       .gte('date', todayStr)
       .lte('date', in14Str)
       .order('date', { ascending: true })
       .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
+    supabase.from('team_managers').select('team_id, profiles(full_name)'),
   ])
+
+  // Build a map of team_id -> first manager name
+  const managerMap = new Map<string, string>()
+  for (const m of allManagers ?? []) {
+    if (!managerMap.has(m.team_id)) {
+      const name = (m.profiles as any)?.full_name
+      if (name) managerMap.set(m.team_id, name)
+    }
+  }
 
   const SENIOR_ORDER = ['First XI', 'Sunday XI', 'Vets XI', 'Women']
 
   const fixtures = (rawFixtures ?? []).map(f => {
     const team = f.teams as any
     const opponent = f.club_teams as any
+    const venueData = f.venues as any
+    const pitchData = f.pitches as any
 
-    // Build a sort key for team view ordering
     let teamSortKey = ''
     if (team) {
       if (team.type === 'senior') {
@@ -58,10 +69,14 @@ export default async function FixturesDashboardPage() {
         teamSortKey = `0_${idx === -1 ? 9 : idx}_${team.name}`
       } else {
         const age = computeAgeGroup(team, seasons ?? []) ?? 0
-        // Higher age = older = should come first, so invert with 999-age
         teamSortKey = `1_${String(999 - age).padStart(4, '0')}_${team.name}`
       }
     }
+
+    // Age group label for email: "Under 12" for junior, "Senior" for senior
+    const ageGroupLabel = team?.type === 'junior'
+      ? `Under ${computeAgeGroup(team, seasons ?? []) ?? ''}`
+      : 'Senior'
 
     return {
       id: f.id,
@@ -74,9 +89,16 @@ export default async function FixturesDashboardPage() {
       teamName: team ? teamDisplayName(team, seasons ?? []) : '—',
       teamType: team?.type ?? 'senior',
       teamSortKey,
+      ageGroupLabel,
       opponentName: opponent ? `${opponent.clubs?.name} ${opponent.name}` : 'Unknown opponent',
-      venueName: (f.venues as any)?.name ?? null,
-      pitchName: (f.pitches as any)?.name ?? null,
+      venueName: venueData?.name ?? null,
+      venueAddress: venueData?.address ?? null,
+      pitchName: pitchData?.name ?? null,
+      pitchType: pitchData?.pitch_type ?? null,
+      kitJersey: team?.kit_jersey ?? null,
+      kitShorts: team?.kit_shorts ?? null,
+      kitSocks: team?.kit_socks ?? null,
+      managerName: managerMap.get(f.team_id) ?? null,
     }
   })
 

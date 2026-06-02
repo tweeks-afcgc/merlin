@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import ConfirmToggle from './ConfirmToggle'
+import EmailModal from './EmailModal'
 
 type Fixture = {
   id: string
@@ -15,9 +16,16 @@ type Fixture = {
   teamName: string
   teamType: string
   teamSortKey: string   // passed in for stable team ordering
+  ageGroupLabel: string
   opponentName: string
   venueName: string | null
+  venueAddress: string | null
   pitchName: string | null
+  pitchType: string | null
+  kitJersey: string | null
+  kitShorts: string | null
+  kitSocks: string | null
+  managerName: string | null
 }
 
 type ViewMode = 'schedule' | 'team' | 'pitch'
@@ -92,11 +100,14 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
           {!needsTime && needsPitch && <p className="text-xs text-amber-600 font-medium">No pitch assigned — cannot confirm</p>}
         </div>
       </Link>
-      {canConfirm && (
-        <div className="flex-shrink-0 pr-4">
+      <div className="flex items-center gap-2 flex-shrink-0 pr-4">
+        {f.confirmed && f.venue === 'home' && (
+          <EmailModal fixture={f} />
+        )}
+        {canConfirm && (
           <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (needsTime || needsPitch)} />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
@@ -210,11 +221,12 @@ function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCon
                   </p>
                 </div>
               </Link>
-              {canConfirm && (
-                <div className="flex-shrink-0 pr-4">
+              <div className="flex items-center gap-2 flex-shrink-0 pr-4">
+                {f.confirmed && f.venue === 'home' && <EmailModal fixture={f} />}
+                {canConfirm && (
                   <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (!f.kickoff_time || (f.venue === 'home' && !f.pitch_id))} />
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))}
         </div>
