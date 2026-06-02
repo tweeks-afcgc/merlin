@@ -17,6 +17,7 @@ type Fixture = {
   teamType: string
   teamSortKey: string   // passed in for stable team ordering
   ageGroupLabel: string
+  teamShortName: string
   opponentName: string
   venueName: string | null
   venueAddress: string | null
