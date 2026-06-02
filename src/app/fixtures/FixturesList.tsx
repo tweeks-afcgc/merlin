@@ -84,8 +84,10 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
           {formatTime(f.kickoff_time)}
         </span>
         <div className="min-w-0">
-          {showTeam && <p className="text-xs text-gray-400 truncate">{f.teamName}</p>}
-          <p className="text-sm font-semibold text-gray-900 truncate">vs {f.opponentName}</p>
+          <p className="text-sm font-semibold text-gray-900 truncate">
+            {showTeam && <span>{f.teamName} </span>}
+            <span className="font-normal text-gray-500">vs {f.opponentName}</span>
+          </p>
           {needsTime && <p className="text-xs text-amber-600 font-medium">Kick off time TBC — cannot confirm</p>}
           {!needsTime && needsPitch && <p className="text-xs text-amber-600 font-medium">No pitch assigned — cannot confirm</p>}
         </div>
@@ -198,8 +200,9 @@ function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCon
                   {formatTime(f.kickoff_time)}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-gray-500 truncate">{f.teamName}</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">vs {f.opponentName}</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {f.teamName} <span className="font-normal text-gray-500">vs {f.opponentName}</span>
+                  </p>
                   <p className="text-xs text-gray-400">
                     {f.venue === 'home' ? 'Home' : f.venue === 'away' ? 'Away' : 'Neutral'}
                     {f.venueName ? ` · ${f.venueName}` : ''}
