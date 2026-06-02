@@ -56,9 +56,9 @@ function pitchGroupKey(f: Fixture): string {
   return f.pitchName ?? 'Pitch TBC'
 }
 
-// Sort order for venue groups: named home venues first (alpha), then Away Games, then Pitch TBC
+// Sort order for venue groups: Pitch TBC first (urgent), then named home venues (alpha), then Away Games
 function venueGroupSort(a: string, b: string): number {
-  const order = (s: string) => s === 'Away Games' ? 1 : s === 'Pitch TBC' ? 2 : 0
+  const order = (s: string) => s === 'Pitch TBC' ? 0 : s === 'Away Games' ? 2 : 1
   const oa = order(a), ob = order(b)
   if (oa !== ob) return oa - ob
   return a.localeCompare(b)
