@@ -31,24 +31,33 @@ function formatTimeAmPm(t: string): string {
   return `${h12}:${String(m).padStart(2, '0')}${ampm}`
 }
 
+// Render a line with **label:** bold and the rest normal
+function EmailLine({ line }: { line: string }) {
+  const match = line.match(/^\*\*(.+?):\*\* (.*)$/)
+  if (match) {
+    return <p><strong>{match[1]}:</strong> {match[2]}</p>
+  }
+  return <p>{line || <>&nbsp;</>}</p>
+}
+
 function buildEmailText(f: Fixture): string {
   const lines: string[] = []
 
   lines.push(`Please see below for confirmation of our upcoming ${f.ageGroupLabel} fixture:`)
   lines.push('')
-  lines.push(`Fixture: ${f.teamName} vs ${f.opponentName}`)
+  lines.push(`**Fixture:** ${f.teamName} vs ${f.opponentName}`)
 
   if (f.kickoff_time) {
-    lines.push(`Kick Off Date & Time: ${formatDateLong(f.date)}, ${formatTimeAmPm(f.kickoff_time)}`)
+    lines.push(`**Kick Off Date & Time:** ${formatDateLong(f.date)}, ${formatTimeAmPm(f.kickoff_time)}`)
   }
 
   const venueStr = [f.venueName, f.venueAddress].filter(Boolean).join(', ')
-  if (venueStr) lines.push(`Venue: ${venueStr}`)
+  if (venueStr) lines.push(`**Venue:** ${venueStr}`)
 
   if (f.pitchType || f.pitchName) {
     const pitchTypeLabel = f.pitchType === '3g' ? '3G' : f.pitchType === 'grass' ? 'Grass' : f.pitchType ?? ''
     const pitchParts = [pitchTypeLabel, f.pitchName].filter(Boolean)
-    lines.push(`Pitch Type: ${pitchParts.join(', ')}`)
+    lines.push(`**Pitch Type:** ${pitchParts.join(', ')}`)
   }
 
   if (f.kitJersey || f.kitShorts || f.kitSocks) {
@@ -77,8 +86,11 @@ export default function EmailModal({ fixture }: { fixture: Fixture }) {
 
   const text = buildEmailText(fixture)
 
+  // Plain text for clipboard: strip ** markers
+  const plainText = text.replace(/\*\*(.+?):\*\*/g, '$1:')
+
   async function handleCopy() {
-    await navigator.clipboard.writeText(text)
+    await navigator.clipboard.writeText(plainText)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -109,9 +121,9 @@ export default function EmailModal({ fixture }: { fixture: Fixture }) {
               </button>
             </div>
             <div className="px-6 py-4">
-              <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed bg-gray-50 rounded-xl p-4 border border-gray-100 max-h-80 overflow-y-auto">
-                {text}
-              </pre>
+              <div className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-xl p-4 border border-gray-100 max-h-80 overflow-y-auto space-y-1">
+                {text.split('\n').map((line, i) => <EmailLine key={i} line={line} />)}
+              </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setOpen(false)} className="border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4 py-2 rounded-lg text-sm transition">
