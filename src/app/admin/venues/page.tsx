@@ -16,11 +16,13 @@ export default async function AdminVenuesPage() {
 
   const { data: venuesRaw } = await supabase
     .from('venues')
-    .select('id, name, pitches(id, name)')
+    .select('id, name, address, pitches(id, name)')
     .order('name', { ascending: true })
 
   const venues = (venuesRaw ?? []).map(v => ({
-    ...v,
+    id: v.id,
+    name: v.name,
+    address: (v as any).address ?? null,
     pitches: Array.isArray(v.pitches) ? v.pitches : [],
   }))
 
