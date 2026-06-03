@@ -120,7 +120,14 @@ export default function AddFixtureFromDashboardPage() {
     fd.set('competition', competition)
     const result = await addFixture(teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false) }
-    else router.push('/fixtures')
+    else {
+      const today = new Date().toISOString().split('T')[0]
+      if (date < today && result.id) {
+        router.push(`/teams/${teamId}/fixtures/${result.id}/edit?from=/fixtures`)
+      } else {
+        router.push('/fixtures')
+      }
+    }
   }
 
   const orderedTeams = sortedTeams(teams, seasons)

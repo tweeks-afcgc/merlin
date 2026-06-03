@@ -23,7 +23,7 @@ export async function addFixture(teamId: string, formData: FormData) {
   const venue = formData.get('venue') as string
   const opponentId = await resolveOpponentId(supabase, formData.get('opponent_id') as string)
 
-  const { error } = await supabase.from('fixtures').insert({
+  const { data: inserted, error } = await supabase.from('fixtures').insert({
     team_id: teamId,
     season_id: formData.get('season_id') as string,
     date: formData.get('date') as string,
@@ -32,11 +32,12 @@ export async function addFixture(teamId: string, formData: FormData) {
     venue,
     competition: formData.get('competition') as string,
     referee_required: venue === 'home',
-  })
+  }).select('id').single()
 
   if (error) return { error: error.message }
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)
+  return { id: inserted.id }
 }
 
 export async function updateFixture(fixtureId: string, teamId: string, formData: FormData) {

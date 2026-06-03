@@ -59,7 +59,14 @@ export default function AddFixturePage() {
     fd.set('competition', competition)
     const result = await addFixture(teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false) }
-    else router.push(`/teams/${teamId}/fixtures`)
+    else {
+      const today = new Date().toISOString().split('T')[0]
+      if (date < today && result.id) {
+        router.push(`/teams/${teamId}/fixtures/${result.id}/edit?from=/teams/${teamId}/fixtures`)
+      } else {
+        router.push(`/teams/${teamId}/fixtures`)
+      }
+    }
   }
 
   return (
