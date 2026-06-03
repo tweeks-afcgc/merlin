@@ -1,39 +1,17 @@
-'use client'
-
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-
-const tabs = [
-  { href: '/admin', label: 'Overview' },
-  { href: '/admin/seasons', label: 'Seasons' },
-  { href: '/admin/teams', label: 'Teams' },
-  { href: '/admin/clubs', label: 'Clubs' },
-  { href: '/admin/venues', label: 'Venues' },
-  { href: '/admin/users', label: 'Users' },
-]
 
 export default function AdminNav() {
-  const pathname = usePathname()
   return (
-    <div className="flex gap-1 text-sm mb-8 border-b border-gray-200 overflow-x-auto">
-      {tabs.map(tab => {
-        const isActive = tab.href === '/admin'
-          ? pathname === '/admin'
-          : pathname.startsWith(tab.href)
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={`whitespace-nowrap px-3 pb-3 -mb-px transition ${
-              isActive
-                ? 'text-red-800 font-semibold border-b-2 border-red-800'
-                : 'text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            {tab.label}
-          </Link>
-        )
-      })}
+    <div className="mb-6">
+      <Link
+        href="/admin"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Admin dashboard
+      </Link>
     </div>
   )
 }
