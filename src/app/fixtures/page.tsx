@@ -103,7 +103,7 @@ export default async function FixturesDashboardPage() {
       teamSortKey,
       ageGroupLabel,
       teamShortName: team?.name ?? '',
-      opponentName: opponent ? `${opponent.clubs?.name} ${opponent.name}` : 'Unknown opponent',
+      opponentName: opponent ? [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown opponent' : 'Unknown opponent',
       venueName: venueData?.name ?? null,
       venueAddress: venueData?.address ?? null,
       pitchName: pitchData?.name ?? null,

@@ -6,6 +6,7 @@ import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { updateFixture, assignRefereeFromRequest } from '../../actions'
+import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 
 type ClubTeam = { id: string; name: string; clubs: { name: string } }
 type Venue = { id: string; name: string }
@@ -26,6 +27,7 @@ export default function EditFixturePage() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   const [clubTeams, setClubTeams] = useState<ClubTeam[]>([])
+  const [opponents, setOpponents] = useState<OpponentOption[]>([])
   const [venues, setVenues] = useState<Venue[]>([])
   const [pitches, setPitches] = useState<Pitch[]>([])
   const [referees, setReferees] = useState<Referee[]>([])
@@ -48,10 +50,10 @@ export default function EditFixturePage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: { user } }, { data: fixture }, { data: teamsData }, { data: venuesData }, { data: refereesData }, { data: requestsData }] = await Promise.all([
+      const [{ data: { user } }, { data: fixture }, { data: clubsData }, { data: venuesData }, { data: refereesData }, { data: requestsData }] = await Promise.all([
         supabase.auth.getUser(),
         supabase.from('fixtures').select('*').eq('id', fixtureId).single(),
-        supabase.from('club_teams').select('id, name, clubs(name)').order('name'),
+        supabase.from('clubs').select('id, name, club_teams(id, name)').order('name'),
         supabase.from('venues').select('id, name').order('name'),
         supabase.from('profiles').select('id, full_name').eq('is_referee', true).order('full_name'),
         supabase.from('referee_requests').select('id, referee_id, created_at, profiles(full_name)').eq('fixture_id', fixtureId).order('created_at'),
@@ -86,7 +88,9 @@ export default function EditFixturePage() {
         }
       }
 
-      setClubTeams((teamsData ?? []) as any)
+      const opts = buildOpponentOptions((clubsData ?? []) as any)
+      setOpponents(opts)
+      setClubTeams((clubsData ?? []) as any) // keep for any legacy refs
       setVenues(venuesData ?? [])
       setReferees(refereesData ?? [])
       setRefRequests((requestsData ?? []).map((r: any) => ({
@@ -189,10 +193,8 @@ export default function EditFixturePage() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="">Select opponent...</option>
-                  {clubTeams.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {(t.clubs as any)?.name} {t.name}
-                    </option>
+                  {opponents.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>

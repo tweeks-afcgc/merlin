@@ -150,7 +150,7 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
                 <div>
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Next fixture</p>
                   <p className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition">
-                    {opponent ? `${opponent.clubs?.name} ${opponent.name}` : 'Unknown opponent'}
+                    {opponent ? [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown opponent' : 'Unknown opponent'}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {formatDate(nextFixture.date)} · {formatTime(nextFixture.kickoff_time)} ·{' '}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { addClub, addClubTeam, deleteClub, deleteClubTeam } from './actions'
+import { addClub, addClubTeam, updateClub, deleteClub, deleteClubTeam } from './actions'
 
 type ClubTeam = { id: string; name: string }
 type Club = { id: string; name: string; club_teams: ClubTeam[] }
@@ -12,6 +12,8 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
   const [addingTeamFor, setAddingTeamFor] = useState<string | null>(null)
   const [teamName, setTeamName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editingClubId, setEditingClubId] = useState<string | null>(null)
+  const [editingClubName, setEditingClubName] = useState('')
 
   async function handleAddClub(formData: FormData) {
     await addClub(formData)
@@ -27,6 +29,17 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
     await addClubTeam(fd)
     setTeamName('')
     setAddingTeamFor(null)
+    setSaving(false)
+    router.refresh()
+  }
+
+  async function handleSaveClub(clubId: string) {
+    if (!editingClubName.trim()) return
+    setSaving(true)
+    const fd = new FormData()
+    fd.set('name', editingClubName.trim())
+    await updateClub(clubId, fd)
+    setEditingClubId(null)
     setSaving(false)
     router.refresh()
   }
@@ -74,21 +87,56 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
             {clubs.map(club => (
               <div key={club.id}>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-900">{club.name}</h3>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => { setAddingTeamFor(club.id); setTeamName('') }}
-                      className="text-xs text-red-800 hover:underline font-medium"
-                    >
-                      + Add team
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClub(club.id)}
-                      className="text-xs text-gray-400 hover:text-red-600 transition"
-                    >
-                      Delete club
-                    </button>
-                  </div>
+                  {/* Club name — inline edit */}
+                  {editingClubId === club.id ? (
+                    <div className="flex items-center gap-2 flex-1 mr-3">
+                      <input
+                        autoFocus
+                        value={editingClubName}
+                        onChange={e => setEditingClubName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveClub(club.id) } if (e.key === 'Escape') setEditingClubId(null) }}
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      />
+                      <button
+                        onClick={() => handleSaveClub(club.id)}
+                        disabled={saving}
+                        className="bg-red-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-900 transition disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingClubId(null)}
+                        className="text-xs text-gray-400 hover:text-gray-600 px-2"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <h3 className="text-sm font-semibold text-gray-900">{club.name}</h3>
+                  )}
+
+                  {editingClubId !== club.id && (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => { setEditingClubId(club.id); setEditingClubName(club.name) }}
+                        className="text-xs text-gray-500 hover:text-gray-800 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => { setAddingTeamFor(club.id); setTeamName('') }}
+                        className="text-xs text-red-800 hover:underline font-medium"
+                      >
+                        + Add team
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClub(club.id)}
+                        className="text-xs text-gray-400 hover:text-red-600 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Add team inline form */}
@@ -134,7 +182,7 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-gray-400 pl-1">No teams added for this club.</p>
+                  <p className="text-xs text-gray-400 pl-1">No teams added — this club will appear as a single opponent option.</p>
                 )}
               </div>
             ))}

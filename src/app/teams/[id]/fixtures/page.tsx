@@ -182,7 +182,7 @@ export default async function FixturesPage({
                       </td>
                       <td className="px-3 py-3 text-gray-600 whitespace-nowrap">{formatTime(f.kickoff_time)}</td>
                       <td className="px-3 py-3 text-gray-900">
-                        {opponent ? `${opponent.clubs?.name} ${opponent.name}` : '—'}
+                        {opponent ? [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || '—' : '—'}
                       </td>
                       <td className="px-3 py-3 text-xs text-gray-500">
                         {f.venue === 'home'

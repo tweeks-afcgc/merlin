@@ -6,10 +6,10 @@ import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { addFixture } from '@/app/teams/[id]/fixtures/actions'
+import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 
 type Season = { id: string; name: string; start_date: string; is_current: boolean }
 type Team = { id: string; name: string; type: string; founding_age_group: number | null; founding_season_id: string | null; age_group: number | null }
-type ClubTeam = { id: string; name: string; clubs: { name: string } }
 
 // Senior teams in the desired fixed order
 const SENIOR_ORDER = ['First XI', 'Sunday XI', 'Vets XI', 'Women']
@@ -76,7 +76,7 @@ export default function AddFixtureFromDashboardPage() {
 
   const [teams, setTeams] = useState<Team[]>([])
   const [seasons, setSeasons] = useState<Season[]>([])
-  const [clubTeams, setClubTeams] = useState<ClubTeam[]>([])
+  const [opponents, setOpponents] = useState<OpponentOption[]>([])
 
   const [teamId, setTeamId] = useState('')
   const [seasonId, setSeasonId] = useState('')
@@ -89,22 +89,16 @@ export default function AddFixtureFromDashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: teamsData }, { data: seasonsData }, { data: clubTeamsData }] = await Promise.all([
+      const [{ data: teamsData }, { data: seasonsData }, { data: clubsData }] = await Promise.all([
         supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group'),
         supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: false }),
-        supabase.from('club_teams').select('id, name, clubs(name)'),
+        supabase.from('clubs').select('id, name, club_teams(id, name)').order('name'),
       ])
       const s = seasonsData ?? []
       setTeams(teamsData ?? [])
       setSeasons(s)
       setSeasonId(s.find(x => x.is_current)?.id ?? s[0]?.id ?? '')
-
-      const sorted = ((clubTeamsData ?? []) as unknown as ClubTeam[]).sort((a, b) => {
-        const nameA = `${(a.clubs as any)?.name} ${a.name}`
-        const nameB = `${(b.clubs as any)?.name} ${b.name}`
-        return nameA.localeCompare(nameB)
-      })
-      setClubTeams(sorted)
+      setOpponents(buildOpponentOptions((clubsData ?? []) as any))
       setLoading(false)
     }
     load()
@@ -230,8 +224,8 @@ export default function AddFixtureFromDashboardPage() {
               {/* Opponent */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Opponent</label>
-                {clubTeams.length === 0 ? (
-                  <p className="text-sm text-gray-400">No opponent teams added yet. Add clubs and teams in Admin first.</p>
+                {opponents.length === 0 ? (
+                  <p className="text-sm text-gray-400">No opponents added yet. Add clubs in Admin first.</p>
                 ) : (
                   <select
                     value={opponentId}
@@ -239,10 +233,8 @@ export default function AddFixtureFromDashboardPage() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                   >
                     <option value="">Select opponent...</option>
-                    {clubTeams.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {(t.clubs as any)?.name} {t.name}
-                      </option>
+                    {opponents.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
                 )}
@@ -293,7 +285,7 @@ export default function AddFixtureFromDashboardPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || clubTeams.length === 0}
+                  disabled={saving || opponents.length === 0}
                   className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
                 >
                   {saving ? 'Saving...' : 'Add fixture'}
