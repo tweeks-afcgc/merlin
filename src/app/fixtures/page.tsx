@@ -26,7 +26,7 @@ export default async function FixturesDashboardPage() {
   const todayStr = today.toISOString().split('T')[0]
   const in14Str = in14Days.toISOString().split('T')[0]
 
-  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }] = await Promise.all([
+  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }, { data: allRequests }] = await Promise.all([
     supabase
       .from('fixtures')
       .select(`
@@ -45,7 +45,11 @@ export default async function FixturesDashboardPage() {
     supabase.from('seasons').select('id, name, start_date, is_current'),
     supabase.from('team_managers').select('team_id, profiles(full_name)'),
     supabase.from('profiles').select('id, full_name').eq('is_referee', true),
+    supabase.from('referee_requests').select('fixture_id'),
   ])
+
+  // Build a set of fixture_ids that have at least one referee request
+  const fixturesWithRequests = new Set((allRequests ?? []).map((r: any) => r.fixture_id))
 
   // Build a map of referee_id -> name
   const refereeMap = new Map<string, string>()
@@ -110,6 +114,7 @@ export default async function FixturesDashboardPage() {
       managerName: managerMap.get(f.team_id) ?? null,
       refereeRequired: f.referee_required ?? true,
       refereeName: f.referee_id ? (refereeMap.get(f.referee_id) ?? null) : null,
+      hasRefereeRequest: fixturesWithRequests.has(f.id),
     }
   })
 

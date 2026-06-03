@@ -11,6 +11,7 @@ interface Props {
   userName?: string | null
   isAdmin?: boolean
   isFixtureSecretary?: boolean
+  isReferee?: boolean
 }
 
 function MenuIcon() {
@@ -29,12 +30,13 @@ function CloseIcon() {
   )
 }
 
-export default function AppShell({ children, userName: nameProp, isAdmin: adminProp, isFixtureSecretary: fsProp }: Props) {
+export default function AppShell({ children, userName: nameProp, isAdmin: adminProp, isFixtureSecretary: fsProp, isReferee: refProp }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [userName, setUserName] = useState<string | null>(nameProp ?? null)
   const [isAdmin, setIsAdmin] = useState(adminProp ?? false)
   const [isFixtureSecretary, setIsFixtureSecretary] = useState(fsProp ?? false)
+  const [isReferee, setIsReferee] = useState(refProp ?? false)
   const pathname = usePathname()
   const profileRef = useRef<HTMLDivElement>(null)
 
@@ -44,12 +46,13 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
-      supabase.from('profiles').select('full_name, role').eq('id', user.id).single()
+      supabase.from('profiles').select('full_name, role, is_referee').eq('id', user.id).single()
         .then(({ data }) => {
           if (data) {
             setUserName(data.full_name)
             setIsAdmin(data.role === 'admin')
             setIsFixtureSecretary(data.role === 'fixture_secretary')
+            setIsReferee(data.is_referee ?? false)
           }
         })
     })
@@ -59,6 +62,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
   useEffect(() => { if (nameProp !== undefined) setUserName(nameProp ?? null) }, [nameProp])
   useEffect(() => { if (adminProp !== undefined) setIsAdmin(adminProp) }, [adminProp])
   useEffect(() => { if (fsProp !== undefined) setIsFixtureSecretary(fsProp) }, [fsProp])
+  useEffect(() => { if (refProp !== undefined) setIsReferee(refProp) }, [refProp])
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -81,6 +85,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
   const navLinks = [
     { href: '/dashboard', label: 'Home' },
     ...(isAdmin || isFixtureSecretary ? [{ href: '/fixtures', label: 'Fixtures' }] : []),
+    ...(isAdmin || isFixtureSecretary || isReferee ? [{ href: '/referee', label: 'Referee' }] : []),
     ...(isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
 

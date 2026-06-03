@@ -52,6 +52,16 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
   revalidatePath(`/teams/${teamId}`)
 }
 
+export async function assignRefereeFromRequest(fixtureId: string, refereeId: string, teamId: string) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('fixtures').update({ referee_id: refereeId }).eq('id', fixtureId)
+  if (error) return { error: error.message }
+  revalidatePath(`/teams/${teamId}/fixtures`)
+  revalidatePath('/fixtures')
+  revalidatePath('/referee')
+  return {}
+}
+
 export async function deleteFixture(fixtureId: string, teamId: string) {
   const supabase = await createClient()
   await supabase.from('fixtures').delete().eq('id', fixtureId)

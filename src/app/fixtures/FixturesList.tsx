@@ -29,6 +29,7 @@ type Fixture = {
   managerName: string | null
   refereeRequired: boolean
   refereeName: string | null
+  hasRefereeRequest: boolean
 }
 
 type ViewMode = 'schedule' | 'team' | 'pitch'
@@ -104,9 +105,11 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
           {!needsTime && needsPitch && <p className="text-xs text-amber-600 font-medium">No pitch assigned — cannot confirm</p>}
           {f.refereeName
             ? <p className="text-xs text-gray-400">Referee: {f.refereeName}</p>
-            : f.refereeRequired
-              ? <p className="text-xs text-amber-600 font-medium">No referee assigned</p>
-              : <p className="text-xs text-amber-600 font-medium">No referee requested</p>
+            : f.hasRefereeRequest
+              ? <p className="text-xs text-blue-600 font-medium">Referee request made</p>
+              : f.refereeRequired
+                ? <p className="text-xs text-amber-600 font-medium">No referee assigned</p>
+                : <p className="text-xs text-amber-600 font-medium">No referee requested</p>
           }
         </div>
       </Link>
@@ -228,7 +231,14 @@ function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCon
                     {f.venue === 'home' ? 'Home' : f.venue === 'away' ? 'Away' : 'Neutral'}
                     {f.venueName ? ` · ${f.venueName}` : ''}
                     {f.pitchName ? ` · ${f.pitchName}` : ''}
-                    {f.refereeName ? ` · Ref: ${f.refereeName}` : f.refereeRequired ? ' · No referee assigned' : ' · No referee requested'}
+                    {f.refereeName
+                      ? ` · Ref: ${f.refereeName}`
+                      : f.hasRefereeRequest
+                        ? ' · Referee request made'
+                        : f.refereeRequired
+                          ? ' · No referee assigned'
+                          : ' · No referee requested'
+                    }
                   </p>
                 </div>
               </Link>

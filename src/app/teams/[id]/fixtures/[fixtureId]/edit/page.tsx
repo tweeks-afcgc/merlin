@@ -5,12 +5,13 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
-import { updateFixture } from '../../actions'
+import { updateFixture, assignRefereeFromRequest } from '../../actions'
 
 type ClubTeam = { id: string; name: string; clubs: { name: string } }
 type Venue = { id: string; name: string }
 type Pitch = { id: string; name: string; venue_id: string }
 type Referee = { id: string; full_name: string | null }
+type RefRequest = { id: string; referee_id: string; refereeName: string; created_at: string }
 
 export default function EditFixturePage() {
   const { id: teamId, fixtureId } = useParams<{ id: string; fixtureId: string }>()
@@ -28,6 +29,8 @@ export default function EditFixturePage() {
   const [venues, setVenues] = useState<Venue[]>([])
   const [pitches, setPitches] = useState<Pitch[]>([])
   const [referees, setReferees] = useState<Referee[]>([])
+  const [refRequests, setRefRequests] = useState<RefRequest[]>([])
+  const [assigningId, setAssigningId] = useState<string | null>(null)
 
   const [date, setDate] = useState('')
   const [tbc, setTbc] = useState(false)
@@ -42,12 +45,13 @@ export default function EditFixturePage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: { user } }, { data: fixture }, { data: teamsData }, { data: venuesData }, { data: refereesData }] = await Promise.all([
+      const [{ data: { user } }, { data: fixture }, { data: teamsData }, { data: venuesData }, { data: refereesData }, { data: requestsData }] = await Promise.all([
         supabase.auth.getUser(),
         supabase.from('fixtures').select('*').eq('id', fixtureId).single(),
         supabase.from('club_teams').select('id, name, clubs(name)').order('name'),
         supabase.from('venues').select('id, name').order('name'),
         supabase.from('profiles').select('id, full_name').eq('is_referee', true).order('full_name'),
+        supabase.from('referee_requests').select('id, referee_id, created_at, profiles(full_name)').eq('fixture_id', fixtureId).order('created_at'),
       ])
 
       if (user) {
@@ -77,6 +81,12 @@ export default function EditFixturePage() {
       setClubTeams((teamsData ?? []) as any)
       setVenues(venuesData ?? [])
       setReferees(refereesData ?? [])
+      setRefRequests((requestsData ?? []).map((r: any) => ({
+        id: r.id,
+        referee_id: r.referee_id,
+        refereeName: r.profiles?.full_name ?? '—',
+        created_at: r.created_at,
+      })))
       setLoading(false)
     }
     load()
@@ -248,6 +258,40 @@ export default function EditFixturePage() {
                       )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Referee requests — admin only, shown when requests exist */}
+              {isAdmin && refRequests.length > 0 && (
+                <div className="border-t border-gray-100 pt-5 space-y-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Referee requests</p>
+                  <p className="text-xs text-gray-500">Select a request to assign that referee to this fixture.</p>
+                  <ul className="divide-y divide-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+                    {refRequests.map(r => (
+                      <li key={r.id} className="flex items-center justify-between px-4 py-3 bg-white">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{r.refereeName}</p>
+                          <p className="text-xs text-gray-400">
+                            Requested {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={assigningId === r.referee_id}
+                          onClick={async () => {
+                            setAssigningId(r.referee_id)
+                            const result = await assignRefereeFromRequest(fixtureId, r.referee_id, teamId)
+                            if (result?.error) setError(result.error)
+                            else setRefereeId(r.referee_id)
+                            setAssigningId(null)
+                          }}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-800 text-white hover:bg-red-900 transition disabled:opacity-50"
+                        >
+                          {assigningId === r.referee_id ? '…' : 'Assign'}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
