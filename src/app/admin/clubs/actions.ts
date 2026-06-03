@@ -33,6 +33,13 @@ export async function deleteClub(clubId: string) {
   revalidatePath('/admin/clubs')
 }
 
+export async function updateClubTeam(teamId: string, formData: FormData) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('club_teams').update({ name: formData.get('name') as string }).eq('id', teamId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/clubs')
+}
+
 export async function deleteClubTeam(teamId: string) {
   const supabase = await createClient()
   await supabase.from('club_teams').delete().eq('id', teamId)

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { addClub, addClubTeam, updateClub, deleteClub, deleteClubTeam } from './actions'
+import { addClub, addClubTeam, updateClub, updateClubTeam, deleteClub, deleteClubTeam } from './actions'
 
 type ClubTeam = { id: string; name: string }
 type Club = { id: string; name: string; club_teams: ClubTeam[] }
@@ -14,6 +14,8 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
   const [saving, setSaving] = useState(false)
   const [editingClubId, setEditingClubId] = useState<string | null>(null)
   const [editingClubName, setEditingClubName] = useState('')
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null)
+  const [editingTeamName, setEditingTeamName] = useState('')
 
   async function handleAddClub(formData: FormData) {
     await addClub(formData)
@@ -47,6 +49,17 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
   async function handleDeleteClub(clubId: string) {
     if (!window.confirm('Delete this club and all its teams?')) return
     await deleteClub(clubId)
+    router.refresh()
+  }
+
+  async function handleSaveTeam(teamId: string) {
+    if (!editingTeamName.trim()) return
+    setSaving(true)
+    const fd = new FormData()
+    fd.set('name', editingTeamName.trim())
+    await updateClubTeam(teamId, fd)
+    setEditingTeamId(null)
+    setSaving(false)
     router.refresh()
   }
 
@@ -171,13 +184,48 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
                   <ul className="divide-y divide-gray-50 border border-gray-100 rounded-lg overflow-hidden">
                     {club.club_teams.map(team => (
                       <li key={team.id} className="flex items-center justify-between px-4 py-2.5 bg-gray-50">
-                        <span className="text-sm text-gray-700">{team.name}</span>
-                        <button
-                          onClick={() => handleDeleteTeam(team.id)}
-                          className="text-xs text-gray-400 hover:text-red-600 transition"
-                        >
-                          Remove
-                        </button>
+                        {editingTeamId === team.id ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <input
+                              autoFocus
+                              value={editingTeamName}
+                              onChange={e => setEditingTeamName(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveTeam(team.id) } if (e.key === 'Escape') setEditingTeamId(null) }}
+                              className="flex-1 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                            />
+                            <button
+                              onClick={() => handleSaveTeam(team.id)}
+                              disabled={saving}
+                              className="bg-red-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-900 transition disabled:opacity-50"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingTeamId(null)}
+                              className="text-xs text-gray-400 hover:text-gray-600 px-1"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-sm text-gray-700">{team.name}</span>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => { setEditingTeamId(team.id); setEditingTeamName(team.name) }}
+                                className="text-xs text-gray-500 hover:text-gray-800 transition"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTeam(team.id)}
+                                className="text-xs text-gray-400 hover:text-red-600 transition"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </li>
                     ))}
                   </ul>
