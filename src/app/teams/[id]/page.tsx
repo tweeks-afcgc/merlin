@@ -139,6 +139,19 @@ export default async function TeamDashboardPage({
   const allStats = calcStats((resultFixtures ?? []) as any)
   const leagueStats = calcStats(((resultFixtures ?? []) as any).filter((f: any) => f.competition === 'league'))
 
+  // Players for this team in the current season
+  const { data: playerRows } = currentSeason ? await supabase
+    .from('player_team_seasons')
+    .select('players(id, first_name, last_name)')
+    .eq('team_id', id)
+    .eq('season_id', currentSeason.id)
+    : { data: [] }
+
+  const players = (playerRows ?? [])
+    .map((r: any) => r.players)
+    .filter(Boolean)
+    .sort((a: any, b: any) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`))
+
   // Next fixture
   const today = new Date().toISOString().split('T')[0]
   const { data: nextFixtureRows } = await supabase
@@ -297,6 +310,32 @@ export default async function TeamDashboardPage({
             )}
           </Link>
         </div>
+        {/* Players card */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mt-4">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+            <h2 className="text-sm font-semibold text-gray-900">
+              Players
+              {currentSeason && <span className="ml-1.5 font-normal text-gray-400 text-xs">{currentSeason.name}</span>}
+            </h2>
+            {isAdmin && (
+              <Link href="/admin/players" className="text-xs font-semibold text-red-800 hover:underline">
+                Manage →
+              </Link>
+            )}
+          </div>
+          {players.length === 0 ? (
+            <p className="px-5 py-4 text-sm text-gray-400">No players registered for this season.</p>
+          ) : (
+            <ul className="divide-y divide-gray-50">
+              {players.map((p: any) => (
+                <li key={p.id} className="px-5 py-2.5">
+                  <span className="text-sm text-gray-900">{p.first_name} {p.last_name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
       </div>
     </AppShell>
   )
