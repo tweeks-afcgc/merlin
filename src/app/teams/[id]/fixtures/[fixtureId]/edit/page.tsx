@@ -71,7 +71,9 @@ export default function EditFixturePage() {
         setCompetition(fixture.competition ?? 'friendly')
         setHomeVenueId(fixture.home_venue_id ?? '')
         setPitchId(fixture.pitch_id ?? '')
-        setRefereeRequired(fixture.referee_required ?? true)
+        // Away/neutral fixtures default to no referee required
+        const isHome = fixture.venue === 'home'
+        setRefereeRequired(isHome ? (fixture.referee_required ?? true) : false)
         setRefereeId(fixture.referee_id ?? '')
         setGoalsFor(fixture.goals_for != null ? String(fixture.goals_for) : '')
         setGoalsAgainst(fixture.goals_against != null ? String(fixture.goals_against) : '')
@@ -205,7 +207,7 @@ export default function EditFixturePage() {
                         name="venue"
                         value={v}
                         checked={venue === v}
-                        onChange={() => setVenue(v)}
+                        onChange={() => { setVenue(v); if (v !== 'home') setRefereeRequired(false) }}
                         className="text-red-800 focus:ring-red-700"
                       />
                       {v.charAt(0).toUpperCase() + v.slice(1)}

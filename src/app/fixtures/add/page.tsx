@@ -260,6 +260,7 @@ export default function AddFixtureFromDashboardPage() {
                         value={v}
                         checked={venue === v}
                         onChange={() => setVenue(v)}
+                        // referee_required handled server-side based on venue
                         className="text-red-800 focus:ring-red-700"
                       />
                       {v.charAt(0).toUpperCase() + v.slice(1)}

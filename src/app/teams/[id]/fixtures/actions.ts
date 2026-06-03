@@ -9,14 +9,17 @@ export async function addFixture(teamId: string, formData: FormData) {
   const kickoffRaw = formData.get('kickoff_time') as string
   const tbc = formData.get('tbc') === 'true'
 
+  const venue = formData.get('venue') as string
+
   const { error } = await supabase.from('fixtures').insert({
     team_id: teamId,
     season_id: formData.get('season_id') as string,
     date: formData.get('date') as string,
     kickoff_time: tbc || !kickoffRaw ? null : kickoffRaw,
     opponent_id: formData.get('opponent_id') as string,
-    venue: formData.get('venue') as string,
+    venue,
     competition: formData.get('competition') as string,
+    referee_required: venue === 'home',
   })
 
   if (error) return { error: error.message }
