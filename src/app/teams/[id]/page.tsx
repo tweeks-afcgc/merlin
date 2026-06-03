@@ -69,8 +69,15 @@ function KitCircle({
   )
 }
 
-export default async function TeamDashboardPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TeamDashboardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ season?: string }>
+}) {
   const { id } = await params
+  const { season: seasonParam } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/signin')
@@ -78,7 +85,7 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
   const [{ data: profile }, { data: team }, { data: seasons }] = await Promise.all([
     supabase.from('profiles').select('full_name, role').eq('id', user.id).single(),
     supabase.from('teams').select('*').eq('id', id).single(),
-    supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
+    supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: false }),
   ])
 
   if (!team) notFound()
@@ -92,13 +99,29 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
     if (!mgr) redirect('/dashboard')
   }
 
-  // Season stats — past fixtures in the current season with a result
+  // Seasons that have at least one fixture for this team
+  const { data: fixtureSeasonRows } = await supabase
+    .from('fixtures')
+    .select('season_id')
+    .eq('team_id', id)
+
+  const seasonIdsWithFixtures = new Set((fixtureSeasonRows ?? []).map((f: any) => f.season_id))
   const currentSeason = seasons?.find(s => s.is_current) ?? null
-  const { data: resultFixtures } = currentSeason ? await supabase
+  const statsSeasons = (seasons ?? []).filter(s => seasonIdsWithFixtures.has(s.id))
+
+  // Resolve which season to show stats for
+  const selectedStatsSeason =
+    statsSeasons.find(s => s.id === seasonParam) ??
+    statsSeasons.find(s => s.is_current) ??
+    statsSeasons[0] ??
+    null
+
+  // Fetch results for the selected stats season
+  const { data: resultFixtures } = selectedStatsSeason ? await supabase
     .from('fixtures')
     .select('competition, goals_for, goals_against')
     .eq('team_id', id)
-    .eq('season_id', currentSeason.id)
+    .eq('season_id', selectedStatsSeason.id)
     .not('goals_for', 'is', null)
     .not('goals_against', 'is', null)
     : { data: [] }
@@ -165,40 +188,63 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
         </div>
 
         {/* Season stats card */}
-        {currentSeason && allStats.p > 0 && (
+        {statsSeasons.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-4">
-            <div className="px-5 py-3 border-b border-gray-50">
-              <h2 className="text-sm font-semibold text-gray-900">Season to date <span className="font-normal text-gray-400">— {currentSeason.name}</span></h2>
+            <div className="px-5 pt-4 pb-0">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">Season stats</h2>
+              {/* Season tabs */}
+              {statsSeasons.length > 1 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {statsSeasons.map(s => (
+                    <Link
+                      key={s.id}
+                      href={`/teams/${id}?season=${s.id}`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                        selectedStatsSeason?.id === s.id
+                          ? 'bg-red-800 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {s.name}{s.is_current ? ' ●' : ''}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="px-5 py-1">
-              {/* Header row */}
-              <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2 border-b border-gray-50">
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide"></span>
-                {['P','W','D','L','GF','GA','GD'].map(h => (
-                  <span key={h} className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center">{h}</span>
-                ))}
+
+            {allStats.p === 0 ? (
+              <p className="px-5 pb-4 text-sm text-gray-400">No results recorded for {selectedStatsSeason?.name}.</p>
+            ) : (
+              <div className="px-5 pb-1">
+                {/* Header row */}
+                <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2 border-b border-gray-100">
+                  <span></span>
+                  {['P','W','D','L','GF','GA','GD'].map(h => (
+                    <span key={h} className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center">{h}</span>
+                  ))}
+                </div>
+                {/* All competitions */}
+                <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5 border-b border-gray-50">
+                  <span className="text-sm text-gray-700 font-medium">All</span>
+                  {[allStats.p, allStats.w, allStats.d, allStats.l, allStats.gf, allStats.ga].map((v, i) => (
+                    <span key={i} className="text-sm text-gray-900 text-center">{v}</span>
+                  ))}
+                  <span className={`text-sm font-semibold text-center ${allStats.gd > 0 ? 'text-green-700' : allStats.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                    {allStats.gd > 0 ? `+${allStats.gd}` : allStats.gd}
+                  </span>
+                </div>
+                {/* League only */}
+                <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5">
+                  <span className="text-sm text-gray-500">League</span>
+                  {[leagueStats.p, leagueStats.w, leagueStats.d, leagueStats.l, leagueStats.gf, leagueStats.ga].map((v, i) => (
+                    <span key={i} className="text-sm text-gray-700 text-center">{v}</span>
+                  ))}
+                  <span className={`text-sm font-medium text-center ${leagueStats.gd > 0 ? 'text-green-700' : leagueStats.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                    {leagueStats.p > 0 ? (leagueStats.gd > 0 ? `+${leagueStats.gd}` : leagueStats.gd) : '—'}
+                  </span>
+                </div>
               </div>
-              {/* All competitions */}
-              <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5 border-b border-gray-50">
-                <span className="text-sm text-gray-700 font-medium">All</span>
-                {[allStats.p, allStats.w, allStats.d, allStats.l, allStats.gf, allStats.ga].map((v, i) => (
-                  <span key={i} className="text-sm text-gray-900 text-center">{v}</span>
-                ))}
-                <span className={`text-sm font-semibold text-center ${allStats.gd > 0 ? 'text-green-700' : allStats.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                  {allStats.gd > 0 ? `+${allStats.gd}` : allStats.gd}
-                </span>
-              </div>
-              {/* League only */}
-              <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5">
-                <span className="text-sm text-gray-500">League</span>
-                {[leagueStats.p, leagueStats.w, leagueStats.d, leagueStats.l, leagueStats.gf, leagueStats.ga].map((v, i) => (
-                  <span key={i} className="text-sm text-gray-700 text-center">{v}</span>
-                ))}
-                <span className={`text-sm font-medium text-center ${leagueStats.gd > 0 ? 'text-green-700' : leagueStats.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                  {leagueStats.p > 0 ? (leagueStats.gd > 0 ? `+${leagueStats.gd}` : leagueStats.gd) : '—'}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
