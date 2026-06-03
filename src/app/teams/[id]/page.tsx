@@ -92,6 +92,30 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
     if (!mgr) redirect('/dashboard')
   }
 
+  // Season stats — past fixtures in the current season with a result
+  const currentSeason = seasons?.find(s => s.is_current) ?? null
+  const { data: resultFixtures } = currentSeason ? await supabase
+    .from('fixtures')
+    .select('competition, goals_for, goals_against')
+    .eq('team_id', id)
+    .eq('season_id', currentSeason.id)
+    .not('goals_for', 'is', null)
+    .not('goals_against', 'is', null)
+    : { data: [] }
+
+  function calcStats(fixtures: { goals_for: number; goals_against: number }[]) {
+    const p = fixtures.length
+    const w = fixtures.filter(f => f.goals_for > f.goals_against).length
+    const d = fixtures.filter(f => f.goals_for === f.goals_against).length
+    const l = fixtures.filter(f => f.goals_for < f.goals_against).length
+    const gf = fixtures.reduce((s, f) => s + f.goals_for, 0)
+    const ga = fixtures.reduce((s, f) => s + f.goals_against, 0)
+    return { p, w, d, l, gf, ga, gd: gf - ga }
+  }
+
+  const allStats = calcStats((resultFixtures ?? []) as any)
+  const leagueStats = calcStats(((resultFixtures ?? []) as any).filter((f: any) => f.competition === 'league'))
+
   // Next fixture
   const today = new Date().toISOString().split('T')[0]
   const { data: nextFixtureRows } = await supabase
@@ -139,6 +163,44 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
             </Link>
           )}
         </div>
+
+        {/* Season stats card */}
+        {currentSeason && allStats.p > 0 && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+            <div className="px-5 py-3 border-b border-gray-50">
+              <h2 className="text-sm font-semibold text-gray-900">Season to date <span className="font-normal text-gray-400">— {currentSeason.name}</span></h2>
+            </div>
+            <div className="px-5 py-1">
+              {/* Header row */}
+              <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2 border-b border-gray-50">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide"></span>
+                {['P','W','D','L','GF','GA','GD'].map(h => (
+                  <span key={h} className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center">{h}</span>
+                ))}
+              </div>
+              {/* All competitions */}
+              <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5 border-b border-gray-50">
+                <span className="text-sm text-gray-700 font-medium">All</span>
+                {[allStats.p, allStats.w, allStats.d, allStats.l, allStats.gf, allStats.ga].map((v, i) => (
+                  <span key={i} className="text-sm text-gray-900 text-center">{v}</span>
+                ))}
+                <span className={`text-sm font-semibold text-center ${allStats.gd > 0 ? 'text-green-700' : allStats.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                  {allStats.gd > 0 ? `+${allStats.gd}` : allStats.gd}
+                </span>
+              </div>
+              {/* League only */}
+              <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5">
+                <span className="text-sm text-gray-500">League</span>
+                {[leagueStats.p, leagueStats.w, leagueStats.d, leagueStats.l, leagueStats.gf, leagueStats.ga].map((v, i) => (
+                  <span key={i} className="text-sm text-gray-700 text-center">{v}</span>
+                ))}
+                <span className={`text-sm font-medium text-center ${leagueStats.gd > 0 ? 'text-green-700' : leagueStats.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                  {leagueStats.p > 0 ? (leagueStats.gd > 0 ? `+${leagueStats.gd}` : leagueStats.gd) : '—'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Fixtures card */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
