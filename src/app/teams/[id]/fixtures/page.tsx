@@ -143,7 +143,7 @@ export default async function FixturesPage({
                   const goalsAgainst = (f as any).goals_against
                   const hasResult = goalsFor != null && goalsAgainst != null
                   const competition = (f as any).competition as string | null
-                  const competitionLabel = competition === 'league' ? 'League' : competition === 'cup' ? 'Cup' : 'Friendly'
+                  const competitionLabel = competition === 'league' ? 'League' : competition === 'cup' ? 'Cup' : competition === 'shield' ? 'Shield' : 'Friendly'
 
                   // Result badge
                   let resultBadge: React.ReactNode = <div className="w-7 h-7" />
@@ -197,6 +197,7 @@ export default async function FixturesPage({
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           competition === 'league' ? 'bg-blue-100 text-blue-800'
                           : competition === 'cup' ? 'bg-purple-100 text-purple-800'
+                          : competition === 'shield' ? 'bg-amber-100 text-amber-800'
                           : 'bg-gray-100 text-gray-600'
                         }`}>
                           {competitionLabel}

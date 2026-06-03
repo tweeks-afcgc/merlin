@@ -279,6 +279,7 @@ export default function AddFixtureFromDashboardPage() {
                   <option value="friendly">Friendly</option>
                   <option value="league">League</option>
                   <option value="cup">Cup</option>
+                  <option value="shield">Shield</option>
                 </select>
               </div>
 
