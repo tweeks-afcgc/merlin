@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
+import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 
 type Profile = { id: string; full_name: string | null; email: string | null }
@@ -10,6 +11,8 @@ type Profile = { id: string; full_name: string | null; email: string | null }
 export default function EditTeamPage() {
   const router = useRouter()
   const { id } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('from') ?? '/admin/teams'
   const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
@@ -71,7 +74,7 @@ export default function EditTeamPage() {
     const { error } = await supabase.from('teams').update(updates).eq('id', id)
 
     if (error) { setError(error.message); setSaving(false) }
-    else router.push('/admin/teams')
+    else router.push(returnTo)
   }
 
   async function toggleManager(userId: string) {
@@ -89,6 +92,7 @@ export default function EditTeamPage() {
   return (
     <AppShell>
       <div className="max-w-md mx-auto px-4 py-8">
+        <div className="mb-6"><BackButton /></div>
         <h1 className="text-xl font-bold text-gray-900 mb-6">Edit team</h1>
 
         {loading ? (
@@ -150,7 +154,7 @@ export default function EditTeamPage() {
                 </div>
 
                 <div className="flex gap-3 pt-1">
-                  <button type="button" onClick={() => router.push('/admin/teams')}
+                  <button type="button" onClick={() => router.push(returnTo)}
                     className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition">
                     Cancel
                   </button>

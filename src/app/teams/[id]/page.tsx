@@ -122,7 +122,7 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
         {/* Team header with kit circle */}
         <div className="flex items-center gap-4 mb-8">
           <KitCircle jersey={team.kit_jersey} shorts={team.kit_shorts} socks={team.kit_socks} />
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">{displayName}</h1>
             <span className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
               team.type === 'senior' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
@@ -130,6 +130,14 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
               {team.type === 'senior' ? 'Senior' : 'Junior'}
             </span>
           </div>
+          {isAdmin && (
+            <Link
+              href={`/admin/teams/${id}/edit?from=/teams/${id}`}
+              className="text-sm font-semibold text-red-800 hover:underline flex-shrink-0"
+            >
+              Edit team
+            </Link>
+          )}
         </div>
 
         {/* Fixtures card */}
