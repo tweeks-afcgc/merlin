@@ -39,6 +39,15 @@ export async function addPitch(venueId: string, formData: FormData) {
   revalidatePath('/admin/venues')
 }
 
+export async function renamePitch(id: string, name: string) {
+  const supabase = await createClient()
+  const trimmed = name.trim()
+  if (!trimmed) return { error: 'Name is required' }
+  const { error } = await supabase.from('pitches').update({ name: trimmed }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/venues')
+}
+
 export async function setPitchActive(id: string, isActive: boolean) {
   const supabase = await createClient()
   const { error } = await supabase.from('pitches').update({ is_active: isActive }).eq('id', id)
