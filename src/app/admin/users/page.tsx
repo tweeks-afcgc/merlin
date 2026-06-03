@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import RoleSelect from './RoleSelect'
+import RefereeToggle from './RefereeToggle'
 import AppShell from '@/components/AppShell'
 import AdminNav from '@/components/AdminNav'
 
@@ -15,7 +16,7 @@ export default async function AdminUsersPage() {
   if (profile?.role !== 'admin') redirect('/dashboard')
 
   const { data: profiles } = await supabase
-    .from('profiles').select('id, full_name, email, role, created_at').order('created_at', { ascending: true })
+    .from('profiles').select('id, full_name, email, role, is_referee, created_at').order('created_at', { ascending: true })
 
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin>
@@ -30,6 +31,7 @@ export default async function AdminUsersPage() {
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide pb-3">Name</th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide pb-3">Email</th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide pb-3">Role</th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide pb-3">Referee</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -37,8 +39,11 @@ export default async function AdminUsersPage() {
                 <tr key={p.id}>
                   <td className="py-3 pr-4 text-gray-900">{p.full_name ?? '—'}</td>
                   <td className="py-3 pr-4 text-gray-600">{p.email ?? '—'}</td>
-                  <td className="py-3">
+                  <td className="py-3 pr-4">
                     <RoleSelect userId={p.id} currentRole={p.role} isSelf={p.id === user.id} />
+                  </td>
+                  <td className="py-3">
+                    <RefereeToggle userId={p.id} isReferee={p.is_referee ?? false} />
                   </td>
                 </tr>
               ))}

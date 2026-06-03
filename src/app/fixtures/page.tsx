@@ -26,11 +26,12 @@ export default async function FixturesDashboardPage() {
   const todayStr = today.toISOString().split('T')[0]
   const in14Str = in14Days.toISOString().split('T')[0]
 
-  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }] = await Promise.all([
+  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }] = await Promise.all([
     supabase
       .from('fixtures')
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id,
+        referee_required, referee_id,
         team_id,
         teams(id, name, type, founding_age_group, founding_season_id, age_group, kit_jersey, kit_shorts, kit_socks),
         club_teams(id, name, clubs(name)),
@@ -43,7 +44,14 @@ export default async function FixturesDashboardPage() {
       .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
     supabase.from('team_managers').select('team_id, profiles(full_name)'),
+    supabase.from('profiles').select('id, full_name').eq('is_referee', true),
   ])
+
+  // Build a map of referee_id -> name
+  const refereeMap = new Map<string, string>()
+  for (const r of allReferees ?? []) {
+    if (r.full_name) refereeMap.set(r.id, r.full_name)
+  }
 
   // Build a map of team_id -> first manager name
   const managerMap = new Map<string, string>()
@@ -100,6 +108,8 @@ export default async function FixturesDashboardPage() {
       kitShorts: team?.kit_shorts ?? null,
       kitSocks: team?.kit_socks ?? null,
       managerName: managerMap.get(f.team_id) ?? null,
+      refereeRequired: f.referee_required ?? true,
+      refereeName: f.referee_id ? (refereeMap.get(f.referee_id) ?? null) : null,
     }
   })
 

@@ -10,6 +10,7 @@ import { updateFixture } from '../../actions'
 type ClubTeam = { id: string; name: string; clubs: { name: string } }
 type Venue = { id: string; name: string }
 type Pitch = { id: string; name: string; venue_id: string }
+type Referee = { id: string; full_name: string | null }
 
 export default function EditFixturePage() {
   const { id: teamId, fixtureId } = useParams<{ id: string; fixtureId: string }>()
@@ -26,6 +27,7 @@ export default function EditFixturePage() {
   const [clubTeams, setClubTeams] = useState<ClubTeam[]>([])
   const [venues, setVenues] = useState<Venue[]>([])
   const [pitches, setPitches] = useState<Pitch[]>([])
+  const [referees, setReferees] = useState<Referee[]>([])
 
   const [date, setDate] = useState('')
   const [tbc, setTbc] = useState(false)
@@ -35,14 +37,17 @@ export default function EditFixturePage() {
   const [competition, setCompetition] = useState('friendly')
   const [homeVenueId, setHomeVenueId] = useState('')
   const [pitchId, setPitchId] = useState('')
+  const [refereeRequired, setRefereeRequired] = useState(true)
+  const [refereeId, setRefereeId] = useState('')
 
   useEffect(() => {
     async function load() {
-      const [{ data: { user } }, { data: fixture }, { data: teamsData }, { data: venuesData }] = await Promise.all([
+      const [{ data: { user } }, { data: fixture }, { data: teamsData }, { data: venuesData }, { data: refereesData }] = await Promise.all([
         supabase.auth.getUser(),
         supabase.from('fixtures').select('*').eq('id', fixtureId).single(),
         supabase.from('club_teams').select('id, name, clubs(name)').order('name'),
         supabase.from('venues').select('id, name').order('name'),
+        supabase.from('profiles').select('id, full_name').eq('is_referee', true).order('full_name'),
       ])
 
       if (user) {
@@ -59,6 +64,8 @@ export default function EditFixturePage() {
         setCompetition(fixture.competition ?? 'friendly')
         setHomeVenueId(fixture.home_venue_id ?? '')
         setPitchId(fixture.pitch_id ?? '')
+        setRefereeRequired(fixture.referee_required ?? true)
+        setRefereeId(fixture.referee_id ?? '')
 
         if (fixture.home_venue_id) {
           const { data: pitchData } = await supabase
@@ -69,6 +76,7 @@ export default function EditFixturePage() {
 
       setClubTeams((teamsData ?? []) as any)
       setVenues(venuesData ?? [])
+      setReferees(refereesData ?? [])
       setLoading(false)
     }
     load()
@@ -99,6 +107,8 @@ export default function EditFixturePage() {
     fd.set('competition', competition)
     fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
+    fd.set('referee_required', refereeRequired ? 'true' : 'false')
+    fd.set('referee_id', refereeRequired ? refereeId : '')
     const result = await updateFixture(fixtureId, teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false) }
     else router.push(returnTo)
@@ -233,6 +243,45 @@ export default function EditFixturePage() {
                           <option value="">Not assigned</option>
                           {pitches.map(p => (
                             <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Referee — admin only */}
+              {isAdmin && (
+                <div className="border-t border-gray-100 pt-5 space-y-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Referee</p>
+
+                  <div>
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={refereeRequired}
+                        onChange={e => setRefereeRequired(e.target.checked)}
+                        className="rounded border-gray-300 text-red-800 focus:ring-red-700"
+                      />
+                      Referee required
+                    </label>
+                  </div>
+
+                  {refereeRequired && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Assigned referee</label>
+                      {referees.length === 0 ? (
+                        <p className="text-sm text-gray-400">No qualified referees on record.</p>
+                      ) : (
+                        <select
+                          value={refereeId}
+                          onChange={e => setRefereeId(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        >
+                          <option value="">Not assigned</option>
+                          {referees.map(r => (
+                            <option key={r.id} value={r.id}>{r.full_name ?? '—'}</option>
                           ))}
                         </select>
                       )}

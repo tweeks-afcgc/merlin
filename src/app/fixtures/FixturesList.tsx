@@ -27,6 +27,8 @@ type Fixture = {
   kitShorts: string | null
   kitSocks: string | null
   managerName: string | null
+  refereeRequired: boolean
+  refereeName: string | null
 }
 
 type ViewMode = 'schedule' | 'team' | 'pitch'
@@ -86,6 +88,7 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
 function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm: boolean; showTeam?: boolean }) {
   const needsTime = !f.kickoff_time
   const needsPitch = f.venue === 'home' && !f.pitch_id
+  const needsRef = f.refereeRequired && !f.refereeName
   return (
     <div className={`flex items-center justify-between gap-4 ${f.confirmed ? '' : 'border-l-4 border-red-400'}`}>
       <Link href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`} className="flex items-center gap-3 min-w-0 flex-1 px-4 py-3 hover:bg-gray-50 transition">
@@ -99,6 +102,10 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
           </p>
           {needsTime && <p className="text-xs text-amber-600 font-medium">Kick off time TBC — cannot confirm</p>}
           {!needsTime && needsPitch && <p className="text-xs text-amber-600 font-medium">No pitch assigned — cannot confirm</p>}
+          {f.refereeName
+            ? <p className="text-xs text-gray-400">Referee: {f.refereeName}</p>
+            : needsRef && <p className="text-xs text-amber-600 font-medium">No referee assigned</p>
+          }
         </div>
       </Link>
       <div className="flex items-center gap-2 flex-shrink-0 pr-4">
@@ -219,6 +226,7 @@ function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCon
                     {f.venue === 'home' ? 'Home' : f.venue === 'away' ? 'Away' : 'Neutral'}
                     {f.venueName ? ` · ${f.venueName}` : ''}
                     {f.pitchName ? ` · ${f.pitchName}` : ''}
+                    {f.refereeName ? ` · Ref: ${f.refereeName}` : f.refereeRequired ? ' · No referee assigned' : ''}
                   </p>
                 </div>
               </Link>
