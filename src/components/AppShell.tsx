@@ -41,8 +41,9 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
   const profileRef = useRef<HTMLDivElement>(null)
 
   // If props not provided (client-only pages), fetch from Supabase
+  // Also fetch if isReferee wasn't explicitly passed, since most server pages don't supply it
   useEffect(() => {
-    if (nameProp !== undefined) return
+    if (nameProp !== undefined && refProp !== undefined) return
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
