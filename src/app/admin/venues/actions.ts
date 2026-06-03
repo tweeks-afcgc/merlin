@@ -39,8 +39,9 @@ export async function addPitch(venueId: string, formData: FormData) {
   revalidatePath('/admin/venues')
 }
 
-export async function deletePitch(id: string) {
+export async function setPitchActive(id: string, isActive: boolean) {
   const supabase = await createClient()
-  await supabase.from('pitches').delete().eq('id', id)
+  const { error } = await supabase.from('pitches').update({ is_active: isActive }).eq('id', id)
+  if (error) return { error: error.message }
   revalidatePath('/admin/venues')
 }

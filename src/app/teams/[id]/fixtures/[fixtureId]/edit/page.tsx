@@ -83,7 +83,7 @@ export default function EditFixturePage() {
 
         if (fixture.home_venue_id) {
           const { data: pitchData } = await supabase
-            .from('pitches').select('id, name, venue_id').eq('venue_id', fixture.home_venue_id)
+            .from('pitches').select('id, name, venue_id').eq('venue_id', fixture.home_venue_id).eq('is_active', true)
           setPitches(pitchData ?? [])
         }
       }
@@ -108,7 +108,7 @@ export default function EditFixturePage() {
     setHomeVenueId(id)
     setPitchId('')
     if (id) {
-      const { data } = await supabase.from('pitches').select('id, name, venue_id').eq('venue_id', id)
+      const { data } = await supabase.from('pitches').select('id, name, venue_id').eq('venue_id', id).eq('is_active', true)
       setPitches(data ?? [])
     } else {
       setPitches([])

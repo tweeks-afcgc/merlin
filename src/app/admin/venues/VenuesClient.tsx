@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { addVenue, deleteVenue, addPitch, deletePitch, updateVenue } from './actions'
+import { addVenue, deleteVenue, addPitch, setPitchActive, updateVenue } from './actions'
 
-type Pitch = { id: string; name: string; pitch_type: string }
+type Pitch = { id: string; name: string; pitch_type: string; is_active: boolean }
 type Venue = { id: string; name: string; address: string | null; pitches: Pitch[] }
 
 export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
@@ -76,11 +76,12 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
     window.location.reload()
   }
 
-  async function handleDeletePitch(id: string, venueId: string) {
-    if (!window.confirm('Delete this pitch?')) return
-    await deletePitch(id)
+  async function handleSetPitchActive(id: string, venueId: string, isActive: boolean) {
+    await setPitchActive(id, isActive)
     setVenues(v => v.map(venue =>
-      venue.id === venueId ? { ...venue, pitches: venue.pitches.filter(p => p.id !== id) } : venue
+      venue.id === venueId
+        ? { ...venue, pitches: venue.pitches.map(p => p.id === id ? { ...p, is_active: isActive } : p) }
+        : venue
     ))
   }
 
@@ -169,15 +170,23 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
               {venue.pitches.length > 0 && (
                 <ul className="mb-4 divide-y divide-gray-50">
                   {venue.pitches.map(pitch => (
-                    <li key={pitch.id} className="flex items-center justify-between py-2">
+                    <li key={pitch.id} className={`flex items-center justify-between py-2 ${!pitch.is_active ? 'opacity-50' : ''}`}>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-700">{pitch.name}</span>
+                        <span className={`text-sm ${pitch.is_active ? 'text-gray-700' : 'text-gray-400 line-through'}`}>{pitch.name}</span>
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${pitch.pitch_type === '3g' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
                           {pitch.pitch_type === '3g' ? '3G' : 'Grass'}
                         </span>
+                        {!pitch.is_active && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-400">
+                            Retired
+                          </span>
+                        )}
                       </div>
-                      <button onClick={() => handleDeletePitch(pitch.id, venue.id)} className="text-xs text-gray-400 hover:text-red-600 transition">
-                        Remove
+                      <button
+                        onClick={() => handleSetPitchActive(pitch.id, venue.id, !pitch.is_active)}
+                        className={`text-xs transition ${pitch.is_active ? 'text-gray-400 hover:text-amber-600' : 'text-gray-400 hover:text-green-700'}`}
+                      >
+                        {pitch.is_active ? 'Retire' : 'Reactivate'}
                       </button>
                     </li>
                   ))}
