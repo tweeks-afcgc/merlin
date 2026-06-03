@@ -19,11 +19,19 @@ export default async function AdminClubsPage() {
     .select('id, name, club_teams(id, name)')
     .order('name', { ascending: true })
 
+  // Filter out auto-created blank club_team rows (created by resolveOpponentId when
+  // a club-only opponent is selected on a fixture — these are internal and shouldn't
+  // be shown or managed by admins)
+  const cleanedClubs = (clubs ?? []).map(club => ({
+    ...club,
+    club_teams: (club.club_teams as any[]).filter((t: any) => t.name !== ''),
+  }))
+
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin>
       <div className="max-w-3xl mx-auto px-4 py-8">
         <AdminNav />
-        <ClubsClient clubs={(clubs ?? []) as any} />
+        <ClubsClient clubs={cleanedClubs as any} />
       </div>
     </AppShell>
   )
