@@ -144,7 +144,7 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
             </Link>
           </div>
 
-          <Link href={`/teams/${id}/fixtures`} className="block px-5 py-4 hover:bg-gray-50 transition group">
+          <Link href={nextFixture ? `/teams/${id}/fixtures/${nextFixture.id}/edit` : `/teams/${id}/fixtures`} className="block px-5 py-4 hover:bg-gray-50 transition group">
             {nextFixture ? (
               <div className="flex items-center justify-between">
                 <div>

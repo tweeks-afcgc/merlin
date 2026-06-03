@@ -63,18 +63,10 @@ export default async function FixturesPage({
 
   const { data: fixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, confirmed, opponent_id, referee_required, referee_id, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
+    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
-
-  // Fetch referee names
-  const refereeIds = [...new Set((fixtures ?? []).map(f => (f as any).referee_id).filter(Boolean))]
-  const refereeMap = new Map<string, string>()
-  if (refereeIds.length > 0) {
-    const { data: refs } = await supabase.from('profiles').select('id, full_name').in('id', refereeIds)
-    for (const r of refs ?? []) if (r.full_name) refereeMap.set(r.id, r.full_name)
-  }
 
   const teamName = teamDisplayName(team, seasons ?? [])
   const today = new Date().toDateString()
@@ -136,7 +128,8 @@ export default async function FixturesPage({
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Time</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Opponent</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Venue · Pitch</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Referee</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Type</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Result</th>
                   <th className="px-3 py-3"></th>
                   <th className="w-1 p-0"></th>
                 </tr>
@@ -146,12 +139,11 @@ export default async function FixturesPage({
                   const opponent = f.club_teams as any
                   const confirmed = (f as any).confirmed
                   const isPast = new Date(f.date) < new Date(today)
-                  const refId = (f as any).referee_id
-                  const refName = refId ? refereeMap.get(refId) : null
-                  const refRequired = (f as any).referee_required ?? true
                   const goalsFor = (f as any).goals_for
                   const goalsAgainst = (f as any).goals_against
                   const hasResult = goalsFor != null && goalsAgainst != null
+                  const competition = (f as any).competition as string | null
+                  const competitionLabel = competition === 'league' ? 'League' : competition === 'cup' ? 'Cup' : 'Friendly'
 
                   // Result badge
                   let resultBadge: React.ReactNode = <div className="w-7 h-7" />
@@ -202,12 +194,16 @@ export default async function FixturesPage({
                         }
                       </td>
                       <td className="px-3 py-3">
-                        {refName
-                          ? <span className="text-xs text-gray-500">{refName}</span>
-                          : refRequired
-                            ? <span className="text-xs text-amber-600 font-medium">Not assigned</span>
-                            : <span className="text-xs text-gray-400">Not requested</span>
-                        }
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          competition === 'league' ? 'bg-blue-100 text-blue-800'
+                          : competition === 'cup' ? 'bg-purple-100 text-purple-800'
+                          : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {competitionLabel}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-sm font-medium text-gray-700 whitespace-nowrap">
+                        {hasResult ? `${goalsFor} – ${goalsAgainst}` : <span className="text-gray-300">—</span>}
                       </td>
                       <td className="px-3 py-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-3">
