@@ -70,10 +70,18 @@ export default async function FixturesPage({
 
   const { data: fixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, confirmed, opponent_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
+    .select('id, date, kickoff_time, venue, confirmed, opponent_id, referee_required, referee_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
+
+  // Fetch referee names for fixtures that have one assigned
+  const refereeIds = [...new Set((fixtures ?? []).map(f => (f as any).referee_id).filter(Boolean))]
+  const refereeMap = new Map<string, string>()
+  if (refereeIds.length > 0) {
+    const { data: refs } = await supabase.from('profiles').select('id, full_name').in('id', refereeIds)
+    for (const r of refs ?? []) if (r.full_name) refereeMap.set(r.id, r.full_name)
+  }
 
   const teamName = teamDisplayName(team, seasons ?? [])
 
@@ -134,6 +142,7 @@ export default async function FixturesPage({
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Opponent</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Venue</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Pitch</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Referee</th>
                   <th className="px-3 py-3"></th>
                 </tr>
               </thead>
@@ -157,6 +166,16 @@ export default async function FixturesPage({
                           ? <span>{(f as any).venues.name}{(f as any).pitches ? ` · ${(f as any).pitches.name}` : ''}</span>
                           : <span className="text-gray-300">—</span>
                         }
+                      </td>
+                      <td className="px-3 py-3">
+                        {(() => {
+                          const refId = (f as any).referee_id
+                          const refName = refId ? refereeMap.get(refId) : null
+                          const refRequired = (f as any).referee_required ?? true
+                          if (refName) return <span className="text-xs text-gray-500">{refName}</span>
+                          if (refRequired) return <span className="text-xs text-amber-600 font-medium">Not assigned</span>
+                          return <span className="text-xs text-amber-600 font-medium">Not requested</span>
+                        })()}
                       </td>
                       <td className="px-3 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">

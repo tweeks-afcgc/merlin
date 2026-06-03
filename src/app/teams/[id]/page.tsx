@@ -44,14 +44,21 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
   const today = new Date().toISOString().split('T')[0]
   const { data: nextFixtureRows } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, club_teams(id, name, clubs(name))')
+    .select('id, date, kickoff_time, venue, referee_required, referee_id, club_teams(id, name, clubs(name))')
     .eq('team_id', id)
     .gte('date', today)
     .order('date', { ascending: true })
     .limit(1)
 
+  // Fetch referee name if assigned
   const nextFixture = nextFixtureRows?.[0] ?? null
   const opponent = nextFixture ? (nextFixture.club_teams as any) : null
+  let refereeName: string | null = null
+  if (nextFixture?.referee_id) {
+    const { data: ref } = await supabase
+      .from('profiles').select('full_name').eq('id', nextFixture.referee_id).single()
+    refereeName = ref?.full_name ?? null
+  }
   const displayName = teamDisplayName(team, seasons ?? [])
 
   return (
@@ -91,6 +98,14 @@ export default async function TeamDashboardPage({ params }: { params: Promise<{ 
                   <p className="text-xs text-gray-400 mt-0.5">
                     {formatDate(nextFixture.date)} · {formatTime(nextFixture.kickoff_time)} ·{' '}
                     {nextFixture.venue === 'home' ? 'Home' : nextFixture.venue === 'away' ? 'Away' : 'Neutral'}
+                  </p>
+                  <p className={`text-xs mt-0.5 ${refereeName ? 'text-gray-400' : 'text-amber-600 font-medium'}`}>
+                    {refereeName
+                      ? `Referee: ${refereeName}`
+                      : (nextFixture as any).referee_required
+                        ? 'No referee assigned'
+                        : 'No referee requested'
+                    }
                   </p>
                 </div>
                 <svg className="w-4 h-4 text-gray-300 group-hover:text-red-800 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
