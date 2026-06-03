@@ -63,7 +63,7 @@ export default async function FixturesPage({
 
   const { data: fixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, confirmed, opponent_id, referee_required, referee_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
+    .select('id, date, kickoff_time, venue, confirmed, opponent_id, referee_required, referee_id, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
@@ -131,12 +131,14 @@ export default async function FixturesPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide pl-4 pr-3 py-3">Date</th>
+                  <th className="w-8 pl-3 py-3"></th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide pl-2 pr-3 py-3">Date</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Time</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Opponent</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Venue · Pitch</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Referee</th>
                   <th className="px-3 py-3"></th>
+                  <th className="w-1 p-0"></th>
                 </tr>
               </thead>
               <tbody>
@@ -147,6 +149,21 @@ export default async function FixturesPage({
                   const refId = (f as any).referee_id
                   const refName = refId ? refereeMap.get(refId) : null
                   const refRequired = (f as any).referee_required ?? true
+                  const goalsFor = (f as any).goals_for
+                  const goalsAgainst = (f as any).goals_against
+                  const hasResult = goalsFor != null && goalsAgainst != null
+
+                  // Result badge
+                  let resultBadge: React.ReactNode = <div className="w-7 h-7" />
+                  if (isPast && hasResult) {
+                    if (goalsFor > goalsAgainst) {
+                      resultBadge = <div className="w-7 h-7 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">W</div>
+                    } else if (goalsFor < goalsAgainst) {
+                      resultBadge = <div className="w-7 h-7 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">L</div>
+                    } else {
+                      resultBadge = <div className="w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">D</div>
+                    }
+                  }
 
                   // Row background based on home/away
                   const rowBg = f.venue === 'home'
@@ -155,15 +172,20 @@ export default async function FixturesPage({
                     ? 'bg-orange-50 hover:bg-orange-100'
                     : 'bg-white hover:bg-gray-50'
 
-                  // Left border colour based on confirmed status
-                  const borderColour = confirmed ? 'border-l-4 border-green-500' : 'border-l-4 border-red-400'
+                  // Right status bar — future fixtures only
+                  const statusBar = !isPast
+                    ? confirmed ? 'bg-green-500' : 'bg-red-400'
+                    : ''
 
                   return (
                     <tr
                       key={f.id}
-                      className={`border-b border-gray-100 last:border-b-0 transition ${rowBg} ${isPast ? 'opacity-50' : ''}`}
+                      className={`border-b border-gray-100 last:border-b-0 transition ${rowBg} ${isPast ? 'opacity-60' : ''}`}
                     >
-                      <td className={`pl-4 pr-3 py-3 font-medium text-gray-900 whitespace-nowrap ${borderColour}`}>
+                      <td className="pl-3 pr-1 py-3">
+                        {resultBadge}
+                      </td>
+                      <td className="pl-2 pr-3 py-3 font-medium text-gray-900 whitespace-nowrap">
                         {formatDate(f.date)}
                       </td>
                       <td className="px-3 py-3 text-gray-600 whitespace-nowrap">{formatTime(f.kickoff_time)}</td>
@@ -193,6 +215,7 @@ export default async function FixturesPage({
                           <DeleteFixtureButton fixtureId={f.id} teamId={teamId} />
                         </div>
                       </td>
+                      <td className={`w-1 p-0 ${statusBar}`} />
                     </tr>
                   )
                 })}

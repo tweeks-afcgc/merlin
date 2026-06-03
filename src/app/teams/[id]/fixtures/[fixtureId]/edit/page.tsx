@@ -42,6 +42,9 @@ export default function EditFixturePage() {
   const [pitchId, setPitchId] = useState('')
   const [refereeRequired, setRefereeRequired] = useState(true)
   const [refereeId, setRefereeId] = useState('')
+  const [goalsFor, setGoalsFor] = useState<string>('')
+  const [goalsAgainst, setGoalsAgainst] = useState<string>('')
+  const [isPast, setIsPast] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -70,6 +73,9 @@ export default function EditFixturePage() {
         setPitchId(fixture.pitch_id ?? '')
         setRefereeRequired(fixture.referee_required ?? true)
         setRefereeId(fixture.referee_id ?? '')
+        setGoalsFor(fixture.goals_for != null ? String(fixture.goals_for) : '')
+        setGoalsAgainst(fixture.goals_against != null ? String(fixture.goals_against) : '')
+        setIsPast(fixture.date < new Date().toISOString().split('T')[0])
 
         if (fixture.home_venue_id) {
           const { data: pitchData } = await supabase
@@ -119,6 +125,8 @@ export default function EditFixturePage() {
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
     fd.set('referee_required', refereeRequired ? 'true' : 'false')
     fd.set('referee_id', refereeRequired ? refereeId : '')
+    fd.set('goals_for', goalsFor)
+    fd.set('goals_against', goalsAgainst)
     const result = await updateFixture(fixtureId, teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false) }
     else router.push(returnTo)
@@ -330,6 +338,50 @@ export default function EditFixturePage() {
                         </select>
                       )}
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* Result — shown for past fixtures */}
+              {isPast && (
+                <div className="border-t border-gray-100 pt-5 space-y-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Result</p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Our score</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={goalsFor}
+                        onChange={e => setGoalsFor(e.target.value)}
+                        placeholder="—"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      />
+                    </div>
+                    <div className="pt-5 text-gray-400 font-bold text-lg">–</div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Their score</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={goalsAgainst}
+                        onChange={e => setGoalsAgainst(e.target.value)}
+                        placeholder="—"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      />
+                    </div>
+                  </div>
+                  {goalsFor !== '' && goalsAgainst !== '' && (
+                    <p className={`text-sm font-semibold ${
+                      Number(goalsFor) > Number(goalsAgainst) ? 'text-green-700'
+                      : Number(goalsFor) < Number(goalsAgainst) ? 'text-red-600'
+                      : 'text-amber-600'
+                    }`}>
+                      {Number(goalsFor) > Number(goalsAgainst) ? '✓ Win'
+                        : Number(goalsFor) < Number(goalsAgainst) ? '✗ Loss'
+                        : '= Draw'}
+                      {' '}({goalsFor}–{goalsAgainst})
+                    </p>
                   )}
                 </div>
               )}

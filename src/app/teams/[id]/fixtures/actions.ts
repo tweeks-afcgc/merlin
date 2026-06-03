@@ -34,6 +34,8 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
   const pitchId = formData.get('pitch_id') as string
   const refereeRequired = formData.get('referee_required') === 'true'
   const refereeIdRaw = formData.get('referee_id') as string
+  const goalsForRaw = formData.get('goals_for') as string
+  const goalsAgainstRaw = formData.get('goals_against') as string
 
   const { error } = await supabase.from('fixtures').update({
     date: formData.get('date') as string,
@@ -45,6 +47,8 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
     pitch_id: pitchId || null,
     referee_required: refereeRequired,
     referee_id: refereeRequired && refereeIdRaw ? refereeIdRaw : null,
+    goals_for: goalsForRaw !== '' ? parseInt(goalsForRaw) : null,
+    goals_against: goalsAgainstRaw !== '' ? parseInt(goalsAgainstRaw) : null,
   }).eq('id', fixtureId)
 
   if (error) return { error: error.message }
