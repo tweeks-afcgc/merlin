@@ -88,3 +88,25 @@ export async function removeVolunteerRole(roleId: string) {
   await supabase.from('volunteer_roles').delete().eq('id', roleId)
   revalidatePath('/admin/volunteers')
 }
+
+export async function createVolunteerFromProfile(formData: FormData) {
+  const supabase = await createClient()
+  const profileId = formData.get('profile_id') as string
+  const firstName = (formData.get('first_name') as string).trim()
+  const lastName = (formData.get('last_name') as string).trim()
+  const email = (formData.get('email') as string | null)?.trim() || null
+  const userRole = (formData.get('user_role') as string | null) || null
+  const isReferee = formData.get('is_referee') === 'true'
+
+  if (!firstName || !lastName) return { error: 'First and last name are required' }
+
+  const { data: volunteer, error } = await supabase
+    .from('volunteers')
+    .insert({ profile_id: profileId, first_name: firstName, last_name: lastName, email, is_app_user: true, user_role: userRole, is_referee: isReferee })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/volunteers')
+  return { id: volunteer.id }
+}

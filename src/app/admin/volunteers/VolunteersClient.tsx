@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { addVolunteer, updateVolunteer, deleteVolunteer, addVolunteerRole, removeVolunteerRole } from './actions'
+import { addVolunteer, updateVolunteer, deleteVolunteer, addVolunteerRole, removeVolunteerRole, createVolunteerFromProfile } from './actions'
 
 type VolunteerRole = { id: string; role_type: string; role_name: string; team_id: string | null; teamName: string | null }
 type Volunteer = {
@@ -9,6 +9,7 @@ type Volunteer = {
   email: string | null; is_app_user: boolean; user_role: string | null; is_referee: boolean
   roles: VolunteerRole[]
 }
+type UnlinkedProfile = { id: string; first_name: string; last_name: string; email: string | null; user_role: string | null }
 type Team = { id: string; displayName: string }
 
 const USER_ROLES = [
@@ -169,13 +170,17 @@ function RoleForm({ volunteerId, teams, onAdded }: { volunteerId: string; teams:
   )
 }
 
-export default function VolunteersClient({ volunteers: initial, teams }: { volunteers: Volunteer[]; teams: Team[] }) {
+export default function VolunteersClient({ volunteers: initial, teams, unlinkedProfiles: initialUnlinked }: { volunteers: Volunteer[]; teams: Team[]; unlinkedProfiles: UnlinkedProfile[] }) {
   const [volunteers, setVolunteers] = useState(initial)
+  const [unlinkedProfiles, setUnlinkedProfiles] = useState(initialUnlinked)
   const [showAddForm, setShowAddForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [linkingProfileId, setLinkingProfileId] = useState<string | null>(null)
+  const [linkingSaving, setLinkingSaving] = useState(false)
+  const [linkingError, setLinkingError] = useState<string | null>(null)
 
   const sorted = [...volunteers].sort((a, b) =>
     `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
@@ -214,6 +219,18 @@ export default function VolunteersClient({ volunteers: initial, teams }: { volun
     setVolunteers(vs => vs.filter(x => x.id !== v.id))
   }
 
+  async function handleLinkProfile(profile: UnlinkedProfile, fd: FormData) {
+    setLinkingSaving(true)
+    setLinkingError(null)
+    fd.set('profile_id', profile.id)
+    const result = await createVolunteerFromProfile(fd)
+    if (result?.error) { setLinkingError(result.error); setLinkingSaving(false); return }
+    setUnlinkedProfiles(ps => ps.filter(p => p.id !== profile.id))
+    setLinkingProfileId(null)
+    setLinkingSaving(false)
+    window.location.reload()
+  }
+
   function userRoleLabel(role: string | null) {
     return USER_ROLES.find(r => r.value === role)?.label ?? role ?? '—'
   }
@@ -240,6 +257,49 @@ export default function VolunteersClient({ volunteers: initial, teams }: { volun
           <h2 className="text-base font-semibold text-gray-900 mb-4">Add volunteer</h2>
           {error && <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{error}</div>}
           <VolunteerForm onSave={handleAdd} onCancel={() => { setShowAddForm(false); setError(null) }} saving={saving} />
+        </div>
+      )}
+
+      {/* Unlinked app users */}
+      {unlinkedProfiles.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-amber-900">App users not yet in volunteers</h2>
+            <p className="text-xs text-amber-700 mt-0.5">These users can log in to Merlin but haven't been added as volunteers. Click "Add as volunteer" to complete their profile.</p>
+          </div>
+          <div className="divide-y divide-amber-100">
+            {unlinkedProfiles.map(p => {
+              const isLinking = linkingProfileId === p.id
+              const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email ?? '(no name)'
+              return (
+                <div key={p.id} className="py-3">
+                  {isLinking ? (
+                    <div className="space-y-3">
+                      <p className="text-xs text-amber-700 font-medium">Set up volunteer profile for <strong>{p.email}</strong></p>
+                      {linkingError && <p className="text-xs text-red-600">{linkingError}</p>}
+                      <VolunteerForm
+                        initial={{ first_name: p.first_name, last_name: p.last_name, email: p.email ?? '', is_app_user: true, user_role: p.user_role ?? 'standard', is_referee: false }}
+                        onSave={fd => handleLinkProfile(p, fd)}
+                        onCancel={() => { setLinkingProfileId(null); setLinkingError(null) }}
+                        saving={linkingSaving}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-amber-900">{fullName}</p>
+                        {p.email && <p className="text-xs text-amber-700">{p.email}</p>}
+                      </div>
+                      <button onClick={() => setLinkingProfileId(p.id)}
+                        className="text-xs font-semibold text-red-800 hover:underline flex-shrink-0">
+                        Add as volunteer →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 
