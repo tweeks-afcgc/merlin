@@ -16,17 +16,24 @@ export default async function AdminVolunteersPage() {
   const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const adminClient = createAdminClient()
-
-  const [{ data: rawVolunteers }, { data: rawTeams }, { data: seasons }, { data: allProfiles }] = await Promise.all([
+  const [{ data: rawVolunteers }, { data: rawTeams }, { data: seasons }] = await Promise.all([
     supabase
       .from('volunteers')
       .select('id, profile_id, first_name, last_name, email, is_app_user, user_role, is_referee, volunteer_roles(id, role_type, role_name, team_id, teams(id, name, type, founding_age_group, founding_season_id, age_group))')
       .order('last_name', { ascending: true }),
     supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group'),
     supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
-    adminClient.from('profiles').select('id, full_name, email, role'),
   ])
+
+  // Fetch all profiles using service role (bypasses RLS). Gracefully skip if key not configured.
+  let allProfiles: { id: string; full_name: string | null; email: string | null; role: string | null }[] = []
+  try {
+    const adminClient = createAdminClient()
+    const { data } = await adminClient.from('profiles').select('id, full_name, email, role')
+    allProfiles = data ?? []
+  } catch {
+    // SUPABASE_SERVICE_ROLE_KEY not set — unlinked profiles section will be hidden
+  }
 
   const seasonsList = seasons ?? []
 
