@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
-import { teamDisplayName } from '@/lib/teamUtils'
+import { teamDisplayName, computeAgeGroup } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +31,14 @@ function kitColour(s: string | null): string {
   return '#d1d5db'
 }
 
+const SENIOR_ORDER = ['first xi', 'sunday xi', 'women', 'vets xi']
+const JUNIOR_NAME_ORDER = ['knights', 'dukes', 'roses']
+
 const ROLE_ORDER = ['manager', 'coach', 'assistant coach', 'assistant']
+
+function getAge(team: any, seasons: any[]): number | null {
+  return computeAgeGroup(team, seasons)
+}
 
 function roleSort(roleName: string): number {
   const lower = roleName.toLowerCase()
@@ -71,8 +78,23 @@ export default async function TeamsPage() {
         .sort((a, b) => a.sortKey - b.sortKey || a.role_name.localeCompare(b.role_name)),
     }))
     .sort((a, b) => {
+      // Seniors before juniors
       if (a.type !== b.type) return a.type === 'senior' ? -1 : 1
-      return a.displayName.localeCompare(b.displayName)
+
+      if (a.type === 'senior') {
+        const ai = SENIOR_ORDER.indexOf(a.name.toLowerCase())
+        const bi = SENIOR_ORDER.indexOf(b.name.toLowerCase())
+        if (ai !== bi) return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+        return a.name.localeCompare(b.name)
+      }
+
+      // Juniors: eldest first (highest age group number), then Knights → Dukes → Roses
+      const ageA = getAge(a as any, seasonsList)
+      const ageB = getAge(b as any, seasonsList)
+      if (ageA !== ageB) return (ageB ?? 0) - (ageA ?? 0)
+      const ni = JUNIOR_NAME_ORDER.indexOf(a.name.toLowerCase())
+      const nj = JUNIOR_NAME_ORDER.indexOf(b.name.toLowerCase())
+      return (ni === -1 ? 99 : ni) - (nj === -1 ? 99 : nj)
     })
 
   return (
