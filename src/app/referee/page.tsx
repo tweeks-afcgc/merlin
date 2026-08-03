@@ -89,12 +89,19 @@ export default async function RefereeDashboardPage({
 
   const canSeeDropdown = isAdmin || isFS
 
-  // Fetch all referees for dropdown (admin/FS only)
+  // Fetch all referees for dropdown (admin/FS only): profile referees + volunteer referees
   let referees: { id: string; full_name: string | null }[] = []
   if (canSeeDropdown) {
-    const { data } = await supabase
-      .from('profiles').select('id, full_name').eq('is_referee', true).order('full_name')
-    referees = data ?? []
+    const [{ data: profileRefs }, { data: volRefs }] = await Promise.all([
+      supabase.from('profiles').select('id, full_name').eq('is_referee', true).order('full_name'),
+      supabase.from('volunteers').select('id, first_name, last_name, profile_id').eq('is_referee', true),
+    ])
+    const profileRefIds = new Set((profileRefs ?? []).map((r: any) => r.id))
+    const volunteerOnly = (volRefs ?? [])
+      .filter((v: any) => !v.profile_id || !profileRefIds.has(v.profile_id))
+      .map((v: any) => ({ id: `vol:${v.id}`, full_name: `${v.first_name} ${v.last_name}` }))
+    referees = [...(profileRefs ?? []), ...volunteerOnly]
+      .sort((a, b) => (a.full_name ?? '').localeCompare(b.full_name ?? ''))
   }
 
   // Determine selected referee
@@ -103,13 +110,16 @@ export default async function RefereeDashboardPage({
     if (refParam && referees.find(r => r.id === refParam)) {
       selectedRefId = refParam
     } else if (isSelfReferee) {
-      selectedRefId = user.id // default to self if also a referee
+      selectedRefId = user.id
     } else if (referees.length > 0) {
       selectedRefId = referees[0].id
     }
   } else {
-    selectedRefId = user.id // pure referee, always self
+    selectedRefId = user.id
   }
+
+  const isVolunteerRef = selectedRefId?.startsWith('vol:') ?? false
+  const selectedVolId = isVolunteerRef ? selectedRefId!.slice(4) : null
 
   const today = new Date().toISOString().split('T')[0]
   const in14Days = new Date()
@@ -132,11 +142,17 @@ export default async function RefereeDashboardPage({
     { data: myAssignedForClash },
   ] = await Promise.all([
     selectedRefId
-      ? supabase.from('fixtures')
-          .select(fixtureSelect)
-          .eq('referee_id', selectedRefId)
-          .gte('date', today).lte('date', in14Str)
-          .order('date').order('kickoff_time')
+      ? isVolunteerRef
+        ? supabase.from('fixtures')
+            .select(fixtureSelect)
+            .eq('volunteer_referee_id', selectedVolId!)
+            .gte('date', today).lte('date', in14Str)
+            .order('date').order('kickoff_time')
+        : supabase.from('fixtures')
+            .select(fixtureSelect)
+            .eq('referee_id', selectedRefId)
+            .gte('date', today).lte('date', in14Str)
+            .order('date').order('kickoff_time')
       : Promise.resolve({ data: [] }),
     supabase.from('fixtures')
       .select(fixtureSelect)

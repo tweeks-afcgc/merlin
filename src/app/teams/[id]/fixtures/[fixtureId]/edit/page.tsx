@@ -11,7 +11,7 @@ import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 type ClubTeam = { id: string; name: string; clubs: { name: string } }
 type Venue = { id: string; name: string }
 type Pitch = { id: string; name: string; venue_id: string }
-type Referee = { id: string; full_name: string | null }
+type Referee = { id: string; full_name: string | null; isVolunteer?: boolean }
 type RefRequest = { id: string; referee_id: string; refereeName: string; created_at: string }
 
 export default function EditFixturePage() {
@@ -50,13 +50,14 @@ export default function EditFixturePage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: { user } }, { data: fixture }, { data: clubsData }, { data: venuesData }, { data: refereesData }, { data: requestsData }] = await Promise.all([
+      const [{ data: { user } }, { data: fixture }, { data: clubsData }, { data: venuesData }, { data: refereesData }, { data: requestsData }, { data: volunteerRefsData }] = await Promise.all([
         supabase.auth.getUser(),
         supabase.from('fixtures').select('*').eq('id', fixtureId).single(),
         supabase.from('clubs').select('id, name, club_teams(id, name)').order('name'),
         supabase.from('venues').select('id, name').order('name'),
         supabase.from('profiles').select('id, full_name').eq('is_referee', true).order('full_name'),
         supabase.from('referee_requests').select('id, referee_id, created_at, profiles(full_name)').eq('fixture_id', fixtureId).order('created_at'),
+        supabase.from('volunteers').select('id, first_name, last_name, profile_id').eq('is_referee', true),
       ])
 
       if (user) {
@@ -76,7 +77,13 @@ export default function EditFixturePage() {
         // Away/neutral fixtures default to no referee required
         const isHome = fixture.venue === 'home'
         setRefereeRequired(isHome ? (fixture.referee_required ?? true) : false)
-        setRefereeId(fixture.referee_id ?? '')
+        setRefereeId(
+          fixture.referee_id
+            ? fixture.referee_id
+            : fixture.volunteer_referee_id
+              ? `vol:${fixture.volunteer_referee_id}`
+              : ''
+        )
         setGoalsFor(fixture.goals_for != null ? String(fixture.goals_for) : '')
         setGoalsAgainst(fixture.goals_against != null ? String(fixture.goals_against) : '')
         setIsPast(fixture.date < new Date().toISOString().split('T')[0])
@@ -92,7 +99,16 @@ export default function EditFixturePage() {
       setOpponents(opts)
       setClubTeams((clubsData ?? []) as any) // keep for any legacy refs
       setVenues(venuesData ?? [])
-      setReferees(refereesData ?? [])
+      // Combine profile referees + volunteer referees (exclude volunteers already in profiles to avoid duplicates)
+      const profileRefIds = new Set((refereesData ?? []).map((r: any) => r.id))
+      const volRefs = (volunteerRefsData ?? [])
+        .filter((v: any) => !v.profile_id || !profileRefIds.has(v.profile_id))
+        .map((v: any) => ({ id: `vol:${v.id}`, full_name: `${v.first_name} ${v.last_name}`, isVolunteer: true }))
+      const combined = [
+        ...(refereesData ?? []),
+        ...volRefs,
+      ].sort((a: any, b: any) => (a.full_name ?? '').localeCompare(b.full_name ?? ''))
+      setReferees(combined)
       setRefRequests((requestsData ?? []).map((r: any) => ({
         id: r.id,
         referee_id: r.referee_id,
@@ -131,6 +147,7 @@ export default function EditFixturePage() {
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
     fd.set('referee_required', refereeRequired ? 'true' : 'false')
     fd.set('referee_id', refereeRequired ? refereeId : '')
+    // volunteer_referee_id is derived server-side from vol: prefix
     fd.set('goals_for', goalsFor)
     fd.set('goals_against', goalsAgainst)
     const result = await updateFixture(fixtureId, teamId, fd)

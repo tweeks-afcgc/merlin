@@ -171,7 +171,7 @@ export default async function TeamDashboardPage({
   const today = new Date().toISOString().split('T')[0]
   const { data: nextFixtureRows } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, referee_required, referee_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
+    .select('id, date, kickoff_time, venue, referee_required, referee_id, volunteer_referee_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
     .eq('team_id', id)
     .gte('date', today)
     .order('date', { ascending: true })
@@ -185,6 +185,10 @@ export default async function TeamDashboardPage({
     const { data: ref } = await supabase
       .from('profiles').select('full_name').eq('id', nextFixture.referee_id).single()
     refereeName = ref?.full_name ?? null
+  } else if ((nextFixture as any)?.volunteer_referee_id) {
+    const { data: ref } = await supabase
+      .from('volunteers').select('first_name, last_name').eq('id', (nextFixture as any).volunteer_referee_id).single()
+    if (ref) refereeName = `${ref.first_name} ${ref.last_name}`
   }
 
   const displayName = teamDisplayName(team, seasons ?? [])

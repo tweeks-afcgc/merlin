@@ -37,6 +37,13 @@ export async function addVolunteer(formData: FormData) {
   return { id: volunteer.id }
 }
 
+async function syncRefereeToProfile(supabase: any, volunteerId: string, isReferee: boolean) {
+  const { data: vol } = await supabase.from('volunteers').select('profile_id').eq('id', volunteerId).single()
+  if (vol?.profile_id) {
+    await supabase.from('profiles').update({ is_referee: isReferee }).eq('id', vol.profile_id)
+  }
+}
+
 export async function updateVolunteer(volunteerId: string, formData: FormData) {
   const supabase = await createClient()
   const firstName = (formData.get('first_name') as string).trim()
@@ -54,6 +61,7 @@ export async function updateVolunteer(volunteerId: string, formData: FormData) {
     .eq('id', volunteerId)
 
   if (error) return { error: error.message }
+  await syncRefereeToProfile(supabase, volunteerId, isReferee)
   revalidatePath('/admin/volunteers')
 }
 
@@ -107,6 +115,9 @@ export async function createVolunteerFromProfile(formData: FormData) {
     .single()
 
   if (error) return { error: error.message }
+  if (isReferee) {
+    await supabase.from('profiles').update({ is_referee: true }).eq('id', profileId)
+  }
   revalidatePath('/admin/volunteers')
   return { id: volunteer.id }
 }

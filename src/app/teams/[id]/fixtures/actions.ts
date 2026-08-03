@@ -48,7 +48,7 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
   const homeVenueId = formData.get('home_venue_id') as string
   const pitchId = formData.get('pitch_id') as string
   const refereeRequired = formData.get('referee_required') === 'true'
-  const refereeIdRaw = formData.get('referee_id') as string
+  const refereeIdRaw = (formData.get('referee_id') as string) || ''
   const goalsForRaw = formData.get('goals_for') as string
   const goalsAgainstRaw = formData.get('goals_against') as string
   const opponentId = await resolveOpponentId(supabase, formData.get('opponent_id') as string)
@@ -62,7 +62,8 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
     home_venue_id: homeVenueId || null,
     pitch_id: pitchId || null,
     referee_required: refereeRequired,
-    referee_id: refereeRequired && refereeIdRaw ? refereeIdRaw : null,
+    referee_id: refereeRequired && refereeIdRaw && !refereeIdRaw.startsWith('vol:') ? refereeIdRaw : null,
+    volunteer_referee_id: refereeRequired && refereeIdRaw.startsWith('vol:') ? refereeIdRaw.slice(4) : null,
     goals_for: goalsForRaw !== '' ? parseInt(goalsForRaw) : null,
     goals_against: goalsAgainstRaw !== '' ? parseInt(goalsAgainstRaw) : null,
   }).eq('id', fixtureId)
