@@ -21,6 +21,7 @@ export default async function AdminDashboardPage() {
     { count: clubCount },
     { count: venueCount },
     { count: playerCount },
+    { count: volunteerCount },
   ] = await Promise.all([
     supabase.from('seasons').select('*').eq('is_current', true).maybeSingle(),
     supabase.from('teams').select('id, type'),
@@ -28,6 +29,7 @@ export default async function AdminDashboardPage() {
     supabase.from('clubs').select('*', { count: 'exact', head: true }),
     supabase.from('venues').select('*', { count: 'exact', head: true }),
     supabase.from('players').select('*', { count: 'exact', head: true }),
+    supabase.from('volunteers').select('*', { count: 'exact', head: true }),
   ])
 
   const seniorCount = teams?.filter(t => t.type === 'senior').length ?? 0
@@ -79,19 +81,19 @@ export default async function AdminDashboardPage() {
             <p className="text-xs text-red-700 font-medium mt-4">Add / edit teams →</p>
           </Link>
 
-          {/* Users */}
+          {/* Volunteers */}
           <Link
-            href="/admin/users"
+            href="/admin/volunteers"
             className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-red-200 transition"
           >
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-              Users
+              Volunteers
             </p>
             <p className="text-2xl font-bold text-gray-900 group-hover:text-red-800 transition">
-              {userCount ?? '—'}
+              {volunteerCount ?? '—'}
             </p>
-            <p className="text-xs text-gray-400 mt-1">Registered members</p>
-            <p className="text-xs text-red-700 font-medium mt-4">Manage users →</p>
+            <p className="text-xs text-gray-400 mt-1">Club volunteers &amp; officials</p>
+            <p className="text-xs text-red-700 font-medium mt-4">Manage volunteers →</p>
           </Link>
 
           {/* Clubs */}

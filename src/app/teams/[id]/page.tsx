@@ -107,7 +107,8 @@ export default async function TeamDashboardPage({
 
   const seasonIdsWithFixtures = new Set((fixtureSeasonRows ?? []).map((f: any) => f.season_id))
   const currentSeason = seasons?.find(s => s.is_current) ?? null
-  const statsSeasons = (seasons ?? []).filter(s => seasonIdsWithFixtures.has(s.id))
+  // Always include the current season even if it has no fixtures yet
+  const statsSeasons = (seasons ?? []).filter(s => s.is_current || seasonIdsWithFixtures.has(s.id))
 
   // Resolve which season to show stats for
   const selectedStatsSeason =
@@ -138,6 +139,20 @@ export default async function TeamDashboardPage({
 
   const allStats = calcStats((resultFixtures ?? []) as any)
   const leagueStats = calcStats(((resultFixtures ?? []) as any).filter((f: any) => f.competition === 'league'))
+
+  // Volunteers with a team role for this team
+  const { data: teamRoleRows } = await supabase
+    .from('volunteer_roles')
+    .select('id, role_name, volunteers(id, first_name, last_name)')
+    .eq('role_type', 'team')
+    .eq('team_id', id)
+    .order('role_name', { ascending: true })
+
+  const teamRoles = (teamRoleRows ?? []).map((r: any) => ({
+    id: r.id,
+    role_name: r.role_name,
+    volunteerName: r.volunteers ? `${r.volunteers.first_name} ${r.volunteers.last_name}` : 'Unknown',
+  }))
 
   // Players for this team in the current season
   const { data: playerRows } = currentSeason ? await supabase
@@ -225,10 +240,7 @@ export default async function TeamDashboardPage({
               )}
             </div>
 
-            {allStats.p === 0 ? (
-              <p className="px-5 pb-4 text-sm text-gray-400">No results recorded for {selectedStatsSeason?.name}.</p>
-            ) : (
-              <div className="px-5 pb-1">
+            <div className="px-5 pb-1">
                 {/* Header row */}
                 <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2 border-b border-gray-100">
                   <span></span>
@@ -256,8 +268,7 @@ export default async function TeamDashboardPage({
                     {leagueStats.p > 0 ? (leagueStats.gd > 0 ? `+${leagueStats.gd}` : leagueStats.gd) : '—'}
                   </span>
                 </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -335,6 +346,28 @@ export default async function TeamDashboardPage({
             </ul>
           )}
         </div>
+
+        {/* Team roles card */}
+        {teamRoles.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mt-4">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+              <h2 className="text-sm font-semibold text-gray-900">Team roles</h2>
+              {isAdmin && (
+                <Link href="/admin/volunteers" className="text-xs font-semibold text-red-800 hover:underline">
+                  Manage →
+                </Link>
+              )}
+            </div>
+            <ul className="divide-y divide-gray-50">
+              {teamRoles.map(r => (
+                <li key={r.id} className="px-5 py-2.5 flex items-center justify-between">
+                  <span className="text-sm text-gray-900">{r.volunteerName}</span>
+                  <span className="text-xs text-gray-500">{r.role_name}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
       </div>
     </AppShell>
