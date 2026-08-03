@@ -270,7 +270,7 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
           <div className="divide-y divide-amber-100">
             {unlinkedProfiles.map(p => {
               const isLinking = linkingProfileId === p.id
-              const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email ?? '(no name)'
+              const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ') || (p.email ?? '(no name)')
               return (
                 <div key={p.id} className="py-3">
                   {isLinking ? (
