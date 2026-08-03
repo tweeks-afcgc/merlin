@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import AppShell from '@/components/AppShell'
 import AdminNav from '@/components/AdminNav'
 import VolunteersClient from './VolunteersClient'
@@ -25,15 +24,9 @@ export default async function AdminVolunteersPage() {
     supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
   ])
 
-  // Fetch all profiles using service role (bypasses RLS). Gracefully skip if key not configured.
-  let allProfiles: { id: string; full_name: string | null; email: string | null; role: string | null }[] = []
-  try {
-    const adminClient = createAdminClient()
-    const { data } = await adminClient.from('profiles').select('id, full_name, email, role')
-    allProfiles = data ?? []
-  } catch {
-    // SUPABASE_SERVICE_ROLE_KEY not set — unlinked profiles section will be hidden
-  }
+  // Fetch all profiles via security-definer RPC (bypasses RLS without needing service role key)
+  const { data: profilesData } = await supabase.rpc('get_all_profiles')
+  const allProfiles: { id: string; full_name: string | null; email: string | null; role: string | null }[] = profilesData ?? []
 
   const seasonsList = seasons ?? []
 
