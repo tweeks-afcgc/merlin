@@ -85,6 +85,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
 
   const navLinks = [
     { href: '/dashboard', label: 'Home' },
+    { href: '/teams', label: 'Teams' },
     ...(isAdmin || isFixtureSecretary ? [{ href: '/fixtures', label: 'Fixtures' }] : []),
     ...(isAdmin || isFixtureSecretary || isReferee ? [{ href: '/referee', label: 'Referee' }] : []),
     ...(isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
