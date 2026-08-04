@@ -138,7 +138,7 @@ function RoleForm({ volunteerId, teams, onAdded }: { volunteerId: string; teams:
       <div className="flex flex-wrap gap-2 items-end">
         <div>
           <label className="block text-xs text-gray-500 mb-1">Type</label>
-          <select value={roleType} onChange={e => setRoleType(e.target.value as 'club' | 'team')}
+          <select value={roleType} onChange={e => { setRoleType(e.target.value as 'club' | 'team'); setRoleName('') }}
             className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
             <option value="club">Club</option>
             <option value="team">Team</option>
@@ -155,10 +155,20 @@ function RoleForm({ volunteerId, teams, onAdded }: { volunteerId: string; teams:
         )}
         <div>
           <label className="block text-xs text-gray-500 mb-1">Role name</label>
-          <input value={roleName} onChange={e => setRoleName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
-            placeholder={roleType === 'team' ? 'e.g. Manager' : 'e.g. Chairman'}
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+          {roleType === 'team' ? (
+            <select value={roleName} onChange={e => setRoleName(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+              <option value="">Select role...</option>
+              <option value="Manager">Manager</option>
+              <option value="Coach">Coach</option>
+              <option value="Assistant">Assistant</option>
+            </select>
+          ) : (
+            <input value={roleName} onChange={e => setRoleName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
+              placeholder="e.g. Chairman"
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+          )}
         </div>
         <button onClick={handleAdd} disabled={saving || !roleName.trim()}
           className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-1.5 rounded-lg text-sm transition disabled:opacity-50">
