@@ -40,6 +40,7 @@ export default function TrainingCard({
   venues: Venue[]
   isAdmin: boolean
 }) {
+  const [open, setOpen] = useState(false)
   const [slots, setSlots] = useState(initialSlots)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -87,12 +88,29 @@ export default function TrainingCard({
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mt-4">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
-        <h2 className="text-sm font-semibold text-gray-900">Training schedule</h2>
-        {isAdmin && !showForm && (
+      {/* Header — clickable to expand/collapse */}
+      <div className="flex items-center justify-between px-5 py-4">
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="flex items-center gap-2 text-left flex-1 group"
+        >
+          <svg
+            className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${open ? 'rotate-0' : '-rotate-90'}`}
+            fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
+          >
+            <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <h2 className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition">
+            Training schedule
+            {!open && slots.length > 0 && (
+              <span className="ml-2 font-normal text-gray-400 text-xs">{slots.length} slot{slots.length !== 1 ? 's' : ''}</span>
+            )}
+          </h2>
+        </button>
+        {isAdmin && open && !showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="text-xs font-semibold text-red-800 hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-red-800 hover:underline flex items-center gap-1 flex-shrink-0"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -102,7 +120,7 @@ export default function TrainingCard({
         )}
       </div>
 
-      {showForm && (
+      {open && showForm && (
         <form onSubmit={handleAdd} className="px-5 py-4 border-b border-gray-50 space-y-4 bg-gray-50">
           {error && <p className="text-xs text-red-600">{error}</p>}
 
@@ -161,10 +179,11 @@ export default function TrainingCard({
         </form>
       )}
 
-      {sorted.length === 0 ? (
-        <p className="px-5 py-4 text-sm text-gray-400">No training slots added for this season.</p>
-      ) : (
-        <ul className="divide-y divide-gray-50">
+      {open && sorted.length === 0 && (
+        <p className="px-5 pb-4 text-sm text-gray-400">No training slots added yet.</p>
+      )}
+      {open && sorted.length > 0 && (
+        <ul className="divide-y divide-gray-50 border-t border-gray-50">
           {sorted.map(slot => (
             <li key={slot.id} className="px-5 py-3 flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -197,3 +216,4 @@ export default function TrainingCard({
     </div>
   )
 }
+
