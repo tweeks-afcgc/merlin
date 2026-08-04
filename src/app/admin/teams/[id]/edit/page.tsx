@@ -23,6 +23,7 @@ export default function EditTeamPage() {
   const [kitJersey, setKitJersey] = useState('')
   const [kitShorts, setKitShorts] = useState('')
   const [kitSocks, setKitSocks] = useState('')
+  const [format, setFormat] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -36,6 +37,7 @@ export default function EditTeamPage() {
       setKitJersey(team.kit_jersey ?? '')
       setKitShorts(team.kit_shorts ?? '')
       setKitSocks(team.kit_socks ?? '')
+      setFormat(team.format ?? '')
 
       if (team.founding_season_id) {
         const { data: season } = await supabase.from('seasons').select('name').eq('id', team.founding_season_id).single()
@@ -58,7 +60,10 @@ export default function EditTeamPage() {
       kit_shorts: kitShorts.trim() || null,
       kit_socks: kitSocks.trim() || null,
     }
-    if (type === 'junior') updates.founding_age_group = parseInt(foundingAgeGroup)
+    if (type === 'junior') {
+      updates.founding_age_group = parseInt(foundingAgeGroup)
+      updates.format = format || null
+    }
 
     const { error } = await supabase.from('teams').update(updates).eq('id', id)
 
@@ -92,19 +97,34 @@ export default function EditTeamPage() {
                   />
                 </div>
                 {type === 'junior' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Age group in {foundingSeasonName || 'founding season'}
-                    </label>
-                    <input
-                      type="number" min={5} max={18} required
-                      value={foundingAgeGroup} onChange={e => setFoundingAgeGroup(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Age group in the founding season — all other seasons are calculated from this.
-                    </p>
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Age group in {foundingSeasonName || 'founding season'}
+                      </label>
+                      <input
+                        type="number" min={5} max={18} required
+                        value={foundingAgeGroup} onChange={e => setFoundingAgeGroup(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Age group in the founding season — all other seasons are calculated from this.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
+                      <select
+                        value={format}
+                        onChange={e => setFormat(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      >
+                        <option value="">Not specified</option>
+                        {['3v3','5v5','7v7','9v9','11v11'].map(f => (
+                          <option key={f} value={f}>{f}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
                 )}
 
                 {/* Kit colours */}

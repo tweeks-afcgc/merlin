@@ -205,11 +205,18 @@ export default async function TeamDashboardPage({
           <KitCircle jersey={team.kit_jersey} shorts={team.kit_shorts} socks={team.kit_socks} />
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">{displayName}</h1>
-            <span className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              team.type === 'senior' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
-            }`}>
-              {team.type === 'senior' ? 'Senior' : 'Junior'}
-            </span>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                team.type === 'senior' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+              }`}>
+                {team.type === 'senior' ? 'Senior' : 'Junior'}
+              </span>
+              {team.type === 'junior' && (team as any).format && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  {(team as any).format}
+                </span>
+              )}
+            </div>
           </div>
           {isAdmin && (
             <Link
