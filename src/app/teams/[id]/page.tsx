@@ -5,6 +5,7 @@ import AppShell from '@/components/AppShell'
 import { teamDisplayName } from '@/lib/teamUtils'
 import BackButton from '@/components/BackButton'
 import TrainingCard from './training/TrainingCard'
+import SeasonSelect from './SeasonSelect'
 
 export const dynamic = 'force-dynamic'
 
@@ -193,19 +194,43 @@ export default async function TeamDashboardPage({
     .filter(Boolean)
     .sort((a: any, b: any) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`))
 
-  // Next fixture
   const today = new Date().toISOString().split('T')[0]
-  const { data: nextFixtureRows } = await supabase
-    .from('fixtures')
-    .select('id, date, kickoff_time, venue, referee_required, referee_id, volunteer_referee_id, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
-    .eq('team_id', id)
-    .gte('date', today)
-    .order('date', { ascending: true })
-    .limit(1)
+  const FIXTURE_SELECT = 'id, date, kickoff_time, venue, referee_required, referee_id, volunteer_referee_id, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name), pitches(name)'
 
-  // Fetch referee name if assigned
-  const nextFixture = nextFixtureRows?.[0] ?? null
-  const opponent = nextFixture ? (nextFixture.club_teams as any) : null
+  const isCurrentSeason = selectedStatsSeason?.is_current ?? false
+
+  const [nextFixtureResult, recentFixtureResult] = await Promise.all([
+    // Only fetch "next" fixture for the current season
+    isCurrentSeason && selectedStatsSeason
+      ? supabase
+          .from('fixtures')
+          .select(FIXTURE_SELECT)
+          .eq('team_id', id)
+          .eq('season_id', selectedStatsSeason.id)
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .limit(1)
+      : Promise.resolve({ data: [] }),
+    // Recent fixtures: for current season use date < today, for past seasons just last 5 by date
+    selectedStatsSeason
+      ? (() => {
+          let q = supabase
+            .from('fixtures')
+            .select(FIXTURE_SELECT)
+            .eq('team_id', id)
+            .eq('season_id', selectedStatsSeason.id)
+            .order('date', { ascending: false })
+            .limit(5)
+          if (isCurrentSeason) q = q.lt('date', today) as typeof q
+          return q
+        })()
+      : Promise.resolve({ data: [] }),
+  ])
+
+  const nextFixture = (nextFixtureResult.data as any[])?.[0] ?? null
+  const recentFixtures = (recentFixtureResult.data as any[]) ?? []
+
+  // Fetch referee name for next fixture if assigned
   let refereeName: string | null = null
   if (nextFixture?.referee_id) {
     const { data: ref } = await supabase
@@ -252,29 +277,23 @@ export default async function TeamDashboardPage({
           )}
         </div>
 
+        {/* Season selector */}
+        {statsSeasons.length > 1 && (
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-sm text-gray-500">Season</span>
+            <SeasonSelect
+              teamId={id}
+              seasons={statsSeasons}
+              selectedId={selectedStatsSeason?.id ?? null}
+            />
+          </div>
+        )}
+
         {/* Season stats card */}
         {statsSeasons.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-4">
             <div className="px-5 pt-4 pb-0">
               <h2 className="text-sm font-semibold text-gray-900 mb-3">Season stats</h2>
-              {/* Season tabs */}
-              {statsSeasons.length > 1 && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {statsSeasons.map(s => (
-                    <Link
-                      key={s.id}
-                      href={`/teams/${id}?season=${s.id}`}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-                        selectedStatsSeason?.id === s.id
-                          ? 'bg-red-800 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {s.name}{s.is_current ? ' ●' : ''}
-                    </Link>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className="px-5 pb-1">
@@ -313,50 +332,94 @@ export default async function TeamDashboardPage({
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
             <h2 className="text-sm font-semibold text-gray-900">Fixtures</h2>
-            <Link
-              href={`/teams/${id}/fixtures`}
-              className="text-xs font-semibold text-red-800 hover:underline"
-            >
+            <Link href={`/teams/${id}/fixtures`} className="text-xs font-semibold text-red-800 hover:underline">
               Fixture list →
             </Link>
           </div>
 
-          <Link href={nextFixture ? `/teams/${id}/fixtures/${nextFixture.id}/edit` : `/teams/${id}/fixtures`} className="block px-5 py-4 hover:bg-gray-50 transition group">
-            {nextFixture ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Next fixture</p>
-                  <p className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition">
-                    {opponent ? [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown opponent' : 'Unknown opponent'}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {formatDate(nextFixture.date)} · {formatTime(nextFixture.kickoff_time)} ·{' '}
-                    {nextFixture.venue === 'home' ? 'Home' : nextFixture.venue === 'away' ? 'Away' : 'Neutral'}
-                    {(nextFixture.venues as any)?.name ? ` · ${(nextFixture.venues as any).name}` : ''}
-                    {(nextFixture.pitches as any)?.name ? ` · ${(nextFixture.pitches as any).name}` : ''}
-                  </p>
-                  <p className={`text-xs mt-0.5 ${refereeName ? 'text-gray-400' : 'text-amber-600 font-medium'}`}>
-                    {refereeName
-                      ? `Referee: ${refereeName}`
-                      : (nextFixture as any).referee_required
-                        ? 'No referee assigned'
-                        : 'No referee requested'
-                    }
-                  </p>
-                </div>
-                <svg className="w-4 h-4 text-gray-300 group-hover:text-red-800 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-400">No upcoming fixtures.</p>
-                <svg className="w-4 h-4 text-gray-300 group-hover:text-red-800 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            )}
-          </Link>
+          {nextFixture === null && recentFixtures.length === 0 ? (
+            <p className="px-5 py-4 text-sm text-gray-400">No fixtures recorded yet.</p>
+          ) : (
+            <ul className="divide-y divide-gray-50">
+              {/* Next upcoming fixture — always first */}
+              {nextFixture && (() => {
+                const opp = nextFixture.club_teams as any
+                const oppName = opp ? [opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown' : 'Unknown'
+                return (
+                  <li>
+                    <Link
+                      href={`/teams/${id}/fixtures/${nextFixture.id}/edit`}
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">NEXT</span>
+                          <span className="text-xs text-gray-400">{formatDate(nextFixture.date)} · {formatTime(nextFixture.kickoff_time)}</span>
+                          <span className={`text-xs font-medium ${nextFixture.venue === 'home' ? 'text-green-700' : 'text-gray-400'}`}>
+                            {nextFixture.venue === 'home' ? 'H' : nextFixture.venue === 'away' ? 'A' : 'N'}
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition truncate">{oppName}</p>
+                        <p className={`text-xs mt-0.5 ${refereeName ? 'text-gray-400' : (nextFixture as any).referee_required ? 'text-amber-600 font-medium' : 'text-gray-300'}`}>
+                          {refereeName
+                            ? `Ref: ${refereeName}`
+                            : (nextFixture as any).referee_required
+                              ? 'No referee assigned'
+                              : 'No referee requested'
+                          }
+                        </p>
+                      </div>
+                      <svg className="w-4 h-4 text-gray-300 group-hover:text-red-800 flex-shrink-0 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </Link>
+                  </li>
+                )
+              })()}
+
+              {/* Last 5 past fixtures, most recent first */}
+              {recentFixtures.map((fx: any) => {
+                const opp = fx.club_teams as any
+                const oppName = opp ? [opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown' : 'Unknown'
+                const hasResult = fx.goals_for !== null && fx.goals_against !== null
+                const won = hasResult && fx.goals_for > fx.goals_against
+                const drew = hasResult && fx.goals_for === fx.goals_against
+                const lost = hasResult && fx.goals_for < fx.goals_against
+                return (
+                  <li key={fx.id}>
+                    <Link
+                      href={`/teams/${id}/fixtures/${fx.id}/edit`}
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-xs text-gray-400">{formatDate(fx.date)}</span>
+                          <span className={`text-xs font-medium ${fx.venue === 'home' ? 'text-green-700' : 'text-gray-400'}`}>
+                            {fx.venue === 'home' ? 'H' : fx.venue === 'away' ? 'A' : 'N'}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium text-gray-700 group-hover:text-red-800 transition truncate">{oppName}</p>
+                      </div>
+                      {hasResult ? (
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {fx.goals_for}–{fx.goals_against}
+                          </span>
+                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
+                            won ? 'bg-green-100 text-green-700' : drew ? 'bg-gray-100 text-gray-500' : 'bg-red-100 text-red-700'
+                          }`}>
+                            {won ? 'W' : drew ? 'D' : 'L'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-300 flex-shrink-0">No result</span>
+                      )}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </div>
         {/* Players card */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mt-4">
