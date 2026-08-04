@@ -11,13 +11,24 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/signin')
 
-  const [{ data: profile }, { data: managedTeamLinks }, { data: seasons }] = await Promise.all([
+  const [{ data: profile }, { data: seasons }, { data: volunteerRow }] = await Promise.all([
     supabase.from('profiles').select('full_name, role').eq('id', user.id).single(),
-    supabase.from('team_managers').select('team_id, teams(*)').eq('user_id', user.id),
     supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
+    supabase.from('volunteers').select('id').eq('profile_id', user.id).maybeSingle(),
   ])
 
-  const managedTeams = (managedTeamLinks ?? []).map((r: any) => r.teams).filter(Boolean)
+  let managedTeams: any[] = []
+  if (volunteerRow) {
+    const { data: roleLinks } = await supabase
+      .from('volunteer_roles')
+      .select('teams(*)')
+      .eq('volunteer_id', volunteerRow.id)
+      .eq('role_type', 'team')
+    managedTeams = (roleLinks ?? []).map((r: any) => r.teams).filter(Boolean)
+    // Deduplicate in case a volunteer holds multiple roles on the same team
+    const seen = new Set<string>()
+    managedTeams = managedTeams.filter((t: any) => { if (seen.has(t.id)) return false; seen.add(t.id); return true })
+  }
   const firstName = profile?.full_name?.split(' ')[0] ?? null
   const currentSeason = seasons?.find(s => s.is_current) ?? null
 

@@ -6,8 +6,6 @@ import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 
-type Profile = { id: string; full_name: string | null; email: string | null }
-
 export default function EditTeamPage() {
   const router = useRouter()
   const { id } = useParams<{ id: string }>()
@@ -25,17 +23,10 @@ export default function EditTeamPage() {
   const [kitJersey, setKitJersey] = useState('')
   const [kitShorts, setKitShorts] = useState('')
   const [kitSocks, setKitSocks] = useState('')
-  const [allUsers, setAllUsers] = useState<Profile[]>([])
-  const [managerIds, setManagerIds] = useState<Set<string>>(new Set())
-  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
-      const [{ data: team }, { data: users }, { data: managers }] = await Promise.all([
-        supabase.from('teams').select('*').eq('id', id).single(),
-        supabase.from('profiles').select('id, full_name, email').order('full_name'),
-        supabase.from('team_managers').select('user_id').eq('team_id', id),
-      ])
+      const { data: team } = await supabase.from('teams').select('*').eq('id', id).single()
 
       if (!team) { router.push('/admin/teams'); return }
 
@@ -45,8 +36,6 @@ export default function EditTeamPage() {
       setKitJersey(team.kit_jersey ?? '')
       setKitShorts(team.kit_shorts ?? '')
       setKitSocks(team.kit_socks ?? '')
-      setAllUsers(users ?? [])
-      setManagerIds(new Set((managers ?? []).map((m: { user_id: string }) => m.user_id)))
 
       if (team.founding_season_id) {
         const { data: season } = await supabase.from('seasons').select('name').eq('id', team.founding_season_id).single()
@@ -75,18 +64,6 @@ export default function EditTeamPage() {
 
     if (error) { setError(error.message); setSaving(false) }
     else router.push(returnTo)
-  }
-
-  async function toggleManager(userId: string) {
-    setTogglingId(userId)
-    if (managerIds.has(userId)) {
-      await supabase.from('team_managers').delete().eq('team_id', id).eq('user_id', userId)
-      setManagerIds(prev => { const next = new Set(prev); next.delete(userId); return next })
-    } else {
-      await supabase.from('team_managers').insert({ team_id: id, user_id: userId })
-      setManagerIds(prev => new Set(prev).add(userId))
-    }
-    setTogglingId(null)
   }
 
   return (
@@ -166,35 +143,8 @@ export default function EditTeamPage() {
               </form>
             </div>
 
-            {/* Managers */}
-            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
-              <h2 className="text-base font-semibold text-gray-900 mb-1">Managers</h2>
-              <p className="text-sm text-gray-400 mb-5">Select one or more managers for this team.</p>
-              <ul className="divide-y divide-gray-50">
-                {allUsers.map(user => {
-                  const isManager = managerIds.has(user.id)
-                  const isToggling = togglingId === user.id
-                  return (
-                    <li key={user.id} className="flex items-center justify-between py-3">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{user.full_name ?? '—'}</p>
-                        <p className="text-xs text-gray-400">{user.email ?? ''}</p>
-                      </div>
-                      <button
-                        onClick={() => toggleManager(user.id)}
-                        disabled={isToggling}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-full transition disabled:opacity-50 ${
-                          isManager
-                            ? 'bg-red-100 text-red-900 hover:bg-red-100 hover:text-red-700'
-                            : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-900'
-                        }`}
-                      >
-                        {isToggling ? '…' : isManager ? 'Manager' : 'Add'}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800">
+              Team staff (managers, coaches, assistants) are now managed via <strong>Admin → Volunteers</strong>. Assign a team role to a volunteer there to give them access to this team.
             </div>
           </>
         )}

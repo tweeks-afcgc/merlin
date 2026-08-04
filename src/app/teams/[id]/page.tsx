@@ -92,11 +92,13 @@ export default async function TeamDashboardPage({
 
   const isAdmin = profile?.role === 'admin'
 
-  // Check access: admin or manager
+  // Check access: admin or volunteer with a role on this team
   if (!isAdmin) {
-    const { data: mgr } = await supabase
-      .from('team_managers').select('user_id').eq('team_id', id).eq('user_id', user.id).single()
-    if (!mgr) redirect('/dashboard')
+    const { data: vol } = await supabase.from('volunteers').select('id').eq('profile_id', user.id).maybeSingle()
+    const hasRole = vol
+      ? !!(await supabase.from('volunteer_roles').select('id').eq('volunteer_id', vol.id).eq('team_id', id).eq('role_type', 'team').maybeSingle()).data
+      : false
+    if (!hasRole) redirect('/dashboard')
   }
 
   // Seasons that have at least one fixture for this team
