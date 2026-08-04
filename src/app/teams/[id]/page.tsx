@@ -103,16 +103,19 @@ export default async function TeamDashboardPage({
     if (!hasRole) redirect('/dashboard')
   }
 
-  // Seasons that have at least one fixture for this team
-  const { data: fixtureSeasonRows } = await supabase
-    .from('fixtures')
-    .select('season_id')
-    .eq('team_id', id)
+  // Seasons that have fixtures or training slots for this team
+  const [{ data: fixtureSeasonRows }, { data: trainingSeasonRows }] = await Promise.all([
+    supabase.from('fixtures').select('season_id').eq('team_id', id),
+    supabase.from('training_slots').select('season_id').eq('team_id', id),
+  ])
 
-  const seasonIdsWithFixtures = new Set((fixtureSeasonRows ?? []).map((f: any) => f.season_id))
+  const seasonIdsWithData = new Set([
+    ...(fixtureSeasonRows ?? []).map((f: any) => f.season_id),
+    ...(trainingSeasonRows ?? []).map((t: any) => t.season_id),
+  ])
   const currentSeason = seasons?.find(s => s.is_current) ?? null
-  // Always include the current season even if it has no fixtures yet
-  const statsSeasons = (seasons ?? []).filter(s => s.is_current || seasonIdsWithFixtures.has(s.id))
+  // Always include current season; also include any season with fixtures or training slots
+  const statsSeasons = (seasons ?? []).filter(s => s.is_current || seasonIdsWithData.has(s.id))
 
   // Resolve which season to show stats for
   const selectedStatsSeason =
