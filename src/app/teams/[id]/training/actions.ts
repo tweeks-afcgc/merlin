@@ -8,7 +8,6 @@ export async function addTrainingSlot(teamId: string, formData: FormData) {
 
   const { error } = await supabase.from('training_slots').insert({
     team_id: teamId,
-    season_id: formData.get('season_id') as string,
     day_of_week: formData.get('day_of_week') as string,
     frequency: formData.get('frequency') as string,
     start_time: formData.get('start_time') as string,

@@ -31,13 +31,11 @@ function formatTime(t: string) {
 
 export default function TrainingCard({
   teamId,
-  seasonId,
   slots: initialSlots,
   venues,
   isAdmin,
 }: {
   teamId: string
-  seasonId: string
   slots: Slot[]
   venues: Venue[]
   isAdmin: boolean
@@ -65,7 +63,6 @@ export default function TrainingCard({
     setSaving(true)
     setError(null)
     const fd = new FormData()
-    fd.set('season_id', seasonId)
     fd.set('day_of_week', day)
     fd.set('frequency', frequency)
     fd.set('start_time', startTime)

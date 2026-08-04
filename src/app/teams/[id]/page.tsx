@@ -103,19 +103,14 @@ export default async function TeamDashboardPage({
     if (!hasRole) redirect('/dashboard')
   }
 
-  // Seasons that have fixtures or training slots for this team
-  const [{ data: fixtureSeasonRows }, { data: trainingSeasonRows }] = await Promise.all([
-    supabase.from('fixtures').select('season_id').eq('team_id', id),
-    supabase.from('training_slots').select('season_id').eq('team_id', id),
-  ])
+  // Seasons that have at least one fixture for this team
+  const { data: fixtureSeasonRows } = await supabase
+    .from('fixtures').select('season_id').eq('team_id', id)
 
-  const seasonIdsWithData = new Set([
-    ...(fixtureSeasonRows ?? []).map((f: any) => f.season_id),
-    ...(trainingSeasonRows ?? []).map((t: any) => t.season_id),
-  ])
+  const seasonIdsWithFixtures = new Set((fixtureSeasonRows ?? []).map((f: any) => f.season_id))
   const currentSeason = seasons?.find(s => s.is_current) ?? null
-  // Always include current season; also include any season with fixtures or training slots
-  const statsSeasons = (seasons ?? []).filter(s => s.is_current || seasonIdsWithData.has(s.id))
+  // Always include current season; also include any season with fixtures
+  const statsSeasons = (seasons ?? []).filter(s => s.is_current || seasonIdsWithFixtures.has(s.id))
 
   // Resolve which season to show stats for
   const selectedStatsSeason =
@@ -147,15 +142,12 @@ export default async function TeamDashboardPage({
   const allStats = calcStats((resultFixtures ?? []) as any)
   const leagueStats = calcStats(((resultFixtures ?? []) as any).filter((f: any) => f.competition === 'league'))
 
-  // Training slots for the selected stats season
+  // Training slots — not season-filtered, always shows current plan
   const [{ data: trainingSlots }, { data: venues }] = await Promise.all([
-    selectedStatsSeason
-      ? supabase
-          .from('training_slots')
-          .select('id, day_of_week, frequency, start_time, end_time, venue_id, notes, venues(name)')
-          .eq('team_id', id)
-          .eq('season_id', selectedStatsSeason.id)
-      : Promise.resolve({ data: [] }),
+    supabase
+      .from('training_slots')
+      .select('id, day_of_week, frequency, start_time, end_time, venue_id, notes, venues(name)')
+      .eq('team_id', id),
     supabase.from('venues').select('id, name').order('name'),
   ])
 
@@ -451,15 +443,12 @@ export default async function TeamDashboardPage({
         </div>
 
         {/* Training schedule card */}
-        {selectedStatsSeason && (
-          <TrainingCard
-            teamId={id}
-            seasonId={selectedStatsSeason.id}
-            slots={trainingSlotsMapped}
-            venues={venues ?? []}
-            isAdmin={isAdmin}
-          />
-        )}
+        <TrainingCard
+          teamId={id}
+          slots={trainingSlotsMapped}
+          venues={venues ?? []}
+          isAdmin={isAdmin}
+        />
 
         {/* Team roles card */}
         {teamRoles.length > 0 && (
