@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import { teamDisplayName } from '@/lib/teamUtils'
 import BackButton from '@/components/BackButton'
+import TrainingCard from './training/TrainingCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -141,6 +142,29 @@ export default async function TeamDashboardPage({
 
   const allStats = calcStats((resultFixtures ?? []) as any)
   const leagueStats = calcStats(((resultFixtures ?? []) as any).filter((f: any) => f.competition === 'league'))
+
+  // Training slots for the selected stats season
+  const [{ data: trainingSlots }, { data: venues }] = await Promise.all([
+    selectedStatsSeason
+      ? supabase
+          .from('training_slots')
+          .select('id, day_of_week, frequency, start_time, end_time, venue_id, notes, venues(name)')
+          .eq('team_id', id)
+          .eq('season_id', selectedStatsSeason.id)
+      : Promise.resolve({ data: [] }),
+    supabase.from('venues').select('id, name').order('name'),
+  ])
+
+  const trainingSlotsMapped = (trainingSlots ?? []).map((s: any) => ({
+    id: s.id,
+    day_of_week: s.day_of_week,
+    frequency: s.frequency,
+    start_time: s.start_time,
+    end_time: s.end_time,
+    venue_id: s.venue_id ?? null,
+    venueName: s.venues?.name ?? null,
+    notes: s.notes ?? null,
+  }))
 
   // Volunteers with a team role for this team
   const { data: teamRoleRows } = await supabase
@@ -359,6 +383,17 @@ export default async function TeamDashboardPage({
             </ul>
           )}
         </div>
+
+        {/* Training schedule card */}
+        {selectedStatsSeason && (
+          <TrainingCard
+            teamId={id}
+            seasonId={selectedStatsSeason.id}
+            slots={trainingSlotsMapped}
+            venues={venues ?? []}
+            isAdmin={isAdmin}
+          />
+        )}
 
         {/* Team roles card */}
         {teamRoles.length > 0 && (
