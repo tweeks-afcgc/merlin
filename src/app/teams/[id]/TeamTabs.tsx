@@ -18,7 +18,7 @@ type Fixture = {
   venues: any
   pitches: any
 }
-type Player = { id: string; first_name: string; last_name: string }
+type Player = { id: string; first_name: string; last_name: string; date_of_birth: string | null }
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -56,9 +56,26 @@ export default function TeamTabs({
 }) {
   const [tab, setTab] = useState<Tab>('fixtures')
   const [players, setPlayers] = useState<Player[]>(initialPlayers)
+  const [playerSort, setPlayerSort] = useState<'alpha' | 'age'>('alpha')
   const [showAddPlayer, setShowAddPlayer] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
   const [addSaving, setAddSaving] = useState(false)
+
+  function formatDob(dob: string | null) {
+    if (!dob) return null
+    return new Date(dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  const sortedPlayers = [...players].sort((a, b) => {
+    if (playerSort === 'age') {
+      // Older players first (earlier DOB = lower date string = sort ascending)
+      if (!a.date_of_birth && !b.date_of_birth) return 0
+      if (!a.date_of_birth) return 1
+      if (!b.date_of_birth) return -1
+      return a.date_of_birth.localeCompare(b.date_of_birth)
+    }
+    return `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
+  })
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'fixtures', label: 'Fixtures' },
@@ -225,6 +242,14 @@ export default function TeamTabs({
               {currentSeasonName ?? ''}
             </span>
             <div className="flex items-center gap-3">
+              <select
+                value={playerSort}
+                onChange={e => setPlayerSort(e.target.value as 'alpha' | 'age')}
+                className="border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-red-700 bg-white"
+              >
+                <option value="alpha">A–Z</option>
+                <option value="age">By age</option>
+              </select>
               {isAdmin && currentSeasonId && !showAddPlayer && (
                 <button
                   onClick={() => { setShowAddPlayer(true); setAddError(null) }}
@@ -253,7 +278,8 @@ export default function TeamTabs({
                 // Optimistically add to list and close form
                 const first = (fd.get('first_name') as string).trim()
                 const last = (fd.get('last_name') as string).trim()
-                setPlayers(prev => [...prev, { id: crypto.randomUUID(), first_name: first, last_name: last }]
+                const dob = (fd.get('date_of_birth') as string) || null
+                setPlayers(prev => [...prev, { id: crypto.randomUUID(), first_name: first, last_name: last, date_of_birth: dob }]
                   .sort((a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)))
                 setShowAddPlayer(false)
                 ;(e.target as HTMLFormElement).reset()
@@ -302,13 +328,16 @@ export default function TeamTabs({
             </form>
           )}
 
-          {players.length === 0 ? (
+          {sortedPlayers.length === 0 ? (
             <p className="px-5 py-4 text-sm text-gray-400">No players registered for this season.</p>
           ) : (
             <ul className="divide-y divide-gray-50">
-              {players.map(p => (
-                <li key={p.id} className="px-5 py-2.5">
+              {sortedPlayers.map(p => (
+                <li key={p.id} className="px-5 py-2.5 flex items-center justify-between">
                   <span className="text-sm text-gray-900">{p.first_name} {p.last_name}</span>
+                  {playerSort === 'age' && p.date_of_birth && (
+                    <span className="text-xs text-gray-400">{formatDob(p.date_of_birth)}</span>
+                  )}
                 </li>
               ))}
             </ul>

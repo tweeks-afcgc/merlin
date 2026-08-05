@@ -180,7 +180,7 @@ export default async function TeamDashboardPage({
   // Players for this team in the current season
   const { data: playerRows } = currentSeason ? await supabase
     .from('player_team_seasons')
-    .select('players(id, first_name, last_name)')
+    .select('players(id, first_name, last_name, date_of_birth)')
     .eq('team_id', id)
     .eq('season_id', currentSeason.id)
     : { data: [] }
