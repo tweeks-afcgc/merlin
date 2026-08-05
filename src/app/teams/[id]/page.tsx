@@ -109,15 +109,17 @@ export default async function TeamDashboardPage({
     .from('fixtures').select('season_id').eq('team_id', id)
 
   const seasonIdsWithFixtures = new Set((fixtureSeasonRows ?? []).map((f: any) => f.season_id))
-  const currentSeason = seasons?.find(s => s.is_current) ?? null
-  // Always include current season; also include any season with fixtures
-  const statsSeasons = (seasons ?? []).filter(s => s.is_current || seasonIdsWithFixtures.has(s.id))
+  const allSeasons = seasons ?? []
+  const currentSeason = allSeasons.find(s => s.is_current) ?? null
+  // Seasons shown in the dropdown: those with fixtures + current season
+  const statsSeasons = allSeasons.filter(s => s.is_current || seasonIdsWithFixtures.has(s.id))
 
-  // Resolve which season to show stats for
+  // Resolve selected season — search ALL seasons so the URL param always wins,
+  // even if the season has no fixtures (e.g. it only has players or training slots)
   const selectedStatsSeason =
-    statsSeasons.find(s => s.id === seasonParam) ??
-    statsSeasons.find(s => s.is_current) ??
-    statsSeasons[0] ??
+    allSeasons.find(s => s.id === seasonParam) ??
+    allSeasons.find(s => s.is_current) ??
+    allSeasons[0] ??
     null
 
   // Fetch results for the selected stats season
