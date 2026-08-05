@@ -54,7 +54,7 @@ export default function TeamTabs({
   players: Player[]
   currentSeasonName: string | null
 }) {
-  const [tab, setTab] = useState<Tab>('fixtures')
+  const [tab, setTab] = useState<Tab>('stats')
   const [players, setPlayers] = useState<Player[]>(initialPlayers)
   const [playerSort, setPlayerSort] = useState<'alpha' | 'age'>('alpha')
   const [showAddPlayer, setShowAddPlayer] = useState(false)
@@ -78,8 +78,8 @@ export default function TeamTabs({
   })
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: 'fixtures', label: 'Fixtures' },
     { key: 'stats', label: 'Season Stats' },
+    { key: 'fixtures', label: 'Fixtures' },
     { key: 'players', label: 'Players' },
   ]
 

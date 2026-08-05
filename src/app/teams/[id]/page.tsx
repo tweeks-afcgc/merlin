@@ -50,23 +50,34 @@ function kitColour(s: string | null): string {
 }
 
 function KitCircle({
-  jersey, shorts, socks,
+  jersey, shorts, socks, imageUrl, title,
 }: {
   jersey: string | null
   shorts: string | null
   socks: string | null
+  imageUrl?: string | null
+  title?: string
 }) {
+  if (imageUrl) {
+    return (
+      <div
+        className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
+        style={{ border: '2px solid rgba(0,0,0,0.1)' }}
+        title={title}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={imageUrl} alt={title ?? 'Kit'} className="w-full h-full object-cover" />
+      </div>
+    )
+  }
   return (
     <div
       className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
       style={{ border: '2px solid rgba(0,0,0,0.1)' }}
       title={[jersey, shorts, socks].filter(Boolean).join(' · ')}
     >
-      {/* Top half — jersey */}
       <div style={{ height: '50%', background: kitColour(jersey) }} />
-      {/* Upper quarter of bottom — shorts */}
       <div style={{ height: '25%', background: kitColour(shorts) }} />
-      {/* Lower quarter of bottom — socks */}
       <div style={{ height: '25%', background: kitColour(socks) }} />
     </div>
   )
@@ -256,7 +267,24 @@ export default async function TeamDashboardPage({
 
         {/* Team header */}
         <div className="flex items-start gap-4 mb-6">
-          <KitCircle jersey={team.kit_jersey} shorts={team.kit_shorts} socks={team.kit_socks} />
+          <div className="flex gap-2 flex-shrink-0">
+            <KitCircle
+              jersey={team.kit_jersey}
+              shorts={team.kit_shorts}
+              socks={team.kit_socks}
+              imageUrl={(team as any).home_kit_image_url ?? null}
+              title="Home kit"
+            />
+            {((team as any).away_kit_jersey || (team as any).away_kit_image_url) && (
+              <KitCircle
+                jersey={(team as any).away_kit_jersey ?? null}
+                shorts={(team as any).away_kit_shorts ?? null}
+                socks={(team as any).away_kit_socks ?? null}
+                imageUrl={(team as any).away_kit_image_url ?? null}
+                title="Away kit"
+              />
+            )}
+          </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold text-gray-900">{displayName}</h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
