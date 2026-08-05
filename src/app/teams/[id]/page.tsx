@@ -316,6 +316,7 @@ export default async function TeamDashboardPage({
           <TeamTabs
             teamId={id}
             isAdmin={isAdmin}
+            currentSeasonId={currentSeason?.id ?? null}
             nextFixture={nextFixture as any}
             recentFixtures={recentFixtures as any[]}
             refereeName={refereeName}

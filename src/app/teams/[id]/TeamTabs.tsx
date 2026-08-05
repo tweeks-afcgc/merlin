@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { quickAddPlayer } from './players/actions'
 
 type Tab = 'fixtures' | 'stats' | 'players'
 type Stats = { p: number; w: number; d: number; l: number; gf: number; ga: number; gd: number }
@@ -31,17 +32,19 @@ function formatTime(t: string | null) {
 export default function TeamTabs({
   teamId,
   isAdmin,
+  currentSeasonId,
   nextFixture,
   recentFixtures,
   refereeName,
   allStats,
   leagueStats,
   selectedSeasonName,
-  players,
+  players: initialPlayers,
   currentSeasonName,
 }: {
   teamId: string
   isAdmin: boolean
+  currentSeasonId: string | null
   nextFixture: Fixture | null
   recentFixtures: Fixture[]
   refereeName: string | null
@@ -52,6 +55,10 @@ export default function TeamTabs({
   currentSeasonName: string | null
 }) {
   const [tab, setTab] = useState<Tab>('fixtures')
+  const [players, setPlayers] = useState<Player[]>(initialPlayers)
+  const [showAddPlayer, setShowAddPlayer] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
+  const [addSaving, setAddSaving] = useState(false)
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'fixtures', label: 'Fixtures' },
@@ -217,12 +224,84 @@ export default function TeamTabs({
             <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
               {currentSeasonName ?? ''}
             </span>
-            {isAdmin && (
-              <Link href="/admin/players" className="text-xs font-semibold text-red-800 hover:underline">
-                Manage →
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+              {isAdmin && currentSeasonId && !showAddPlayer && (
+                <button
+                  onClick={() => { setShowAddPlayer(true); setAddError(null) }}
+                  className="text-xs font-semibold text-red-800 hover:underline flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                  Add player
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Add player form */}
+          {showAddPlayer && currentSeasonId && (
+            <form
+              onSubmit={async e => {
+                e.preventDefault()
+                setAddSaving(true)
+                setAddError(null)
+                const fd = new FormData(e.currentTarget)
+                const result = await quickAddPlayer(teamId, currentSeasonId, fd)
+                setAddSaving(false)
+                if (result?.error) { setAddError(result.error); return }
+                // Optimistically add to list and close form
+                const first = (fd.get('first_name') as string).trim()
+                const last = (fd.get('last_name') as string).trim()
+                setPlayers(prev => [...prev, { id: crypto.randomUUID(), first_name: first, last_name: last }]
+                  .sort((a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)))
+                setShowAddPlayer(false)
+                ;(e.target as HTMLFormElement).reset()
+              }}
+              className="px-5 py-4 bg-gray-50 border-b border-gray-100 space-y-3"
+            >
+              {addError && <p className="text-xs text-red-600">{addError}</p>}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">First name</label>
+                  <input
+                    name="first_name" required autoFocus
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Last name</label>
+                  <input
+                    name="last_name" required
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Date of birth <span className="font-normal text-gray-400">(optional)</span></label>
+                <input
+                  name="date_of_birth" type="date"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit" disabled={addSaving}
+                  className="bg-red-800 hover:bg-red-900 text-white font-semibold px-5 py-2 rounded-lg text-sm transition disabled:opacity-60"
+                >
+                  {addSaving ? 'Adding…' : 'Add'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowAddPlayer(false); setAddError(null) }}
+                  className="border border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold px-4 py-2 rounded-lg text-sm transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
           {players.length === 0 ? (
             <p className="px-5 py-4 text-sm text-gray-400">No players registered for this season.</p>
           ) : (
