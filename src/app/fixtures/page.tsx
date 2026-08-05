@@ -19,12 +19,7 @@ export default async function FixturesDashboardPage() {
   const isFS = profile?.role === 'fixture_secretary'
   if (!isAdmin && !isFS) redirect('/dashboard')
 
-  const today = new Date()
-  const in14Days = new Date(today)
-  in14Days.setDate(today.getDate() + 14)
-
-  const todayStr = today.toISOString().split('T')[0]
-  const in14Str = in14Days.toISOString().split('T')[0]
+  const todayStr = new Date().toISOString().split('T')[0]
 
   const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }, { data: allRequests }] = await Promise.all([
     supabase
@@ -39,7 +34,6 @@ export default async function FixturesDashboardPage() {
         pitches(name, pitch_type)
       `)
       .gte('date', todayStr)
-      .lte('date', in14Str)
       .order('date', { ascending: true })
       .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
@@ -124,7 +118,7 @@ export default async function FixturesDashboardPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Fixtures</h1>
-            <p className="text-sm text-gray-400 mt-1">All fixtures in the next 14 days.</p>
+            <p className="text-sm text-gray-400 mt-1">Upcoming fixtures.</p>
           </div>
           <Link
             href="/fixtures/add"

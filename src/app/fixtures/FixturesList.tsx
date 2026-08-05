@@ -35,6 +35,7 @@ type Fixture = {
 type ViewMode = 'schedule' | 'team' | 'pitch'
 type TeamFilter = 'all' | 'senior' | 'junior'
 type VenueFilter = 'all' | 'home' | 'away'
+type DateRange = 14 | 30 | 'all'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -371,8 +372,16 @@ export default function FixturesList({
   const [view, setView] = useState<ViewMode>('schedule')
   const [teamFilter, setTeamFilter] = useState<TeamFilter>('all')
   const [venueFilter, setVenueFilter] = useState<VenueFilter>('all')
+  const [dateRange, setDateRange] = useState<DateRange>(14)
+
+  const cutoff = dateRange === 'all' ? null : (() => {
+    const d = new Date()
+    d.setDate(d.getDate() + dateRange)
+    return d.toISOString().split('T')[0]
+  })()
 
   const filtered = fixtures.filter(f => {
+    if (cutoff && f.date > cutoff) return false
     if (teamFilter !== 'all' && f.teamType !== teamFilter) return false
     const isHome = f.venue === 'home'
     if (venueFilter === 'home' && !isHome) return false
@@ -388,6 +397,12 @@ export default function FixturesList({
       {/* Top bar: filters + view switcher */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400 font-medium mr-1">Period</span>
+            <FilterButton active={dateRange === 14} onClick={() => setDateRange(14)}>14 days</FilterButton>
+            <FilterButton active={dateRange === 30} onClick={() => setDateRange(30)}>30 days</FilterButton>
+            <FilterButton active={dateRange === 'all'} onClick={() => setDateRange('all')}>All</FilterButton>
+          </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-gray-400 font-medium mr-1">Team</span>
             <FilterButton active={teamFilter === 'all'} onClick={() => setTeamFilter('all')}>All</FilterButton>
