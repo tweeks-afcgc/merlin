@@ -135,7 +135,7 @@ export default function EditTeamPage() {
     imageUrl: string | null
     onUpload: (f: File) => void
     uploading: boolean
-    fileRef: React.RefObject<HTMLInputElement>
+    fileRef: React.RefObject<HTMLInputElement | null>
     kitType: 'home' | 'away'
   }) {
     return (
