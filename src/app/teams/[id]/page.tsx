@@ -178,11 +178,11 @@ export default async function TeamDashboardPage({
   }))
 
   // Players for this team in the current season
-  const { data: playerRows } = currentSeason ? await supabase
+  const { data: playerRows } = selectedStatsSeason ? await supabase
     .from('player_team_seasons')
     .select('players(id, first_name, last_name, date_of_birth)')
     .eq('team_id', id)
-    .eq('season_id', currentSeason.id)
+    .eq('season_id', selectedStatsSeason.id)
     : { data: [] }
 
   const players = (playerRows ?? [])
@@ -324,7 +324,7 @@ export default async function TeamDashboardPage({
             leagueStats={leagueStats}
             selectedSeasonName={selectedStatsSeason?.name ?? null}
             players={players as any[]}
-            currentSeasonName={currentSeason?.name ?? null}
+            currentSeasonName={selectedStatsSeason?.name ?? null}
           />
         </div>
 
