@@ -316,6 +316,7 @@ export default async function TeamDashboardPage({
         {/* Tabbed card: Fixtures | Season Stats | Players */}
         <div className={statsSeasons.length > 1 ? '' : 'mt-6'}>
           <TeamTabs
+            key={selectedStatsSeason?.id ?? 'no-season'}
             teamId={id}
             isAdmin={isAdmin}
             currentSeasonId={currentSeason?.id ?? null}
