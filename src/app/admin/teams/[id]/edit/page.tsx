@@ -844,7 +844,7 @@ export default function EditTeamPage() {
                           </span>
                           <div className="min-w-0">
                             <span className="text-sm text-gray-800 truncate block">{c.name}{c.abbr_name ? ` (${c.abbr_name})` : ''}</span>
-                            {c.division && <span className="text-xs text-gray-400">Division {c.division}</span>}
+                            {c.division && <span className="text-xs text-gray-400">{c.division}</span>}
                           </div>
                         </div>
                         <button type="button" onClick={() => startEditComp(c)} className="text-gray-300 hover:text-red-800 transition flex-shrink-0" title="Edit">
