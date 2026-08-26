@@ -15,7 +15,7 @@ type Fixture = {
   team_id: string
   teamName: string
   teamType: string
-  teamSortKey: string   // passed in for stable team ordering
+  teamSortKey: string
   ageGroupLabel: string
   teamShortName: string
   opponentName: string
@@ -91,30 +91,40 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
   const needsTime = !f.kickoff_time
   const needsPitch = f.venue === 'home' && !f.pitch_id
   const needsRef = f.refereeRequired && !f.refereeName
+  const hasWarning = needsTime || (!needsTime && needsPitch)
+
   return (
-    <div className={`flex items-center justify-between gap-4 ${f.confirmed ? '' : 'border-l-4 border-red-400'}`}>
-      <Link href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`} className="flex items-center gap-3 min-w-0 flex-1 px-4 py-3 hover:bg-gray-50 transition">
-        <span className={`text-sm font-bold w-12 flex-shrink-0 ${f.confirmed ? 'text-green-700' : 'text-red-600'}`}>
+    <div className={`flex items-center justify-between gap-2 ${f.confirmed ? '' : 'border-l-4 border-red-400'}`}>
+      <Link href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`} className="flex items-center gap-2 min-w-0 flex-1 px-3 py-3 hover:bg-gray-50 transition">
+        <span className={`text-sm font-bold w-10 flex-shrink-0 ${f.confirmed ? 'text-green-700' : 'text-red-600'}`}>
           {formatTime(f.kickoff_time)}
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate">
-            {showTeam && <span>{f.teamName} </span>}
-            <span className="font-normal text-gray-500">vs {f.opponentName}</span>
+          <p className="text-sm font-semibold text-gray-900 leading-snug truncate">
+            {showTeam ? f.teamName : f.opponentName}
           </p>
-          {needsTime && <p className="text-xs text-amber-600 font-medium">Kick off time TBC — cannot confirm</p>}
-          {!needsTime && needsPitch && <p className="text-xs text-amber-600 font-medium">No pitch assigned — cannot confirm</p>}
-          {f.refereeName
-            ? <p className="text-xs text-gray-400">Referee: {f.refereeName}</p>
-            : f.hasRefereeRequest
-              ? <p className="text-xs text-blue-600 font-medium">Referee request made</p>
-              : f.refereeRequired
-                ? <p className="text-xs text-amber-600 font-medium">No referee assigned</p>
-                : <p className="text-xs text-amber-600 font-medium">No referee requested</p>
-          }
+          {showTeam && (
+            <p className="text-xs text-gray-500 leading-snug truncate">vs {f.opponentName}</p>
+          )}
+          {/* Warnings — desktop always shown, mobile only for blocking issues */}
+          {hasWarning && (
+            <p className="text-xs text-amber-600 font-medium leading-snug">
+              {needsTime ? 'Kick off TBC' : 'No pitch assigned'}
+            </p>
+          )}
+          {/* Referee — desktop shows all states, mobile only shows missing when required */}
+          {f.refereeName ? (
+            <p className="hidden sm:block text-xs text-gray-400 leading-snug">Ref: {f.refereeName}</p>
+          ) : f.hasRefereeRequest ? (
+            <p className="hidden sm:block text-xs text-blue-600 font-medium leading-snug">Referee request made</p>
+          ) : f.refereeRequired ? (
+            <p className="text-xs text-amber-600 font-medium leading-snug">No referee</p>
+          ) : (
+            <p className="hidden sm:block text-xs text-amber-600 font-medium leading-snug">No referee requested</p>
+          )}
         </div>
       </Link>
-      <div className="flex items-center gap-2 flex-shrink-0 pr-4">
+      <div className="flex items-center gap-1.5 flex-shrink-0 pr-3">
         {f.confirmed && f.venue === 'home' && (
           <EmailModal fixture={f} />
         )}
@@ -218,39 +228,44 @@ function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCon
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
-          {dayFixtures.map(f => (
-            <div key={f.id} className={`flex items-center justify-between gap-4 ${f.confirmed ? '' : 'border-l-4 border-red-400'}`}>
-              <Link href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`} className="flex items-center gap-3 min-w-0 flex-1 px-4 py-3 hover:bg-gray-50 transition">
-                <span className={`text-sm font-bold w-12 flex-shrink-0 ${f.confirmed ? 'text-green-700' : 'text-red-600'}`}>
-                  {formatTime(f.kickoff_time)}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {f.teamName} <span className="font-normal text-gray-500">vs {f.opponentName}</span>
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {f.venue === 'home' ? 'Home' : f.venue === 'away' ? 'Away' : 'Neutral'}
-                    {f.venueName ? ` · ${f.venueName}` : ''}
-                    {f.pitchName ? ` · ${f.pitchName}` : ''}
-                    {f.refereeName
-                      ? ` · Ref: ${f.refereeName}`
-                      : f.hasRefereeRequest
-                        ? ' · Referee request made'
-                        : f.refereeRequired
-                          ? ' · No referee assigned'
-                          : ' · No referee requested'
-                    }
-                  </p>
+          {dayFixtures.map(f => {
+            const needsTime = !f.kickoff_time
+            const needsPitch = f.venue === 'home' && !f.pitch_id
+            return (
+              <div key={f.id} className={`flex items-center justify-between gap-2 ${f.confirmed ? '' : 'border-l-4 border-red-400'}`}>
+                <Link href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`} className="flex items-center gap-2 min-w-0 flex-1 px-3 py-3 hover:bg-gray-50 transition">
+                  <span className={`text-sm font-bold w-10 flex-shrink-0 ${f.confirmed ? 'text-green-700' : 'text-red-600'}`}>
+                    {formatTime(f.kickoff_time)}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate leading-snug">{f.teamName}</p>
+                    <p className="text-xs text-gray-500 truncate leading-snug">vs {f.opponentName}</p>
+                    <p className="text-xs text-gray-400 truncate leading-snug">
+                      {f.venue === 'home' ? 'H' : f.venue === 'away' ? 'A' : 'N'}
+                      {f.venueName ? ` · ${f.venueName}` : ''}
+                      {f.pitchName ? ` · ${f.pitchName}` : ''}
+                      <span className="hidden sm:inline">
+                        {f.refereeName
+                          ? ` · Ref: ${f.refereeName}`
+                          : f.hasRefereeRequest
+                            ? ' · Ref requested'
+                            : f.refereeRequired
+                              ? ' · No ref'
+                              : ''
+                        }
+                      </span>
+                    </p>
+                  </div>
+                </Link>
+                <div className="flex items-center gap-1.5 flex-shrink-0 pr-3">
+                  {f.confirmed && f.venue === 'home' && <EmailModal fixture={f} />}
+                  {canConfirm && (
+                    <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (needsTime || needsPitch)} />
+                  )}
                 </div>
-              </Link>
-              <div className="flex items-center gap-2 flex-shrink-0 pr-4">
-                {f.confirmed && f.venue === 'home' && <EmailModal fixture={f} />}
-                {canConfirm && (
-                  <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (!f.kickoff_time || (f.venue === 'home' && !f.pitch_id))} />
-                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
@@ -360,6 +375,69 @@ function ViewDropdown({ view, onChange }: { view: ViewMode; onChange: (v: ViewMo
   )
 }
 
+// ─── Mobile filter panel ─────────────────────────────────────────────────────
+
+function MobileFilters({
+  dateRange, setDateRange,
+  teamFilter, setTeamFilter,
+  venueFilter, setVenueFilter,
+}: {
+  dateRange: DateRange; setDateRange: (v: DateRange) => void
+  teamFilter: TeamFilter; setTeamFilter: (v: TeamFilter) => void
+  venueFilter: VenueFilter; setVenueFilter: (v: VenueFilter) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const activeCount = (dateRange !== 14 ? 1 : 0) + (teamFilter !== 'all' ? 1 : 0) + (venueFilter !== 'all' ? 1 : 0)
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center gap-1.5 border text-sm font-semibold px-3 py-2 rounded-lg transition ${activeCount > 0 ? 'bg-red-800 text-white border-red-800' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M3 4h18M7 9h10M10 14h4M12 19h0" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Filters{activeCount > 0 ? ` (${activeCount})` : ''}
+      </button>
+      {open && (
+        <div className="absolute left-0 top-11 bg-white shadow-xl rounded-xl border border-gray-100 z-20 p-4 space-y-4 w-64">
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Period</p>
+            <div className="flex gap-1.5 flex-wrap">
+              <FilterButton active={dateRange === 14} onClick={() => setDateRange(14)}>14 days</FilterButton>
+              <FilterButton active={dateRange === 30} onClick={() => setDateRange(30)}>30 days</FilterButton>
+              <FilterButton active={dateRange === 'all'} onClick={() => setDateRange('all')}>All</FilterButton>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Team</p>
+            <div className="flex gap-1.5 flex-wrap">
+              <FilterButton active={teamFilter === 'all'} onClick={() => setTeamFilter('all')}>All</FilterButton>
+              <FilterButton active={teamFilter === 'senior'} onClick={() => setTeamFilter('senior')}>Senior</FilterButton>
+              <FilterButton active={teamFilter === 'junior'} onClick={() => setTeamFilter('junior')}>Junior</FilterButton>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Venue</p>
+            <div className="flex gap-1.5 flex-wrap">
+              <FilterButton active={venueFilter === 'all'} onClick={() => setVenueFilter('all')}>All</FilterButton>
+              <FilterButton active={venueFilter === 'home'} onClick={() => setVenueFilter('home')}>Home</FilterButton>
+              <FilterButton active={venueFilter === 'away'} onClick={() => setVenueFilter('away')}>Away</FilterButton>
+            </div>
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            className="w-full bg-gray-900 text-white text-sm font-semibold py-2 rounded-lg"
+          >
+            Done
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main export ─────────────────────────────────────────────────────────────
 
 export default function FixturesList({
@@ -389,14 +467,14 @@ export default function FixturesList({
     return true
   })
 
-  // Unique sorted dates that have fixtures (for team/pitch date dropdowns)
   const fixtureDates = [...new Set(fixtures.map(f => f.date))].sort()
 
   return (
     <div>
-      {/* Top bar: filters + view switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div className="flex flex-wrap gap-4">
+      {/* Top bar */}
+      <div className="flex items-center justify-between gap-3 mb-6">
+        {/* Desktop filters */}
+        <div className="hidden sm:flex flex-wrap gap-4">
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-gray-400 font-medium mr-1">Period</span>
             <FilterButton active={dateRange === 14} onClick={() => setDateRange(14)}>14 days</FilterButton>
@@ -415,6 +493,14 @@ export default function FixturesList({
             <FilterButton active={venueFilter === 'home'} onClick={() => setVenueFilter('home')}>Home</FilterButton>
             <FilterButton active={venueFilter === 'away'} onClick={() => setVenueFilter('away')}>Away</FilterButton>
           </div>
+        </div>
+        {/* Mobile filters */}
+        <div className="sm:hidden">
+          <MobileFilters
+            dateRange={dateRange} setDateRange={setDateRange}
+            teamFilter={teamFilter} setTeamFilter={setTeamFilter}
+            venueFilter={venueFilter} setVenueFilter={setVenueFilter}
+          />
         </div>
         <ViewDropdown view={view} onChange={setView} />
       </div>
