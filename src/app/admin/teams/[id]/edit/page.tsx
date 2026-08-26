@@ -192,6 +192,29 @@ export default function EditTeamPage() {
   const [sName, setSName] = useState('')
   const [sSaving, setSSaving] = useState(false)
 
+  // Inline editing — training slots
+  const [editingSlotId, setEditingSlotId] = useState<string | null>(null)
+  const [eDay, setEDay] = useState('')
+  const [eFreq, setEFreq] = useState('weekly')
+  const [eStart, setEStart] = useState('')
+  const [eEnd, setEEnd] = useState('')
+  const [eVenueId, setEVenueId] = useState('')
+  const [eNotes, setENotes] = useState('')
+  const [eSaving, setESaving] = useState(false)
+
+  // Inline editing — competitions
+  const [editingCompId, setEditingCompId] = useState<string | null>(null)
+  const [ecType, setEcType] = useState<'league' | 'cup'>('league')
+  const [ecName, setEcName] = useState('')
+  const [ecAbbr, setEcAbbr] = useState('')
+  const [ecDiv, setEcDiv] = useState('')
+  const [ecSaving, setEcSaving] = useState(false)
+
+  // Inline editing — sponsors
+  const [editingSponsorId, setEditingSponsorId] = useState<string | null>(null)
+  const [esName, setEsName] = useState('')
+  const [esSaving, setEsSaving] = useState(false)
+
   useEffect(() => {
     async function load() {
       const { data: team } = await supabase.from('teams').select('*').eq('id', id).single()
@@ -351,6 +374,76 @@ export default function EditTeamPage() {
   async function removeSponsor(sId: string) {
     await supabase.from('team_sponsors').delete().eq('id', sId)
     setSponsors(prev => prev.filter(s => s.id !== sId))
+  }
+
+  function startEditSlot(slot: TrainingSlot) {
+    setEditingSlotId(slot.id)
+    setEDay(slot.day_of_week)
+    setEFreq(slot.frequency)
+    setEStart(slot.start_time ?? '')
+    setEEnd(slot.end_time ?? '')
+    setEVenueId(slot.venue_id ?? '')
+    setENotes(slot.notes ?? '')
+  }
+
+  async function saveSlot() {
+    if (!editingSlotId) return
+    setESaving(true)
+    const venueName = eVenueId ? venues.find(v => v.id === eVenueId)?.name ?? null : null
+    const { error } = await supabase.from('training_slots').update({
+      day_of_week: eDay, frequency: eFreq,
+      start_time: eStart || null, end_time: eEnd || null,
+      venue_id: eVenueId || null, notes: eNotes || null,
+    }).eq('id', editingSlotId)
+    setESaving(false)
+    if (error) return
+    setTrainingSlots(prev => prev.map(s => s.id === editingSlotId ? {
+      ...s, day_of_week: eDay, frequency: eFreq,
+      start_time: eStart || null, end_time: eEnd || null,
+      venue_id: eVenueId || null, notes: eNotes || null, venueName,
+    } : s).sort((a, b) => DAY_ORDER.indexOf(a.day_of_week) - DAY_ORDER.indexOf(b.day_of_week)))
+    setEditingSlotId(null)
+  }
+
+  function startEditComp(c: Competition) {
+    setEditingCompId(c.id)
+    setEcType(c.type)
+    setEcName(c.name)
+    setEcAbbr(c.abbr_name ?? '')
+    setEcDiv(c.division ?? '')
+  }
+
+  async function saveComp() {
+    if (!editingCompId) return
+    setEcSaving(true)
+    const { error } = await supabase.from('team_competitions').update({
+      type: ecType, name: ecName.trim(),
+      abbr_name: ecType === 'league' ? (ecAbbr.trim() || null) : null,
+      division: ecType === 'league' ? (ecDiv.trim() || null) : null,
+    }).eq('id', editingCompId)
+    setEcSaving(false)
+    if (error) return
+    setCompetitions(prev => prev.map(c => c.id === editingCompId ? {
+      ...c, type: ecType, name: ecName.trim(),
+      abbr_name: ecType === 'league' ? (ecAbbr.trim() || null) : null,
+      division: ecType === 'league' ? (ecDiv.trim() || null) : null,
+    } : c))
+    setEditingCompId(null)
+  }
+
+  function startEditSponsor(s: Sponsor) {
+    setEditingSponsorId(s.id)
+    setEsName(s.name)
+  }
+
+  async function saveSponsor() {
+    if (!editingSponsorId) return
+    setEsSaving(true)
+    const { error } = await supabase.from('team_sponsors').update({ name: esName.trim() }).eq('id', editingSponsorId)
+    setEsSaving(false)
+    if (error) return
+    setSponsors(prev => prev.map(s => s.id === editingSponsorId ? { ...s, name: esName.trim() } : s))
+    setEditingSponsorId(null)
   }
 
   return (
@@ -582,6 +675,50 @@ export default function EditTeamPage() {
               {trainingSlots.length > 0 && (
                 <ul className="divide-y divide-gray-50">
                   {trainingSlots.map(slot => {
+                    if (editingSlotId === slot.id) return (
+                      <li key={slot.id} className="px-5 py-4 bg-gray-50 space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Day</label>
+                            <select value={eDay} onChange={e => setEDay(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                              {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d}>{d}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Frequency</label>
+                            <select value={eFreq} onChange={e => setEFreq(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                              <option value="weekly">Weekly</option>
+                              <option value="Alternate">Alternate</option>
+                              <option value="monthly">Monthly</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Start <span className="text-gray-400">(opt)</span></label>
+                            <input type="time" value={eStart} onChange={e => setEStart(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">End <span className="text-gray-400">(opt)</span></label>
+                            <input type="time" value={eEnd} onChange={e => setEEnd(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Venue <span className="text-gray-400">(opt)</span></label>
+                          <select value={eVenueId} onChange={e => setEVenueId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                            <option value="">None</option>
+                            {venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Notes <span className="text-gray-400">(opt)</span></label>
+                          <input type="text" value={eNotes} onChange={e => setENotes(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={saveSlot} disabled={eSaving} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-800 text-white hover:bg-red-900 disabled:opacity-50 transition">{eSaving ? 'Saving…' : 'Save'}</button>
+                          <button type="button" onClick={() => setEditingSlotId(null)} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                          <button type="button" onClick={() => { removeSlot(slot.id); setEditingSlotId(null) }} className="ml-auto text-xs text-red-400 hover:text-red-600 transition">Remove</button>
+                        </div>
+                      </li>
+                    )
                     const start = slot.start_time?.slice(0, 5) ?? null
                     const end = slot.end_time?.slice(0, 5) ?? null
                     const timeStr = start && end ? `${start}–${end}` : start ? `from ${start}` : null
@@ -595,7 +732,9 @@ export default function EditTeamPage() {
                     return (
                       <li key={slot.id} className="px-5 py-3 flex items-center justify-between gap-4">
                         <span className="text-sm text-gray-800">{parts.join(' · ')}</span>
-                        <button type="button" onClick={() => removeSlot(slot.id)} className="text-xs text-gray-300 hover:text-red-500 transition flex-shrink-0">Remove</button>
+                        <button type="button" onClick={() => startEditSlot(slot)} className="text-gray-300 hover:text-red-800 transition flex-shrink-0" title="Edit">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
                       </li>
                     )
                   })}
@@ -664,20 +803,56 @@ export default function EditTeamPage() {
               )}
               {competitions.length > 0 && (
                 <ul className="divide-y divide-gray-50">
-                  {competitions.map(c => (
-                    <li key={c.id} className="px-5 py-3 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${c.type === 'league' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
-                          {c.type === 'league' ? 'League' : 'Cup'}
-                        </span>
-                        <div className="min-w-0">
-                          <span className="text-sm text-gray-800 truncate block">{c.name}{c.abbr_name ? ` (${c.abbr_name})` : ''}</span>
-                          {c.division && <span className="text-xs text-gray-400">Division {c.division}</span>}
+                  {competitions.map(c => {
+                    if (editingCompId === c.id) return (
+                      <li key={c.id} className="px-5 py-4 bg-gray-50 space-y-3">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Type</label>
+                          <select value={ecType} onChange={e => setEcType(e.target.value as 'league' | 'cup')} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                            <option value="league">League</option>
+                            <option value="cup">Cup</option>
+                          </select>
                         </div>
-                      </div>
-                      <button type="button" onClick={() => removeComp(c.id)} className="text-xs text-gray-300 hover:text-red-500 transition flex-shrink-0">Remove</button>
-                    </li>
-                  ))}
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">{ecType === 'league' ? 'League name' : 'Cup name'}</label>
+                          <input type="text" value={ecName} onChange={e => setEcName(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                        </div>
+                        {ecType === 'league' && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs text-gray-500 mb-1">Abbreviation <span className="text-gray-400">(opt)</span></label>
+                              <input type="text" value={ecAbbr} onChange={e => setEcAbbr(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-500 mb-1">Division <span className="text-gray-400">(opt)</span></label>
+                              <input type="text" value={ecDiv} onChange={e => setEcDiv(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <button type="button" onClick={saveComp} disabled={ecSaving || !ecName.trim()} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-800 text-white hover:bg-red-900 disabled:opacity-50 transition">{ecSaving ? 'Saving…' : 'Save'}</button>
+                          <button type="button" onClick={() => setEditingCompId(null)} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                          <button type="button" onClick={() => { removeComp(c.id); setEditingCompId(null) }} className="ml-auto text-xs text-red-400 hover:text-red-600 transition">Remove</button>
+                        </div>
+                      </li>
+                    )
+                    return (
+                      <li key={c.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${c.type === 'league' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                            {c.type === 'league' ? 'League' : 'Cup'}
+                          </span>
+                          <div className="min-w-0">
+                            <span className="text-sm text-gray-800 truncate block">{c.name}{c.abbr_name ? ` (${c.abbr_name})` : ''}</span>
+                            {c.division && <span className="text-xs text-gray-400">Division {c.division}</span>}
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => startEditComp(c)} className="text-gray-300 hover:text-red-800 transition flex-shrink-0" title="Edit">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
               {addingComp && (
@@ -732,12 +907,26 @@ export default function EditTeamPage() {
               )}
               {sponsors.length > 0 && (
                 <ul className="divide-y divide-gray-50">
-                  {sponsors.map(s => (
-                    <li key={s.id} className="px-5 py-3 flex items-center justify-between gap-3">
-                      <span className="text-sm text-gray-800">{s.name}</span>
-                      <button type="button" onClick={() => removeSponsor(s.id)} className="text-xs text-gray-300 hover:text-red-500 transition flex-shrink-0">Remove</button>
-                    </li>
-                  ))}
+                  {sponsors.map(s => {
+                    if (editingSponsorId === s.id) return (
+                      <li key={s.id} className="px-5 py-4 bg-gray-50 space-y-2">
+                        <input type="text" autoFocus value={esName} onChange={e => setEsName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); saveSponsor() } }} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                        <div className="flex gap-2">
+                          <button type="button" onClick={saveSponsor} disabled={esSaving || !esName.trim()} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-800 text-white hover:bg-red-900 disabled:opacity-50 transition">{esSaving ? 'Saving…' : 'Save'}</button>
+                          <button type="button" onClick={() => setEditingSponsorId(null)} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                          <button type="button" onClick={() => { removeSponsor(s.id); setEditingSponsorId(null) }} className="ml-auto text-xs text-red-400 hover:text-red-600 transition">Remove</button>
+                        </div>
+                      </li>
+                    )
+                    return (
+                      <li key={s.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                        <span className="text-sm text-gray-800">{s.name}</span>
+                        <button type="button" onClick={() => startEditSponsor(s)} className="text-gray-300 hover:text-red-800 transition flex-shrink-0" title="Edit">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
               {addingSponsor && (
