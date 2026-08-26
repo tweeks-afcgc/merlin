@@ -165,14 +165,14 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
       {menuOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col md:hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 h-14 border-b border-gray-100 flex-shrink-0">
-            <span className="font-bold text-lg text-red-800">Merlin</span>
+          <div className="flex items-center px-4 h-14 border-b border-gray-100 flex-shrink-0 gap-3">
             <button
               onClick={() => setMenuOpen(false)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition"
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition flex-shrink-0"
             >
               <CloseIcon />
             </button>
+            <span className="font-bold text-lg text-red-800">Merlin</span>
           </div>
 
           {/* User info strip */}
