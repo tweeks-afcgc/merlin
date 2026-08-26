@@ -94,7 +94,7 @@ export default async function TeamsPage() {
         .sort((a, b) => a[1].sortKey - b[1].sortKey || a[0].localeCompare(b[0]))
         .map(([roleName, { names }]) => ({
           label: names.length > 1 ? pluralise(roleName) : roleName,
-          value: names.join(', ') || '—',
+          names: names.length > 0 ? names : ['—'],
         }))
 
       // League for current season
@@ -214,33 +214,35 @@ export default async function TeamsPage() {
 
                     <div className="mt-1.5 space-y-1">
 
-                      {/* Staff roles */}
-                      {team.roleLines.map((r: { label: string; value: string }, i: number) => (
-                        <div key={i} className="flex items-baseline gap-2">
-                          <span className="w-24 flex-shrink-0 text-xs text-gray-400">{r.label}</span>
-                          <span className="text-xs text-gray-700">{r.value}</span>
-                        </div>
-                      ))}
+                      {/* Staff roles — one name per line, label only on first */}
+                      {team.roleLines.map((r: { label: string; names: string[] }, i: number) =>
+                        r.names.map((name, j) => (
+                          <div key={`${i}-${j}`} className="flex items-baseline gap-2">
+                            <span className={`w-20 flex-shrink-0 text-xs ${j === 0 ? 'text-gray-400' : 'invisible'}`}>{r.label}</span>
+                            <span className="text-xs text-gray-700">{name}</span>
+                          </div>
+                        ))
+                      )}
 
                       {/* League */}
                       {team.league && (
                         <div className="flex items-baseline gap-2">
-                          <span className="w-24 flex-shrink-0 text-xs text-gray-400">League</span>
+                          <span className="w-20 flex-shrink-0 text-xs text-gray-400">League</span>
                           <span className="text-xs text-gray-700">
-                            {team.league.abbr_name ?? team.league.name}{team.league.division ? ` · Division ${team.league.division}` : ''}
+                            {team.league.abbr_name ?? team.league.name}{team.league.division ? ` - ${team.league.division}` : ''}
                           </span>
                         </div>
                       )}
 
-                      {/* Home ground */}
+                      {/* Home */}
                       {team.venueName && (
                         <div className="flex items-baseline gap-2">
-                          <span className="w-24 flex-shrink-0 text-xs text-gray-400">Home ground</span>
+                          <span className="w-20 flex-shrink-0 text-xs text-gray-400">Home</span>
                           <span className="text-xs text-gray-700">{team.venueName}</span>
                         </div>
                       )}
 
-                      {/* Training */}
+                      {/* Training — one slot per line, label only on first */}
                       {team.slots.map((slot: any, i: number) => {
                         const start = fmtTime(slot.start_time)
                         const end = fmtTime(slot.end_time)
@@ -253,21 +255,21 @@ export default async function TeamsPage() {
                         const display = venuePart ? `${mainParts.join(' ')} ${venuePart}` : mainParts.join(' ')
                         return (
                           <div key={i} className="flex items-baseline gap-2">
-                            <span className={`w-24 flex-shrink-0 text-xs ${i === 0 ? 'text-gray-400' : 'invisible'}`}>Training</span>
+                            <span className={`w-20 flex-shrink-0 text-xs ${i === 0 ? 'text-gray-400' : 'invisible'}`}>Training</span>
                             <span className="text-xs text-gray-700">{display}</span>
                           </div>
                         )
                       })}
 
-                      {/* Sponsors */}
-                      {team.sponsors.length > 0 && (
-                        <div className="flex items-baseline gap-2">
-                          <span className="w-24 flex-shrink-0 text-xs text-gray-400">
-                            {team.sponsors.length > 1 ? 'Sponsors' : 'Sponsor'}
+                      {/* Sponsors — one per line, label only on first */}
+                      {team.sponsors.map((name: string, i: number) => (
+                        <div key={i} className="flex items-baseline gap-2">
+                          <span className={`w-20 flex-shrink-0 text-xs ${i === 0 ? 'text-gray-400' : 'invisible'}`}>
+                            {i === 0 ? (team.sponsors.length > 1 ? 'Sponsors' : 'Sponsor') : 'Sponsor'}
                           </span>
-                          <span className="text-xs text-gray-700">{team.sponsors.join(', ')}</span>
+                          <span className="text-xs text-gray-700">{name}</span>
                         </div>
-                      )}
+                      ))}
                     </div>
                   </div>
                 </div>
