@@ -178,13 +178,12 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
             </div>
           </div>
 
-          {/* User info strip */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 flex-shrink-0">
-            <div className="w-10 h-10 rounded-full bg-red-800 text-white font-bold flex items-center justify-center text-sm flex-shrink-0">
-              {initials}
+          {/* User name strip */}
+          {userName && (
+            <div className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
+              <span className="text-sm font-semibold text-gray-900">{userName}</span>
             </div>
-            <span className="text-sm font-semibold text-gray-900 truncate">{userName ?? ''}</span>
-          </div>
+          )}
 
           {/* Nav links */}
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
