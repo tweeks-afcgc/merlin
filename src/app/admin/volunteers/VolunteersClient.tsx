@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { addVolunteer, updateVolunteer, deleteVolunteer, addVolunteerRole, removeVolunteerRole, createVolunteerFromProfile } from './actions'
+import { addVolunteer, updateVolunteer, deleteVolunteer, addVolunteerRole, updateVolunteerRole, removeVolunteerRole, createVolunteerFromProfile } from './actions'
 
 type VolunteerRole = { id: string; role_type: string; role_name: string; team_id: string | null; teamName: string | null }
 type Volunteer = {
@@ -180,6 +180,82 @@ function RoleForm({ volunteerId, teams, onAdded }: { volunteerId: string; teams:
   )
 }
 
+function EditRoleForm({ role, teams, onSaved, onCancel }: {
+  role: VolunteerRole
+  teams: Team[]
+  onSaved: (updated: VolunteerRole) => void
+  onCancel: () => void
+}) {
+  const [roleType, setRoleType] = useState<'club' | 'team'>(role.role_type as 'club' | 'team')
+  const [roleName, setRoleName] = useState(role.role_name)
+  const [teamId, setTeamId] = useState(role.team_id ?? teams[0]?.id ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSave() {
+    if (!roleName.trim()) return
+    setSaving(true)
+    const fd = new FormData()
+    fd.set('role_type', roleType)
+    fd.set('role_name', roleName.trim())
+    if (roleType === 'team') fd.set('team_id', teamId)
+    const result = await updateVolunteerRole(role.id, fd)
+    if (result?.error) { setError(result.error); setSaving(false); return }
+    const team = teams.find(t => t.id === teamId)
+    onSaved({ ...role, role_type: roleType, role_name: roleName.trim(), team_id: roleType === 'team' ? teamId : null, teamName: roleType === 'team' ? (team?.displayName ?? null) : null })
+    setSaving(false)
+  }
+
+  return (
+    <div className="px-4 py-3 bg-gray-50 space-y-2">
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      <div className="flex flex-wrap gap-2 items-end">
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Type</label>
+          <select value={roleType} onChange={e => { setRoleType(e.target.value as 'club' | 'team'); setRoleName('') }}
+            className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+            <option value="club">Club</option>
+            <option value="team">Team</option>
+          </select>
+        </div>
+        {roleType === 'team' && (
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Team</label>
+            <select value={teamId} onChange={e => setTeamId(e.target.value)}
+              className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+              {teams.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+            </select>
+          </div>
+        )}
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Role name</label>
+          {roleType === 'team' ? (
+            <select value={roleName} onChange={e => setRoleName(e.target.value)}
+              className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+              <option value="">Select role...</option>
+              <option value="Manager">Manager</option>
+              <option value="Coach">Coach</option>
+              <option value="Assistant">Assistant</option>
+            </select>
+          ) : (
+            <input value={roleName} onChange={e => setRoleName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
+              className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+          )}
+        </div>
+        <button onClick={handleSave} disabled={saving || !roleName.trim()}
+          className="bg-red-800 hover:bg-red-900 text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        <button onClick={onCancel}
+          className="border border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold px-3 py-1.5 rounded-lg text-sm transition">
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function VolunteersClient({ volunteers: initial, teams, unlinkedProfiles: initialUnlinked }: { volunteers: Volunteer[]; teams: Team[]; unlinkedProfiles: UnlinkedProfile[] }) {
   const [volunteers, setVolunteers] = useState(initial)
   const [unlinkedProfiles, setUnlinkedProfiles] = useState(initialUnlinked)
@@ -191,6 +267,7 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
   const [linkingProfileId, setLinkingProfileId] = useState<string | null>(null)
   const [linkingSaving, setLinkingSaving] = useState(false)
   const [linkingError, setLinkingError] = useState<string | null>(null)
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
 
   const sorted = [...volunteers].sort((a, b) =>
     `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
@@ -375,19 +452,39 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                           {v.roles.length > 0 ? (
                             <ul className="divide-y divide-gray-50 border border-gray-100 rounded-lg overflow-hidden mb-3">
                               {v.roles.map(r => (
-                                <li key={r.id} className="flex items-center justify-between px-4 py-2.5 bg-gray-50">
-                                  <div>
-                                    <p className="text-sm font-medium text-gray-800">{r.role_name}</p>
-                                    <p className="text-xs text-gray-400">
-                                      {r.role_type === 'team' ? `Team: ${r.teamName ?? '—'}` : 'Club role'}
-                                    </p>
-                                  </div>
-                                  <button onClick={async () => {
-                                    await removeVolunteerRole(r.id)
-                                    setVolunteers(vs => vs.map(vol => vol.id === v.id
-                                      ? { ...vol, roles: vol.roles.filter(x => x.id !== r.id) }
-                                      : vol))
-                                  }} className="text-xs text-gray-400 hover:text-red-600 transition">Remove</button>
+                                <li key={r.id}>
+                                  {editingRoleId === r.id ? (
+                                    <EditRoleForm
+                                      role={r}
+                                      teams={teams}
+                                      onSaved={updated => {
+                                        setVolunteers(vs => vs.map(vol => vol.id === v.id
+                                          ? { ...vol, roles: vol.roles.map(x => x.id === r.id ? updated : x) }
+                                          : vol))
+                                        setEditingRoleId(null)
+                                      }}
+                                      onCancel={() => setEditingRoleId(null)}
+                                    />
+                                  ) : (
+                                    <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50">
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-800">{r.role_name}</p>
+                                        <p className="text-xs text-gray-400">
+                                          {r.role_type === 'team' ? `Team: ${r.teamName ?? '—'}` : 'Club role'}
+                                        </p>
+                                      </div>
+                                      <div className="flex items-center gap-3 text-xs">
+                                        <button onClick={() => setEditingRoleId(r.id)}
+                                          className="text-gray-500 hover:text-gray-800 transition">Edit</button>
+                                        <button onClick={async () => {
+                                          await removeVolunteerRole(r.id)
+                                          setVolunteers(vs => vs.map(vol => vol.id === v.id
+                                            ? { ...vol, roles: vol.roles.filter(x => x.id !== r.id) }
+                                            : vol))
+                                        }} className="text-gray-400 hover:text-red-600 transition">Remove</button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </li>
                               ))}
                             </ul>

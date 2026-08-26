@@ -46,7 +46,7 @@ function FixtureRow({ f, seasons, subtitle }: {
   const opponent = f.club_teams as any
   const venueData = f.venues as any
   const teamName = team ? teamDisplayName(team, seasons) : '—'
-  const opponentName = opponent ? [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown opponent' : 'Unknown opponent'
+  const opponentName = opponent ? ([opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown opponent').replace(/^\[Internal\]\s*/, '') : 'Unknown opponent'
 
   return (
     <div className="px-4 py-3 flex items-start justify-between gap-4">

@@ -1,9 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { addPlayer, updatePlayer, deletePlayer, addPlayerTeamSeason, removePlayerTeamSeason } from './actions'
+import { addPlayer, updatePlayer, deletePlayer, addPlayerTeamSeason, updatePlayerTeamSeason, removePlayerTeamSeason } from './actions'
 
-type TeamSeason = { id: string; team_id: string; season_id: string; teamName: string; seasonName: string }
+type TeamSeason = {
+  id: string
+  team_id: string
+  season_id: string
+  teamName: string
+  seasonName: string
+  player_number: number | null
+}
 type Player = { id: string; first_name: string; last_name: string; date_of_birth: string | null; teamSeasons: TeamSeason[] }
 type Team = { id: string; displayName: string }
 type Season = { id: string; name: string; is_current: boolean }
@@ -35,10 +42,19 @@ export default function PlayersClient({
   const [editLast, setEditLast] = useState('')
   const [editDob, setEditDob] = useState('')
 
+  // Inline edit assignment: key = assignment id
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null)
+  const [editLinkTeamId, setEditLinkTeamId] = useState('')
+  const [editLinkSeasonId, setEditLinkSeasonId] = useState('')
+  const [editLinkNumber, setEditLinkNumber] = useState('')
+  const [editLinkError, setEditLinkError] = useState<string | null>(null)
+  const [editLinkSaving, setEditLinkSaving] = useState(false)
+
   // Add team-season link
   const currentSeason = seasons.find(s => s.is_current) ?? seasons[0]
   const [linkTeamId, setLinkTeamId] = useState<Record<string, string>>({})
   const [linkSeasonId, setLinkSeasonId] = useState<Record<string, string>>({})
+  const [linkNumber, setLinkNumber] = useState<Record<string, string>>({})
   const [linkError, setLinkError] = useState<Record<string, string>>({})
 
   function initLink(playerId: string) {
@@ -87,24 +103,65 @@ export default function PlayersClient({
     const fd = new FormData()
     fd.set('team_id', teamId)
     fd.set('season_id', seasonId)
+    fd.set('player_number', linkNumber[playerId] ?? '')
     const result = await addPlayerTeamSeason(playerId, fd)
     if (result?.error) { setLinkError(e => ({ ...e, [playerId]: result.error! })); return }
     setLinkError(e => ({ ...e, [playerId]: '' }))
     const team = teams.find(t => t.id === teamId)
     const season = seasons.find(s => s.id === seasonId)
+    const numRaw = (linkNumber[playerId] ?? '').trim()
     const newLink: TeamSeason = {
-      id: crypto.randomUUID(), // placeholder; page reload will fix
+      id: crypto.randomUUID(),
       team_id: teamId,
       season_id: seasonId,
       teamName: team?.displayName ?? '—',
       seasonName: season?.name ?? '—',
+      player_number: numRaw ? parseInt(numRaw) : null,
     }
     setPlayers(ps => ps.map(p => p.id === playerId ? { ...p, teamSeasons: [...p.teamSeasons, newLink] } : p))
+    setLinkNumber(n => ({ ...n, [playerId]: '' }))
+  }
+
+  function startEditLink(ts: TeamSeason) {
+    setEditingLinkId(ts.id)
+    setEditLinkTeamId(ts.team_id)
+    setEditLinkSeasonId(ts.season_id)
+    setEditLinkNumber(ts.player_number != null ? String(ts.player_number) : '')
+    setEditLinkError(null)
+  }
+
+  async function handleUpdateLink(playerId: string) {
+    if (!editingLinkId) return
+    setEditLinkSaving(true)
+    setEditLinkError(null)
+    const fd = new FormData()
+    fd.set('team_id', editLinkTeamId)
+    fd.set('season_id', editLinkSeasonId)
+    fd.set('player_number', editLinkNumber)
+    const result = await updatePlayerTeamSeason(editingLinkId, fd)
+    if (result?.error) { setEditLinkError(result.error); setEditLinkSaving(false); return }
+    const team = teams.find(t => t.id === editLinkTeamId)
+    const season = seasons.find(s => s.id === editLinkSeasonId)
+    const num = editLinkNumber.trim() ? parseInt(editLinkNumber) : null
+    setPlayers(ps => ps.map(p => p.id === playerId ? {
+      ...p,
+      teamSeasons: p.teamSeasons.map(ts => ts.id === editingLinkId ? {
+        ...ts,
+        team_id: editLinkTeamId,
+        season_id: editLinkSeasonId,
+        teamName: team?.displayName ?? ts.teamName,
+        seasonName: season?.name ?? ts.seasonName,
+        player_number: num,
+      } : ts),
+    } : p))
+    setEditingLinkId(null)
+    setEditLinkSaving(false)
   }
 
   async function handleRemoveLink(playerId: string, linkId: string) {
     await removePlayerTeamSeason(linkId)
     setPlayers(ps => ps.map(p => p.id === playerId ? { ...p, teamSeasons: p.teamSeasons.filter(ts => ts.id !== linkId) } : p))
+    if (editingLinkId === linkId) setEditingLinkId(null)
   }
 
   const sortedPlayers = [...players].sort((a, b) =>
@@ -201,6 +258,7 @@ export default function PlayersClient({
                             onClick={() => {
                               initLink(player.id)
                               setExpandedId(isExpanded ? null : player.id)
+                              setEditingLinkId(null)
                             }}
                             className="text-xs text-red-800 hover:underline font-medium"
                           >
@@ -230,21 +288,98 @@ export default function PlayersClient({
                     <div className="pb-4 pl-3 space-y-3">
                       {/* Existing links */}
                       {player.teamSeasons.length > 0 ? (
-                        <ul className="divide-y divide-gray-50 border border-gray-100 rounded-lg overflow-hidden mb-3">
+                        <ul className="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden mb-3">
                           {[...player.teamSeasons]
                             .sort((a, b) => a.seasonName.localeCompare(b.seasonName) || a.teamName.localeCompare(b.teamName))
-                            .map(ts => (
-                              <li key={ts.id} className="flex items-center justify-between px-4 py-2.5 bg-gray-50">
-                                <div>
-                                  <p className="text-sm text-gray-800 font-medium">{ts.teamName}</p>
-                                  <p className="text-xs text-gray-400">{ts.seasonName}</p>
-                                </div>
-                                <button onClick={() => handleRemoveLink(player.id, ts.id)}
-                                  className="text-xs text-gray-400 hover:text-red-600 transition">
-                                  Remove
-                                </button>
-                              </li>
-                            ))}
+                            .map(ts => {
+                              const isEditingThis = editingLinkId === ts.id
+                              return (
+                                <li key={ts.id} className="bg-gray-50">
+                                  {isEditingThis ? (
+                                    <div className="px-4 py-3 space-y-2">
+                                      <div className="flex flex-wrap gap-2 items-end">
+                                        <div>
+                                          <label className="block text-xs text-gray-500 mb-1">Season</label>
+                                          <select
+                                            value={editLinkSeasonId}
+                                            onChange={e => setEditLinkSeasonId(e.target.value)}
+                                            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                                          >
+                                            {seasons.map(s => (
+                                              <option key={s.id} value={s.id}>{s.name}{s.is_current ? ' (current)' : ''}</option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-gray-500 mb-1">Team</label>
+                                          <select
+                                            value={editLinkTeamId}
+                                            onChange={e => setEditLinkTeamId(e.target.value)}
+                                            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                                          >
+                                            {teams.map(t => (
+                                              <option key={t.id} value={t.id}>{t.displayName}</option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-gray-500 mb-1">Shirt #</label>
+                                          <input
+                                            type="number" min={1} max={99}
+                                            value={editLinkNumber}
+                                            onChange={e => setEditLinkNumber(e.target.value)}
+                                            placeholder="—"
+                                            className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                                          />
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <button
+                                            onClick={() => handleUpdateLink(player.id)}
+                                            disabled={editLinkSaving}
+                                            className="bg-red-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-900 disabled:opacity-50"
+                                          >
+                                            {editLinkSaving ? 'Saving…' : 'Save'}
+                                          </button>
+                                          <button
+                                            onClick={() => setEditingLinkId(null)}
+                                            className="text-xs text-gray-400 hover:text-gray-600 px-2"
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                      {editLinkError && <p className="text-xs text-red-600">{editLinkError}</p>}
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between px-4 py-2.5">
+                                      <div>
+                                        <p className="text-sm text-gray-800 font-medium">
+                                          {ts.teamName}
+                                          {ts.player_number != null && (
+                                            <span className="ml-2 text-xs font-semibold text-gray-400">#{ts.player_number}</span>
+                                          )}
+                                        </p>
+                                        <p className="text-xs text-gray-400">{ts.seasonName}</p>
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <button
+                                          onClick={() => startEditLink(ts)}
+                                          className="text-xs text-gray-500 hover:text-gray-800 transition"
+                                        >
+                                          Edit
+                                        </button>
+                                        <button
+                                          onClick={() => handleRemoveLink(player.id, ts.id)}
+                                          className="text-xs text-gray-400 hover:text-red-600 transition"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </li>
+                              )
+                            })}
                         </ul>
                       ) : (
                         <p className="text-xs text-gray-400">No team assignments yet.</p>
@@ -275,6 +410,16 @@ export default function PlayersClient({
                               <option key={t.id} value={t.id}>{t.displayName}</option>
                             ))}
                           </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Shirt #</label>
+                          <input
+                            type="number" min={1} max={99}
+                            value={linkNumber[player.id] ?? ''}
+                            onChange={e => setLinkNumber(n => ({ ...n, [player.id]: e.target.value }))}
+                            placeholder="—"
+                            className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                          />
                         </div>
                         <button
                           onClick={() => handleAddLink(player.id)}

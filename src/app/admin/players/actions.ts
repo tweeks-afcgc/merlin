@@ -35,8 +35,23 @@ export async function addPlayerTeamSeason(playerId: string, formData: FormData) 
   const supabase = await createClient()
   const teamId = formData.get('team_id') as string
   const seasonId = formData.get('season_id') as string
+  const playerNumberRaw = (formData.get('player_number') as string ?? '').trim()
+  const player_number = playerNumberRaw ? parseInt(playerNumberRaw) : null
   if (!teamId || !seasonId) return { error: 'Team and season are required' }
-  const { error } = await supabase.from('player_team_seasons').insert({ player_id: playerId, team_id: teamId, season_id: seasonId })
+  const { error } = await supabase.from('player_team_seasons').insert({ player_id: playerId, team_id: teamId, season_id: seasonId, player_number })
+  if (error?.code === '23505') return { error: 'This player is already linked to that team for that season' }
+  if (error) return { error: error.message }
+  revalidatePath('/admin/players')
+}
+
+export async function updatePlayerTeamSeason(id: string, formData: FormData) {
+  const supabase = await createClient()
+  const teamId = formData.get('team_id') as string
+  const seasonId = formData.get('season_id') as string
+  const playerNumberRaw = (formData.get('player_number') as string ?? '').trim()
+  const player_number = playerNumberRaw ? parseInt(playerNumberRaw) : null
+  if (!teamId || !seasonId) return { error: 'Team and season are required' }
+  const { error } = await supabase.from('player_team_seasons').update({ team_id: teamId, season_id: seasonId, player_number }).eq('id', id)
   if (error?.code === '23505') return { error: 'This player is already linked to that team for that season' }
   if (error) return { error: error.message }
   revalidatePath('/admin/players')

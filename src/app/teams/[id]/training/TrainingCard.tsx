@@ -24,7 +24,8 @@ type Slot = {
 
 type Venue = { id: string; name: string }
 
-function formatTime(t: string) {
+function formatTime(t: string | null) {
+  if (!t) return null
   const [h, m] = t.split(':')
   return `${h}:${m}`
 }
@@ -40,13 +41,11 @@ export default function TrainingCard({
   venues: Venue[]
   isAdmin: boolean
 }) {
-  const [open, setOpen] = useState(false)
   const [slots, setSlots] = useState(initialSlots)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Form state
   const [day, setDay] = useState('Monday')
   const [frequency, setFrequency] = useState('weekly')
   const [startTime, setStartTime] = useState('')
@@ -60,7 +59,6 @@ export default function TrainingCard({
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    if (!startTime || !endTime) { setError('Start and end time are required'); return }
     setSaving(true)
     setError(null)
     const fd = new FormData()
@@ -72,7 +70,6 @@ export default function TrainingCard({
     fd.set('notes', notes)
     const result = await addTrainingSlot(teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false); return }
-    // Reload via server revalidation — simplest approach for server-rendered slots
     setSaving(false)
     setShowForm(false)
     setStartTime('')
@@ -87,43 +84,26 @@ export default function TrainingCard({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mt-4">
-      {/* Header — clickable to expand/collapse */}
-      <div className="flex items-center justify-between px-5 py-4">
-        <button
-          onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-2 text-left flex-1 group"
-        >
-          <svg
-            className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${open ? 'rotate-0' : '-rotate-90'}`}
-            fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
-          >
-            <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <h2 className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition">
-            Training schedule
-            {!open && slots.length > 0 && (
-              <span className="ml-2 font-normal text-gray-400 text-xs">{slots.length} slot{slots.length !== 1 ? 's' : ''}</span>
-            )}
-          </h2>
-        </button>
-        {isAdmin && open && !showForm && (
+    <div className="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden mb-4">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <span className="text-sm font-semibold text-gray-700">Training schedule</span>
+        {isAdmin && !showForm && (
           <button
+            type="button"
             onClick={() => setShowForm(true)}
-            className="text-xs font-semibold text-red-800 hover:underline flex items-center gap-1 flex-shrink-0"
+            className="text-red-800 hover:text-red-900 transition"
+            title="Add slot"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
-            Add slot
           </button>
         )}
       </div>
 
-      {open && showForm && (
+      {showForm && (
         <form onSubmit={handleAdd} className="px-5 py-4 border-b border-gray-50 space-y-4 bg-gray-50">
           {error && <p className="text-xs text-red-600">{error}</p>}
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Day</label>
@@ -140,17 +120,16 @@ export default function TrainingCard({
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Start time</label>
-              <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required
+              <label className="block text-xs text-gray-500 mb-1">Start time <span className="text-gray-400">(optional)</span></label>
+              <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">End time</label>
-              <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} required
+              <label className="block text-xs text-gray-500 mb-1">End time <span className="text-gray-400">(optional)</span></label>
+              <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
             </div>
           </div>
-
           <div>
             <label className="block text-xs text-gray-500 mb-1">Venue</label>
             <select value={venueId} onChange={e => setVenueId(e.target.value)}
@@ -159,13 +138,11 @@ export default function TrainingCard({
               {venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
           </div>
-
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">(optional — e.g. which pitch or area)</span></label>
+            <label className="block text-xs text-gray-500 mb-1">Notes <span className="text-gray-400">(optional)</span></label>
             <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Bottom pitch"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
           </div>
-
           <div className="flex gap-2">
             <button type="submit" disabled={saving}
               className="bg-red-800 hover:bg-red-900 text-white font-semibold px-5 py-2 rounded-lg text-sm transition disabled:opacity-60">
@@ -179,41 +156,42 @@ export default function TrainingCard({
         </form>
       )}
 
-      {open && sorted.length === 0 && (
-        <p className="px-5 pb-4 text-sm text-gray-400">No training slots added yet.</p>
-      )}
-      {open && sorted.length > 0 && (
-        <ul className="divide-y divide-gray-50 border-t border-gray-50">
-          {sorted.map(slot => (
-            <li key={slot.id} className="px-5 py-3 flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-gray-900">{slot.day_of_week}</span>
-                  <span className="text-xs text-gray-500">{formatTime(slot.start_time)} – {formatTime(slot.end_time)}</span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">
-                    {slot.frequency}
-                  </span>
+      {sorted.length === 0 ? (
+        <p className="px-5 py-4 text-sm text-gray-400">No training slots added yet.</p>
+      ) : (
+        <ul className="divide-y divide-gray-50">
+          {sorted.map(slot => {
+            const start = formatTime(slot.start_time)
+            const end = formatTime(slot.end_time)
+            const timeStr = start && end ? `${start} – ${end}` : start ? `from ${start}` : null
+            return (
+              <li key={slot.id} className="px-5 py-3 flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium text-gray-900">{slot.day_of_week}</span>
+                    {timeStr && <span className="text-xs text-gray-500">{timeStr}</span>}
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">
+                      {slot.frequency}
+                    </span>
+                  </div>
+                  {slot.venueName && (
+                    <p className="text-xs text-gray-500 mt-0.5">{slot.venueName}{slot.notes ? ` · ${slot.notes}` : ''}</p>
+                  )}
+                  {!slot.venueName && slot.notes && (
+                    <p className="text-xs text-gray-500 mt-0.5">{slot.notes}</p>
+                  )}
                 </div>
-                {slot.venueName && (
-                  <p className="text-xs text-gray-500 mt-0.5">{slot.venueName}{slot.notes ? ` · ${slot.notes}` : ''}</p>
+                {isAdmin && (
+                  <button onClick={() => handleDelete(slot.id)}
+                    className="text-xs text-gray-400 hover:text-red-600 transition flex-shrink-0 mt-0.5">
+                    Remove
+                  </button>
                 )}
-                {!slot.venueName && slot.notes && (
-                  <p className="text-xs text-gray-500 mt-0.5">{slot.notes}</p>
-                )}
-              </div>
-              {isAdmin && (
-                <button
-                  onClick={() => handleDelete(slot.id)}
-                  className="text-xs text-gray-400 hover:text-red-600 transition flex-shrink-0 mt-0.5"
-                >
-                  Remove
-                </button>
-              )}
-            </li>
-          ))}
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
   )
 }
-

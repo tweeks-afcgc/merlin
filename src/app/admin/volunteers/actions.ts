@@ -91,6 +91,24 @@ export async function addVolunteerRole(volunteerId: string, formData: FormData) 
   revalidatePath('/admin/volunteers')
 }
 
+export async function updateVolunteerRole(roleId: string, formData: FormData) {
+  const supabase = await createClient()
+  const roleType = formData.get('role_type') as string
+  const roleName = (formData.get('role_name') as string).trim()
+  const teamId = (formData.get('team_id') as string | null) || null
+
+  if (!roleName) return { error: 'Role name is required' }
+
+  const { error } = await supabase.from('volunteer_roles').update({
+    role_type: roleType,
+    role_name: roleName,
+    team_id: roleType === 'team' ? teamId : null,
+  }).eq('id', roleId)
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/volunteers')
+}
+
 export async function removeVolunteerRole(roleId: string) {
   const supabase = await createClient()
   await supabase.from('volunteer_roles').delete().eq('id', roleId)

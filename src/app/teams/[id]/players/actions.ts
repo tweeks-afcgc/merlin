@@ -13,6 +13,8 @@ export async function quickAddPlayer(
   const first_name = (formData.get('first_name') as string).trim()
   const last_name = (formData.get('last_name') as string).trim()
   const date_of_birth = (formData.get('date_of_birth') as string) || null
+  const playerNumberRaw = (formData.get('player_number') as string).trim()
+  const player_number = playerNumberRaw ? parseInt(playerNumberRaw) : null
 
   if (!first_name || !last_name) return { error: 'First and last name are required.' }
 
@@ -26,7 +28,7 @@ export async function quickAddPlayer(
 
   const { error: linkError } = await supabase
     .from('player_team_seasons')
-    .insert({ player_id: player.id, team_id: teamId, season_id: seasonId })
+    .insert({ player_id: player.id, team_id: teamId, season_id: seasonId, player_number })
 
   if (linkError) return { error: linkError.message }
 

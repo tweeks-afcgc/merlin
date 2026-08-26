@@ -33,16 +33,38 @@ export default function ConfirmToggle({
 
   return (
     <div className="text-right">
+      {/* Desktop: text label */}
       <button
         onClick={handle}
         disabled={loading || disabled}
-        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-40 ${
+        className={`hidden sm:inline-flex text-xs font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-40 ${
           confirmed
             ? 'bg-green-100 text-green-800 hover:bg-green-200'
             : 'bg-red-100 text-red-800 hover:bg-red-200'
         }`}
       >
         {loading ? '...' : confirmed ? 'Confirmed' : 'Confirm'}
+      </button>
+      {/* Mobile: icon dot */}
+      <button
+        onClick={handle}
+        disabled={loading || disabled}
+        title={confirmed ? 'Confirmed — tap to unconfirm' : 'Tap to confirm'}
+        className={`sm:hidden w-7 h-7 rounded-full flex items-center justify-center transition disabled:opacity-40 ${
+          confirmed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        }`}
+      >
+        {loading ? (
+          <span className="text-xs">…</span>
+        ) : confirmed ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="8" />
+          </svg>
+        )}
       </button>
       {error && <p className="text-xs text-red-600 mt-1 max-w-48">{error}</p>}
     </div>

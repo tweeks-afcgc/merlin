@@ -4,7 +4,17 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { quickAddPlayer } from './players/actions'
 
-type Tab = 'fixtures' | 'stats' | 'players'
+type Tab = 'fixtures' | 'stats' | 'playerstats' | 'players'
+type PlayerStat = {
+  player_id: string
+  name: string
+  player_number: number | null
+  played: number
+  goals: number
+  assists: number
+  motm: number
+  total_mins: number
+}
 type Stats = { p: number; w: number; d: number; l: number; gf: number; ga: number; gd: number }
 type Fixture = {
   id: string
@@ -18,7 +28,7 @@ type Fixture = {
   venues: any
   pitches: any
 }
-type Player = { id: string; first_name: string; last_name: string; date_of_birth: string | null }
+type Player = { id: string; first_name: string; last_name: string; date_of_birth: string | null; player_number: number | null }
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -40,6 +50,7 @@ export default function TeamTabs({
   leagueStats,
   selectedSeasonName,
   players: initialPlayers,
+  playerStats,
   currentSeasonName,
 }: {
   teamId: string
@@ -52,11 +63,12 @@ export default function TeamTabs({
   leagueStats: Stats
   selectedSeasonName: string | null
   players: Player[]
+  playerStats: PlayerStat[]
   currentSeasonName: string | null
 }) {
   const [tab, setTab] = useState<Tab>('stats')
   const [players, setPlayers] = useState<Player[]>(initialPlayers)
-  const [playerSort, setPlayerSort] = useState<'alpha' | 'age'>('alpha')
+  const [playerSort, setPlayerSort] = useState<'number' | 'alpha' | 'age'>('number')
   const [showAddPlayer, setShowAddPlayer] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
   const [addSaving, setAddSaving] = useState(false)
@@ -67,8 +79,13 @@ export default function TeamTabs({
   }
 
   const sortedPlayers = [...players].sort((a, b) => {
+    if (playerSort === 'number') {
+      if (a.player_number != null && b.player_number != null) return a.player_number - b.player_number
+      if (a.player_number != null) return -1
+      if (b.player_number != null) return 1
+      return `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
+    }
     if (playerSort === 'age') {
-      // Older players first (earlier DOB = lower date string = sort ascending)
       if (!a.date_of_birth && !b.date_of_birth) return 0
       if (!a.date_of_birth) return 1
       if (!b.date_of_birth) return -1
@@ -80,6 +97,7 @@ export default function TeamTabs({
   const TABS: { key: Tab; label: string }[] = [
     { key: 'stats', label: 'Season Stats' },
     { key: 'fixtures', label: 'Fixtures' },
+    { key: 'playerstats', label: 'Player Stats' },
     { key: 'players', label: 'Players' },
   ]
 
@@ -121,8 +139,8 @@ export default function TeamTabs({
               {nextFixture && (() => {
                 const opp = nextFixture.club_teams as any
                 const oppName = opp
-                  ? [opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown'
-                  : 'Unknown'
+                  ? ([opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC').replace(/^\[Internal\]\s*/, '')
+                  : 'TBC'
                 return (
                   <li>
                     <Link
@@ -157,8 +175,8 @@ export default function TeamTabs({
               {recentFixtures.map((fx: any) => {
                 const opp = fx.club_teams as any
                 const oppName = opp
-                  ? [opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown'
-                  : 'Unknown'
+                  ? ([opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC').replace(/^\[Internal\]\s*/, '')
+                  : 'TBC'
                 const hasResult = fx.goals_for !== null && fx.goals_against !== null
                 const won = hasResult && fx.goals_for > fx.goals_against
                 const drew = hasResult && fx.goals_for === fx.goals_against
@@ -234,6 +252,112 @@ export default function TeamTabs({
         </div>
       )}
 
+      {/* Player Stats tab */}
+      {tab === 'playerstats' && (() => {
+        const scorers = [...playerStats].filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
+        const assisters = [...playerStats].filter(p => p.assists > 0).sort((a, b) => b.assists - a.assists || a.name.localeCompare(b.name))
+        const allRows = [...playerStats].sort((a, b) => {
+          if (a.player_number != null && b.player_number != null) return a.player_number - b.player_number
+          if (a.player_number != null) return -1
+          if (b.player_number != null) return 1
+          return a.name.localeCompare(b.name)
+        })
+        const hasAnyData = playerStats.some(p => p.played > 0 || p.goals > 0 || p.assists > 0)
+        if (!hasAnyData) return (
+          <p className="px-5 py-4 text-sm text-gray-400">No player stats recorded for this season yet.</p>
+        )
+        return (
+          <div className="divide-y divide-gray-100">
+            {/* Top Scorers */}
+            {scorers.length > 0 && (
+              <div>
+                <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Top Scorers</h3>
+                </div>
+                <ul className="divide-y divide-gray-50">
+                  {scorers.map((p, i) => (
+                    <li key={p.player_id} className="px-5 py-2.5 flex items-center gap-3">
+                      <span className="w-5 text-xs font-bold text-gray-300 flex-shrink-0">{i + 1}</span>
+                      <span className="w-7 text-right text-xs font-semibold text-gray-400 flex-shrink-0">
+                        {p.player_number != null ? `#${p.player_number}` : ''}
+                      </span>
+                      <span className="text-sm text-gray-900 flex-1">{p.name}</span>
+                      <span className="text-sm font-bold text-red-800">{p.goals}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Top Assisters */}
+            {assisters.length > 0 && (
+              <div>
+                <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Top Assisters</h3>
+                </div>
+                <ul className="divide-y divide-gray-50">
+                  {assisters.map((p, i) => (
+                    <li key={p.player_id} className="px-5 py-2.5 flex items-center gap-3">
+                      <span className="w-5 text-xs font-bold text-gray-300 flex-shrink-0">{i + 1}</span>
+                      <span className="w-7 text-right text-xs font-semibold text-gray-400 flex-shrink-0">
+                        {p.player_number != null ? `#${p.player_number}` : ''}
+                      </span>
+                      <span className="text-sm text-gray-900 flex-1">{p.name}</span>
+                      <span className="text-sm font-bold text-blue-700">{p.assists}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Full player stats table */}
+            <div>
+              <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">All Players</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="text-left px-5 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Player</th>
+                      <th className="text-center px-2 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide w-12">Apps</th>
+                      <th className="text-center px-2 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide w-12">Goals</th>
+                      <th className="text-center px-2 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide w-12">Asst</th>
+                      <th className="text-center px-2 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide w-14">MOTM</th>
+                      <th className="text-center px-2 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide w-14">Mins</th>
+                      <th className="text-center px-2 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Avg Mins</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {allRows.map(p => {
+                      const avgMins = p.played > 0 ? Math.round(p.total_mins / p.played) : 0
+                      return (
+                        <tr key={p.player_id} className="hover:bg-gray-50/50">
+                          <td className="px-5 py-2 text-gray-900 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-2">
+                              {p.player_number != null && (
+                                <span className="text-xs font-semibold text-gray-400 w-6 text-right">#{p.player_number}</span>
+                              )}
+                              {p.name}
+                            </span>
+                          </td>
+                          <td className="px-2 py-2 text-center text-gray-700">{p.played || '—'}</td>
+                          <td className="px-2 py-2 text-center font-medium text-gray-900">{p.goals || '—'}</td>
+                          <td className="px-2 py-2 text-center text-gray-700">{p.assists || '—'}</td>
+                          <td className="px-2 py-2 text-center text-gray-700">{p.motm || '—'}</td>
+                          <td className="px-2 py-2 text-center text-gray-500">{p.total_mins || '—'}</td>
+                          <td className="px-2 py-2 text-center text-gray-500">{p.played > 0 ? avgMins : '—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Players tab */}
       {tab === 'players' && (
         <div>
@@ -244,9 +368,10 @@ export default function TeamTabs({
             <div className="flex items-center gap-3">
               <select
                 value={playerSort}
-                onChange={e => setPlayerSort(e.target.value as 'alpha' | 'age')}
+                onChange={e => setPlayerSort(e.target.value as 'number' | 'alpha' | 'age')}
                 className="border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-red-700 bg-white"
               >
+                <option value="number">By number</option>
                 <option value="alpha">A–Z</option>
                 <option value="age">By age</option>
               </select>
@@ -279,7 +404,9 @@ export default function TeamTabs({
                 const first = (fd.get('first_name') as string).trim()
                 const last = (fd.get('last_name') as string).trim()
                 const dob = (fd.get('date_of_birth') as string) || null
-                setPlayers(prev => [...prev, { id: crypto.randomUUID(), first_name: first, last_name: last, date_of_birth: dob }]
+                const numRaw = (fd.get('player_number') as string).trim()
+                const num = numRaw ? parseInt(numRaw) : null
+                setPlayers(prev => [...prev, { id: crypto.randomUUID(), first_name: first, last_name: last, date_of_birth: dob, player_number: num }]
                   .sort((a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)))
                 setShowAddPlayer(false)
                 ;(e.target as HTMLFormElement).reset()
@@ -303,12 +430,21 @@ export default function TeamTabs({
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Date of birth <span className="font-normal text-gray-400">(optional)</span></label>
-                <input
-                  name="date_of_birth" type="date"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Date of birth <span className="font-normal text-gray-400">(optional)</span></label>
+                  <input
+                    name="date_of_birth" type="date"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Shirt number <span className="font-normal text-gray-400">(optional)</span></label>
+                  <input
+                    name="player_number" type="number" min={1} max={99}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  />
+                </div>
               </div>
               <div className="flex gap-2">
                 <button
@@ -333,8 +469,11 @@ export default function TeamTabs({
           ) : (
             <ul className="divide-y divide-gray-50">
               {sortedPlayers.map(p => (
-                <li key={p.id} className="px-5 py-2.5 flex items-center justify-between">
-                  <span className="text-sm text-gray-900">{p.first_name} {p.last_name}</span>
+                <li key={p.id} className="px-5 py-2.5 flex items-center gap-3">
+                  <span className="w-7 text-right text-xs font-semibold text-gray-400 flex-shrink-0">
+                    {p.player_number != null ? `#${p.player_number}` : ''}
+                  </span>
+                  <span className="text-sm text-gray-900 flex-1">{p.first_name} {p.last_name}</span>
                   {playerSort === 'age' && p.date_of_birth && (
                     <span className="text-xs text-gray-400">{formatDob(p.date_of_birth)}</span>
                   )}

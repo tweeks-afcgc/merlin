@@ -10,8 +10,8 @@ export async function addTrainingSlot(teamId: string, formData: FormData) {
     team_id: teamId,
     day_of_week: formData.get('day_of_week') as string,
     frequency: formData.get('frequency') as string,
-    start_time: formData.get('start_time') as string,
-    end_time: formData.get('end_time') as string,
+    start_time: (formData.get('start_time') as string) || null,
+    end_time: (formData.get('end_time') as string) || null,
     venue_id: (formData.get('venue_id') as string) || null,
     notes: (formData.get('notes') as string).trim() || null,
   })

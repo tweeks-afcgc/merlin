@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function addTeam(formData: FormData) {
   const supabase = await createClient()
@@ -25,8 +26,23 @@ export async function addTeam(formData: FormData) {
 }
 
 export async function deleteTeam(teamId: string) {
-  const supabase = await createClient()
-  await supabase.from('teams').delete().eq('id', teamId)
+  const supabase = createAdminClient()
+
+  const results = await Promise.all([
+    supabase.from('fixtures').delete().eq('team_id', teamId),
+    supabase.from('training_slots').delete().eq('team_id', teamId),
+    supabase.from('player_team_seasons').delete().eq('team_id', teamId),
+    supabase.from('volunteer_roles').delete().eq('team_id', teamId),
+    supabase.from('team_competitions').delete().eq('team_id', teamId),
+    supabase.from('team_sponsors').delete().eq('team_id', teamId),
+  ])
+
+  const depErrors = results.map((r, i) => r.error ? `dep[${i}]: ${r.error.message}` : null).filter(Boolean)
+  if (depErrors.length) return { error: depErrors.join('; ') }
+
+  const { error } = await supabase.from('teams').delete().eq('id', teamId)
+  if (error) return { error: `teams: ${error.message}` }
+
   revalidatePath('/admin/teams')
   revalidatePath('/teams')
 }

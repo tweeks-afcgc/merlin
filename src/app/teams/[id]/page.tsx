@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import { teamDisplayName } from '@/lib/teamUtils'
 import BackButton from '@/components/BackButton'
-import TrainingCard from './training/TrainingCard'
 import SeasonSelect from './SeasonSelect'
 import TeamTabs from './TeamTabs'
 
@@ -20,65 +19,71 @@ function formatTime(t: string | null) {
   return `${h}:${m}`
 }
 
-// Map a kit colour description to a CSS background value
+const COLOUR_MAP: Record<string, string> = {
+  'light red': '#fca5a5',
+  'red': '#dc2626',
+  'dark red': '#991b1b',
+  'maroon': '#7f1d1d',
+  'burgundy': '#881337',
+  'rose': '#fb7185',
+  'pink': '#ec4899',
+  'hot pink': '#db2777',
+  'magenta': '#a21caf',
+  'peach': '#fdba74',
+  'orange': '#f97316',
+  'dark orange': '#c2410c',
+  'burnt orange': '#92400e',
+  'yellow': '#fde047',
+  'amber': '#f59e0b',
+  'gold': '#d97706',
+  'lime': '#a3e635',
+  'light green': '#4ade80',
+  'green': '#16a34a',
+  'dark green': '#15803d',
+  'forest': '#166534',
+  'emerald': '#059669',
+  'sky blue': '#7dd3fc',
+  'light blue': '#38bdf8',
+  'cyan': '#06b6d4',
+  'blue': '#2563eb',
+  'royal blue': '#1d4ed8',
+  'dark blue': '#1e40af',
+  'navy': '#1e3a5f',
+  'lilac': '#c084fc',
+  'purple': '#9333ea',
+  'violet': '#7c3aed',
+  'indigo': '#4f46e5',
+  'white': '#f9fafb',
+  'cream': '#fef9c3',
+  'silver': '#e5e7eb',
+  'light grey': '#9ca3af',
+  'grey': '#6b7280',
+  'gray': '#6b7280',
+  'dark grey': '#374151',
+  'charcoal': '#1f2937',
+  'black': '#111827',
+}
+
 function kitColour(s: string | null): string {
   if (!s) return '#d1d5db'
-  const t = s.toLowerCase()
-  if ((t.includes('red') && t.includes('black')) || (t.includes('black') && t.includes('red'))) {
-    return 'repeating-linear-gradient(90deg,#dc2626 0px,#dc2626 6px,#111827 6px,#111827 12px)'
-  }
-  if (t.includes('red') && t.includes('white')) {
-    return 'repeating-linear-gradient(90deg,#dc2626 0px,#dc2626 6px,#f3f4f6 6px,#f3f4f6 12px)'
-  }
-  if (t.includes('blue') && t.includes('white')) {
-    return 'repeating-linear-gradient(90deg,#2563eb 0px,#2563eb 6px,#f3f4f6 6px,#f3f4f6 12px)'
-  }
-  if (t.includes('navy')) return '#1e3a5f'
-  if (t.includes('maroon') || t.includes('burgundy')) return '#881337'
-  if (t.includes('sky') || t.includes('light blue')) return '#7dd3fc'
-  if (t.includes('red')) return '#dc2626'
-  if (t.includes('black')) return '#111827'
-  if (t.includes('white') || t.includes('cream')) return '#f3f4f6'
-  if (t.includes('blue')) return '#2563eb'
-  if (t.includes('yellow') || t.includes('amber') || t.includes('gold')) return '#fbbf24'
-  if (t.includes('green')) return '#16a34a'
-  if (t.includes('orange')) return '#ea580c'
-  if (t.includes('purple') || t.includes('violet')) return '#7c3aed'
-  if (t.includes('pink')) return '#ec4899'
-  if (t.includes('grey') || t.includes('gray') || t.includes('silver')) return '#9ca3af'
-  return '#d1d5db'
+  return COLOUR_MAP[s.toLowerCase()] ?? '#d1d5db'
 }
 
 function KitCircle({
-  jersey, shorts, socks, imageUrl, title,
+  jersey, shorts, title,
 }: {
   jersey: string | null
   shorts: string | null
-  socks: string | null
-  imageUrl?: string | null
   title?: string
 }) {
-  if (imageUrl) {
-    return (
-      <div
-        className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
-        style={{ border: '2px solid rgba(0,0,0,0.1)' }}
-        title={title}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt={title ?? 'Kit'} className="w-full h-full object-cover" />
-      </div>
-    )
-  }
   return (
     <div
       className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
       style={{ border: '2px solid rgba(0,0,0,0.1)' }}
-      title={[jersey, shorts, socks].filter(Boolean).join(' · ')}
+      title={[jersey, shorts].filter(Boolean).join(' · ')}
     >
       <div style={{ height: '50%', background: kitColour(jersey) }} />
-      <div style={{ height: '25%', background: kitColour(shorts) }} />
-      <div style={{ height: '25%', background: kitColour(socks) }} />
+      <div style={{ height: '50%', background: kitColour(shorts) }} />
     </div>
   )
 }
@@ -157,13 +162,23 @@ export default async function TeamDashboardPage({
   const leagueStats = calcStats(((resultFixtures ?? []) as any).filter((f: any) => f.competition === 'league'))
 
   // Training slots — not season-filtered, always shows current plan
-  const [{ data: trainingSlots }, { data: venues }] = await Promise.all([
+  const [{ data: trainingSlots }, { data: venues }, { data: defaultVenueRow }, { data: pitchRow }, { data: competitionsData }, { data: sponsorsData }] = await Promise.all([
     supabase
       .from('training_slots')
       .select('id, day_of_week, frequency, start_time, end_time, venue_id, notes, venues(name)')
       .eq('team_id', id),
     supabase.from('venues').select('id, name').order('name'),
+    (team as any).default_venue_id
+      ? supabase.from('venues').select('name').eq('id', (team as any).default_venue_id).single()
+      : Promise.resolve({ data: null }),
+    (team as any).default_pitch_id
+      ? supabase.from('pitches').select('name').eq('id', (team as any).default_pitch_id).single()
+      : Promise.resolve({ data: null }),
+    supabase.from('team_competitions').select('id, season_id, type, name, abbr_name, division').eq('team_id', id).order('created_at'),
+    supabase.from('team_sponsors').select('id, season_id, name').eq('team_id', id).order('created_at'),
   ])
+  const defaultVenueName: string | null = (defaultVenueRow as any)?.name ?? null
+  const defaultPitchName: string | null = ((pitchRow as any)?.name) ?? null
 
   const trainingSlotsMapped = (trainingSlots ?? []).map((s: any) => ({
     id: s.id,
@@ -193,15 +208,54 @@ export default async function TeamDashboardPage({
   // Players for this team in the current season
   const { data: playerRows } = selectedStatsSeason ? await supabase
     .from('player_team_seasons')
-    .select('players(id, first_name, last_name, date_of_birth)')
+    .select('player_number, players(id, first_name, last_name, date_of_birth)')
     .eq('team_id', id)
     .eq('season_id', selectedStatsSeason.id)
     : { data: [] }
 
   const players = (playerRows ?? [])
-    .map((r: any) => r.players)
+    .map((r: any) => r.players ? { ...r.players, player_number: r.player_number ?? null } : null)
     .filter(Boolean)
-    .sort((a: any, b: any) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`))
+    .sort((a: any, b: any) => {
+      if (a.player_number != null && b.player_number != null) return a.player_number - b.player_number
+      if (a.player_number != null) return -1
+      if (b.player_number != null) return 1
+      return `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
+    })
+
+  // Player performance stats for the selected season
+  const { data: perfRows } = selectedStatsSeason ? await supabase
+    .from('fixture_player_performances')
+    .select('player_id, played, goals, assists, motm, mins_played, fixtures!inner(team_id, season_id)')
+    .eq('fixtures.team_id', id)
+    .eq('fixtures.season_id', selectedStatsSeason.id)
+    : { data: [] }
+
+  // Aggregate per player
+  type PlayerStat = {
+    player_id: string
+    name: string
+    player_number: number | null
+    played: number
+    goals: number
+    assists: number
+    motm: number
+    total_mins: number
+  }
+  const playerMap = new Map<string, PlayerStat>()
+  for (const p of players as any[]) {
+    playerMap.set(p.id, { player_id: p.id, name: `${p.first_name} ${p.last_name}`, player_number: p.player_number, played: 0, goals: 0, assists: 0, motm: 0, total_mins: 0 })
+  }
+  for (const row of (perfRows ?? []) as any[]) {
+    const s = playerMap.get(row.player_id)
+    if (!s) continue
+    if (row.played) s.played += 1
+    s.goals += row.goals ?? 0
+    s.assists += row.assists ?? 0
+    if (row.motm) s.motm += 1
+    s.total_mins += row.mins_played ?? 0
+  }
+  const playerStats = Array.from(playerMap.values())
 
   const today = new Date().toISOString().split('T')[0]
   const FIXTURE_SELECT = 'id, date, kickoff_time, venue, referee_required, referee_id, volunteer_referee_id, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name), pitches(name)'
@@ -271,16 +325,12 @@ export default async function TeamDashboardPage({
             <KitCircle
               jersey={team.kit_jersey}
               shorts={team.kit_shorts}
-              socks={team.kit_socks}
-              imageUrl={(team as any).home_kit_image_url ?? null}
               title="Home kit"
             />
-            {((team as any).away_kit_jersey || (team as any).away_kit_image_url) && (
+            {(team as any).away_kit_jersey && (
               <KitCircle
                 jersey={(team as any).away_kit_jersey ?? null}
                 shorts={(team as any).away_kit_shorts ?? null}
-                socks={(team as any).away_kit_socks ?? null}
-                imageUrl={(team as any).away_kit_image_url ?? null}
                 title="Away kit"
               />
             )}
@@ -310,6 +360,54 @@ export default async function TeamDashboardPage({
                 ))}
               </div>
             )}
+            {defaultVenueName && (
+              <p className="text-sm text-gray-500 mt-1.5">
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">Home ground</span>
+                {defaultVenueName}{defaultPitchName ? ` · ${defaultPitchName}` : ''}
+              </p>
+            )}
+            {/* Training slots */}
+            {trainingSlotsMapped.map((slot, i) => {
+              const start = slot.start_time ? slot.start_time.slice(0, 5) : null
+              const end = slot.end_time ? slot.end_time.slice(0, 5) : null
+              const timeStr = start && end ? `${start}–${end}` : start ? `from ${start}` : null
+              const isAlt = slot.frequency === 'Alternate' || slot.frequency === 'bi-weekly'
+              const dayStr = slot.day_of_week + (isAlt ? ' (Alt)' : '')
+              const freqPart = !isAlt && slot.frequency !== 'weekly' ? slot.frequency : null
+              const mainParts = [dayStr, freqPart, timeStr].filter(Boolean)
+              const venuePart = slot.venueName ? `@ ${slot.venueName}` : null
+              const display = venuePart ? `${mainParts.join(' · ')} ${venuePart}` : mainParts.join(' · ')
+              return (
+                <p key={slot.id} className="text-sm text-gray-500 mt-1 flex">
+                  <span className={`text-xs font-medium uppercase tracking-wide mr-1.5 flex-shrink-0 ${i === 0 ? 'text-gray-400' : 'invisible'}`}>Training</span>
+                  {display}
+                </p>
+              )
+            })}
+            {/* League (current season) */}
+            {(competitionsData ?? []).filter((c: any) => c.season_id === currentSeason?.id && c.type === 'league').map((c: any) => (
+              <p key={c.id} className="text-sm text-gray-500 mt-1">
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">League</span>
+                {c.abbr_name ?? c.name}{c.division ? ` · Division ${c.division}` : ''}
+              </p>
+            ))}
+            {/* Cup(s) (current season) */}
+            {(competitionsData ?? []).filter((c: any) => c.season_id === currentSeason?.id && c.type === 'cup').map((c: any) => (
+              <p key={c.id} className="text-sm text-gray-500 mt-1">
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">Cup</span>
+                {c.name}
+              </p>
+            ))}
+            {/* Sponsors (current season) */}
+            {(() => {
+              const currentSponsors = (sponsorsData ?? []).filter((s: any) => s.season_id === currentSeason?.id)
+              return currentSponsors.length > 0 ? (
+                <p className="text-sm text-gray-500 mt-1">
+                  <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">Sponsors</span>
+                  {currentSponsors.map((s: any) => s.name).join(', ')}
+                </p>
+              ) : null
+            })()}
           </div>
           {isAdmin && (
             <Link
@@ -320,14 +418,6 @@ export default async function TeamDashboardPage({
             </Link>
           )}
         </div>
-
-        {/* Training schedule — expandable */}
-        <TrainingCard
-          teamId={id}
-          slots={trainingSlotsMapped}
-          venues={venues ?? []}
-          isAdmin={isAdmin}
-        />
 
         {/* Season selector */}
         {statsSeasons.length > 1 && (
@@ -355,6 +445,7 @@ export default async function TeamDashboardPage({
             leagueStats={leagueStats}
             selectedSeasonName={selectedStatsSeason?.name ?? null}
             players={players as any[]}
+            playerStats={playerStats}
             currentSeasonName={selectedStatsSeason?.name ?? null}
           />
         </div>

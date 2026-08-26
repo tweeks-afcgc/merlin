@@ -97,7 +97,11 @@ export default async function FixturesDashboardPage() {
       teamSortKey,
       ageGroupLabel,
       teamShortName: team?.name ?? '',
-      opponentName: opponent ? [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown opponent' : 'Unknown opponent',
+      opponentName: (() => {
+        if (!opponent) return 'TBC'
+        const raw = [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC'
+        return raw.replace(/^\[Internal\]\s*/, '')
+      })(),
       venueName: venueData?.name ?? null,
       venueAddress: venueData?.address ?? null,
       pitchName: pitchData?.name ?? null,

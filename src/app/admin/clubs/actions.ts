@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function addClub(formData: FormData) {
   const supabase = await createClient()
@@ -28,8 +29,10 @@ export async function updateClub(clubId: string, formData: FormData) {
 }
 
 export async function deleteClub(clubId: string) {
-  const supabase = await createClient()
-  await supabase.from('clubs').delete().eq('id', clubId)
+  const supabase = createAdminClient()
+  await supabase.from('club_teams').delete().eq('club_id', clubId)
+  const { error } = await supabase.from('clubs').delete().eq('id', clubId)
+  if (error) return { error: error.message }
   revalidatePath('/admin/clubs')
 }
 

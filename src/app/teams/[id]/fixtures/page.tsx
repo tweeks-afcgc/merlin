@@ -5,6 +5,7 @@ import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { teamDisplayName } from '@/lib/teamUtils'
 import DeleteFixtureButton from './DeleteFixtureButton'
+import FixtureNotesCell from './FixtureNotesCell'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,7 +64,7 @@ export default async function FixturesPage({
 
   const { data: fixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
+    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, notes, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
@@ -131,6 +132,7 @@ export default async function FixturesPage({
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Type</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Result</th>
                   <th className="px-3 py-3"></th>
+                  <th className="w-6 px-1 py-3"></th>
                   <th className="w-1 p-0"></th>
                 </tr>
               </thead>
@@ -182,7 +184,7 @@ export default async function FixturesPage({
                       </td>
                       <td className="px-3 py-3 text-gray-600 whitespace-nowrap">{formatTime(f.kickoff_time)}</td>
                       <td className="px-3 py-3 text-gray-900">
-                        {opponent ? [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || '—' : '—'}
+                        {opponent ? ([opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || '—').replace(/^\[Internal\]\s*/, '') : '—'}
                       </td>
                       <td className="px-3 py-3 text-xs text-gray-500">
                         {f.venue === 'home'
@@ -212,6 +214,7 @@ export default async function FixturesPage({
                           <DeleteFixtureButton fixtureId={f.id} teamId={teamId} />
                         </div>
                       </td>
+                      <FixtureNotesCell notes={(f as any).notes ?? null} />
                       <td className={`w-1 p-0 ${statusBar}`} />
                     </tr>
                   )
