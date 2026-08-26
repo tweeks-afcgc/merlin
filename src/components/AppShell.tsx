@@ -100,22 +100,22 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
       {/* ── Top bar ── */}
       <header className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-100 z-40 flex items-center px-4 gap-3">
 
-        {/* Desktop hamburger */}
+        {/* Hamburger — mobile and desktop */}
         <button
           onClick={() => setMenuOpen(o => !o)}
-          className="hidden md:flex w-9 h-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition"
+          className="flex w-9 h-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition"
           aria-label="Toggle menu"
         >
           <MenuIcon />
         </button>
 
         {/* Logo */}
-        <span className="flex-1 text-center md:text-left font-bold text-lg text-red-800 tracking-tight">
+        <span className="flex-1 font-bold text-lg text-red-800 tracking-tight">
           Merlin
         </span>
 
-        {/* Desktop profile avatar */}
-        <div ref={profileRef} className="relative hidden md:block">
+        {/* Profile avatar */}
+        <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen(o => !o)}
             className="w-9 h-9 rounded-full bg-red-800 hover:bg-red-900 text-white text-sm font-bold flex items-center justify-center transition"
@@ -137,9 +137,6 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
             </div>
           )}
         </div>
-
-        {/* Mobile spacer to keep logo centred */}
-        <div className="md:hidden w-9" />
       </header>
 
       {/* ── Desktop sidebar (slides in) ── */}
@@ -219,21 +216,9 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
       )}
 
       {/* ── Page content ── */}
-      <main className="pt-14 pb-20 md:pb-8 min-h-screen">
+      <main className="pt-14 pb-8 min-h-screen">
         {children}
       </main>
-
-      {/* ── Mobile bottom bar with centred menu button ── */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-100 flex items-center justify-center md:hidden z-30">
-        <button
-          onClick={() => setMenuOpen(o => !o)}
-          className="flex flex-col items-center gap-1 text-gray-500 hover:text-red-800 transition px-8 py-2"
-          aria-label="Menu"
-        >
-          <MenuIcon />
-          <span className="text-xs font-medium">Menu</span>
-        </button>
-      </div>
     </div>
   )
 }
