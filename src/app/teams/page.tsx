@@ -154,8 +154,8 @@ export default async function TeamsPage() {
               {/* Whole-card link */}
               <Link href={`/teams/${team.id}`} className="block px-5 py-4 pr-14">
                 <div className="flex items-start gap-4">
-                  {/* Kit circles — desktop only (left side) */}
-                  <div className="hidden sm:flex gap-1.5 flex-shrink-0 mt-0.5">
+                  {/* Kit circles — desktop only (left side), stacked vertically */}
+                  <div className="hidden sm:flex flex-col gap-1 flex-shrink-0 mt-0.5">
                     <div
                       className="w-11 h-11 rounded-full overflow-hidden"
                       style={{ border: '2px solid rgba(0,0,0,0.1)' }}
@@ -164,7 +164,7 @@ export default async function TeamsPage() {
                       <div style={{ height: '50%', background: kitColour(team.kit_jersey ?? null) }} />
                       <div style={{ height: '50%', background: kitColour(team.kit_shorts ?? null) }} />
                     </div>
-                    {(team as any).away_kit_jersey && (
+                    {(team as any).away_kit_jersey ? (
                       <div
                         className="w-11 h-11 rounded-full overflow-hidden"
                         style={{ border: '2px solid rgba(0,0,0,0.1)' }}
@@ -173,6 +173,8 @@ export default async function TeamsPage() {
                         <div style={{ height: '50%', background: kitColour((team as any).away_kit_jersey ?? null) }} />
                         <div style={{ height: '50%', background: kitColour((team as any).away_kit_shorts ?? null) }} />
                       </div>
+                    ) : (
+                      <div className="w-11 h-11" />
                     )}
                   </div>
 
