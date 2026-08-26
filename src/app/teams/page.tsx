@@ -212,30 +212,32 @@ export default async function TeamsPage() {
                       )}
                     </div>
 
-                    <div className="mt-1 space-y-0.5">
+                    <div className="mt-1.5 space-y-1">
 
                       {/* Staff roles */}
                       {team.roleLines.map((r: { label: string; value: string }, i: number) => (
-                        <p key={i} className="text-xs text-gray-500">
-                          <span className="text-gray-400 uppercase tracking-wide text-[10px] font-medium mr-1">{r.label}</span>
-                          {r.value}
-                        </p>
+                        <div key={i} className="flex items-baseline gap-2">
+                          <span className="w-24 flex-shrink-0 text-xs text-gray-400">{r.label}</span>
+                          <span className="text-xs text-gray-700">{r.value}</span>
+                        </div>
                       ))}
 
                       {/* League */}
                       {team.league && (
-                        <p className="text-xs text-gray-500">
-                          <span className="text-gray-400 uppercase tracking-wide text-[10px] font-medium mr-1">League</span>
-                          {team.league.abbr_name ?? team.league.name}{team.league.division ? ` · Division ${team.league.division}` : ''}
-                        </p>
+                        <div className="flex items-baseline gap-2">
+                          <span className="w-24 flex-shrink-0 text-xs text-gray-400">League</span>
+                          <span className="text-xs text-gray-700">
+                            {team.league.abbr_name ?? team.league.name}{team.league.division ? ` · Division ${team.league.division}` : ''}
+                          </span>
+                        </div>
                       )}
 
                       {/* Home ground */}
                       {team.venueName && (
-                        <p className="text-xs text-gray-500">
-                          <span className="text-gray-400 uppercase tracking-wide text-[10px] font-medium mr-1">Home ground</span>
-                          {team.venueName}
-                        </p>
+                        <div className="flex items-baseline gap-2">
+                          <span className="w-24 flex-shrink-0 text-xs text-gray-400">Home ground</span>
+                          <span className="text-xs text-gray-700">{team.venueName}</span>
+                        </div>
                       )}
 
                       {/* Training */}
@@ -248,25 +250,23 @@ export default async function TeamsPage() {
                         const freqPart = !isAlt && slot.frequency !== 'weekly' ? slot.frequency : null
                         const mainParts = [dayStr, freqPart, timeStr].filter(Boolean)
                         const venuePart = (slot.venues as any)?.name ? `@ ${(slot.venues as any).name}` : null
-                        const display = venuePart ? `${mainParts.join(' · ')} ${venuePart}` : mainParts.join(' · ')
+                        const display = venuePart ? `${mainParts.join(' ')} ${venuePart}` : mainParts.join(' ')
                         return (
-                          <p key={i} className="text-xs text-gray-500 flex">
-                            <span className={`uppercase tracking-wide text-[10px] font-medium mr-1 flex-shrink-0 ${i === 0 ? 'text-gray-400' : 'invisible'}`}>
-                              Training
-                            </span>
-                            {display}
-                          </p>
+                          <div key={i} className="flex items-baseline gap-2">
+                            <span className={`w-24 flex-shrink-0 text-xs ${i === 0 ? 'text-gray-400' : 'invisible'}`}>Training</span>
+                            <span className="text-xs text-gray-700">{display}</span>
+                          </div>
                         )
                       })}
 
                       {/* Sponsors */}
                       {team.sponsors.length > 0 && (
-                        <p className="text-xs text-gray-500">
-                          <span className="text-gray-400 uppercase tracking-wide text-[10px] font-medium mr-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="w-24 flex-shrink-0 text-xs text-gray-400">
                             {team.sponsors.length > 1 ? 'Sponsors' : 'Sponsor'}
                           </span>
-                          {team.sponsors.join(', ')}
-                        </p>
+                          <span className="text-xs text-gray-700">{team.sponsors.join(', ')}</span>
+                        </div>
                       )}
                     </div>
                   </div>
