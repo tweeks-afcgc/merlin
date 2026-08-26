@@ -172,7 +172,10 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
             >
               <CloseIcon />
             </button>
-            <span className="font-bold text-lg text-red-800">Merlin</span>
+            <span className="flex-1 font-bold text-lg text-red-800">Merlin</span>
+            <div className="w-9 h-9 rounded-full bg-red-800 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+              {initials}
+            </div>
           </div>
 
           {/* User info strip */}
