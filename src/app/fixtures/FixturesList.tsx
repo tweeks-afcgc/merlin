@@ -169,7 +169,9 @@ function ScheduleView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfir
 
         return (
           <div key={date}>
-            <h2 className="text-base font-bold text-gray-900 mb-3 pb-2 border-b-2 border-red-800">{formatDateLong(date)}</h2>
+            <div className="inline-flex items-center bg-red-800 text-white text-sm font-bold px-4 py-2 rounded-lg mb-3">
+              {formatDateLong(date)}
+            </div>
             <div className="space-y-4">
               {venueKeys.map(venueKey => {
                 const isHome = venueKey !== 'Away Games' && venueKey !== 'Pitch TBC'
