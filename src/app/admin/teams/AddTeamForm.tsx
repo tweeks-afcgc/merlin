@@ -102,6 +102,19 @@ export default function AddTeamForm({ currentSeason }: { currentSeason: Season |
           )}
         </div>
 
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Gender</label>
+          <select
+            name="gender"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+          >
+            <option value="">Not specified</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Mixed">Mixed</option>
+          </select>
+        </div>
+
         <button
           type="submit"
           disabled={loading || (type === 'junior' && !currentSeason)}

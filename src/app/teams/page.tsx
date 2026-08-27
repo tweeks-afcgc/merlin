@@ -210,6 +210,11 @@ export default async function TeamsPage() {
                           {(team as any).format}
                         </span>
                       )}
+                      {(team as any).gender && (() => {
+                        const g = (team as any).gender
+                        const cls = g === 'Male' ? 'bg-blue-100 text-blue-700' : g === 'Female' ? 'bg-pink-100 text-pink-700' : 'bg-green-100 text-green-700'
+                        return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>{g}</span>
+                      })()}
                     </div>
 
                     <div className="mt-1.5 space-y-1">

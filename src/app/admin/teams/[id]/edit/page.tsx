@@ -137,6 +137,7 @@ export default function EditTeamPage() {
   const [foundingSeasonName, setFoundingSeasonName] = useState('')
   const [currentAgeGroup, setCurrentAgeGroup] = useState<number | null>(null)
   const [format, setFormat] = useState('')
+  const [gender, setGender] = useState('')
   const [ageGroupOpen, setAgeGroupOpen] = useState(false)
 
   // Home kit
@@ -227,6 +228,7 @@ export default function EditTeamPage() {
       setKitShorts(team.kit_shorts ?? '')
       setKitSocks(team.kit_socks ?? '')
       setFormat(team.format ?? '')
+      setGender((team as any).gender ?? '')
 
       const awayJ = (team as any).away_kit_jersey ?? ''
       const awayS = (team as any).away_kit_shorts ?? ''
@@ -296,6 +298,7 @@ export default function EditTeamPage() {
 
     const updates: Record<string, unknown> = {
       name,
+      gender: gender || null,
       default_venue_id: defaultVenueId || null,
       default_pitch_id: defaultPitchId || null,
       kit_jersey: kitJersey || null,
@@ -504,6 +507,19 @@ export default function EditTeamPage() {
                 {error && (
                   <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{error}</div>
                 )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                  <select
+                    value={gender} onChange={e => setGender(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  >
+                    <option value="">Not specified</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Mixed">Mixed</option>
+                  </select>
+                </div>
 
                 {type === 'junior' && (
                   <>
