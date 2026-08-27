@@ -128,13 +128,8 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
 
   return (
     <>
-      {/* Desktop filters */}
-      <div className="hidden sm:block mb-5 p-4 bg-white rounded-xl border border-gray-100 shadow-sm space-y-3">
-        <FilterPanel />
-      </div>
-
-      {/* Mobile filters */}
-      <div className="sm:hidden mb-4">
+      {/* Filters — collapsible on all screen sizes */}
+      <div className="mb-4">
         <button
           onClick={() => setFiltersOpen(o => !o)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition"
@@ -191,12 +186,12 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
                   {/* Badges row — always on its own line so alignment is consistent */}
                   {(team.format || team.gender) && (
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      {team.gender && genderBadge(team.gender)}
                       {team.format && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
                           {team.format}
                         </span>
                       )}
-                      {team.gender && genderBadge(team.gender)}
                     </div>
                   )}
 
