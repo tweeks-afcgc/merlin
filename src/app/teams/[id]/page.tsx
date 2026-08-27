@@ -349,65 +349,66 @@ export default async function TeamDashboardPage({
                 </span>
               )}
             </div>
-            {/* Roles inline */}
-            {sortedRoles.length > 0 && (
-              <div className="mt-2 flex flex-col gap-0.5">
+            {/* Info rows — consistent label/value layout */}
+            {(sortedRoles.length > 0 || defaultVenueName || trainingSlotsMapped.length > 0) && (
+              <div className="mt-2 space-y-1">
+                {/* Roles — one per line, label only on first of each role group */}
                 {sortedRoles.map(r => (
-                  <p key={r.id} className="text-sm text-gray-600">
-                    <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">{r.role_name}</span>
-                    {r.volunteerName}
-                  </p>
+                  <div key={r.id} className="flex items-baseline gap-2">
+                    <span className="w-28 flex-shrink-0 text-sm text-gray-400">{r.role_name}</span>
+                    <span className="text-sm text-gray-700">{r.volunteerName}</span>
+                  </div>
+                ))}
+                {/* Home */}
+                {defaultVenueName && (
+                  <div className="flex items-baseline gap-2">
+                    <span className="w-28 flex-shrink-0 text-sm text-gray-400">Home</span>
+                    <span className="text-sm text-gray-700">{defaultVenueName}{defaultPitchName ? ` · ${defaultPitchName}` : ''}</span>
+                  </div>
+                )}
+                {/* Training slots */}
+                {trainingSlotsMapped.map((slot, i) => {
+                  const start = slot.start_time ? slot.start_time.slice(0, 5) : null
+                  const end = slot.end_time ? slot.end_time.slice(0, 5) : null
+                  const timeStr = start && end ? `${start}–${end}` : start ? `from ${start}` : null
+                  const isAlt = slot.frequency === 'Alternate' || slot.frequency === 'bi-weekly'
+                  const dayStr = slot.day_of_week + (isAlt ? ' (Alt)' : '')
+                  const freqPart = !isAlt && slot.frequency !== 'weekly' ? slot.frequency : null
+                  const mainParts = [dayStr, freqPart, timeStr].filter(Boolean)
+                  const venuePart = slot.venueName ? `@ ${slot.venueName}` : null
+                  const display = venuePart ? `${mainParts.join(' ')} ${venuePart}` : mainParts.join(' ')
+                  return (
+                    <div key={slot.id} className="flex items-baseline gap-2">
+                      <span className={`w-28 flex-shrink-0 text-sm ${i === 0 ? 'text-gray-400' : 'invisible'}`}>Training</span>
+                      <span className="text-sm text-gray-700">{display}</span>
+                    </div>
+                  )
+                })}
+                {/* League */}
+                {(competitionsData ?? []).filter((c: any) => c.season_id === currentSeason?.id && c.type === 'league').map((c: any) => (
+                  <div key={c.id} className="flex items-baseline gap-2">
+                    <span className="w-28 flex-shrink-0 text-sm text-gray-400">League</span>
+                    <span className="text-sm text-gray-700">{c.abbr_name ?? c.name}{c.division ? ` - ${c.division}` : ''}</span>
+                  </div>
+                ))}
+                {/* Cup(s) */}
+                {(competitionsData ?? []).filter((c: any) => c.season_id === currentSeason?.id && c.type === 'cup').map((c: any) => (
+                  <div key={c.id} className="flex items-baseline gap-2">
+                    <span className="w-28 flex-shrink-0 text-sm text-gray-400">Cup</span>
+                    <span className="text-sm text-gray-700">{c.name}</span>
+                  </div>
+                ))}
+                {/* Sponsors — one per line */}
+                {(sponsorsData ?? []).filter((s: any) => s.season_id === currentSeason?.id).map((s: any, i: number, arr: any[]) => (
+                  <div key={s.id} className="flex items-baseline gap-2">
+                    <span className={`w-28 flex-shrink-0 text-sm ${i === 0 ? 'text-gray-400' : 'invisible'}`}>
+                      {i === 0 ? (arr.length > 1 ? 'Sponsors' : 'Sponsor') : 'Sponsor'}
+                    </span>
+                    <span className="text-sm text-gray-700">{s.name}</span>
+                  </div>
                 ))}
               </div>
             )}
-            {defaultVenueName && (
-              <p className="text-sm text-gray-500 mt-1.5">
-                <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">Home ground</span>
-                {defaultVenueName}{defaultPitchName ? ` · ${defaultPitchName}` : ''}
-              </p>
-            )}
-            {/* Training slots */}
-            {trainingSlotsMapped.map((slot, i) => {
-              const start = slot.start_time ? slot.start_time.slice(0, 5) : null
-              const end = slot.end_time ? slot.end_time.slice(0, 5) : null
-              const timeStr = start && end ? `${start}–${end}` : start ? `from ${start}` : null
-              const isAlt = slot.frequency === 'Alternate' || slot.frequency === 'bi-weekly'
-              const dayStr = slot.day_of_week + (isAlt ? ' (Alt)' : '')
-              const freqPart = !isAlt && slot.frequency !== 'weekly' ? slot.frequency : null
-              const mainParts = [dayStr, freqPart, timeStr].filter(Boolean)
-              const venuePart = slot.venueName ? `@ ${slot.venueName}` : null
-              const display = venuePart ? `${mainParts.join(' · ')} ${venuePart}` : mainParts.join(' · ')
-              return (
-                <p key={slot.id} className="text-sm text-gray-500 mt-1 flex">
-                  <span className={`text-xs font-medium uppercase tracking-wide mr-1.5 flex-shrink-0 ${i === 0 ? 'text-gray-400' : 'invisible'}`}>Training</span>
-                  {display}
-                </p>
-              )
-            })}
-            {/* League (current season) */}
-            {(competitionsData ?? []).filter((c: any) => c.season_id === currentSeason?.id && c.type === 'league').map((c: any) => (
-              <p key={c.id} className="text-sm text-gray-500 mt-1">
-                <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">League</span>
-                {c.abbr_name ?? c.name}{c.division ? ` · Division ${c.division}` : ''}
-              </p>
-            ))}
-            {/* Cup(s) (current season) */}
-            {(competitionsData ?? []).filter((c: any) => c.season_id === currentSeason?.id && c.type === 'cup').map((c: any) => (
-              <p key={c.id} className="text-sm text-gray-500 mt-1">
-                <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">Cup</span>
-                {c.name}
-              </p>
-            ))}
-            {/* Sponsors (current season) */}
-            {(() => {
-              const currentSponsors = (sponsorsData ?? []).filter((s: any) => s.season_id === currentSeason?.id)
-              return currentSponsors.length > 0 ? (
-                <p className="text-sm text-gray-500 mt-1">
-                  <span className="text-gray-400 text-xs font-medium uppercase tracking-wide mr-1.5">Sponsors</span>
-                  {currentSponsors.map((s: any) => s.name).join(', ')}
-                </p>
-              ) : null
-            })()}
           </div>
           {isAdmin && (
             <Link
