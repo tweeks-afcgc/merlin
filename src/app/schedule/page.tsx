@@ -147,8 +147,8 @@ export default async function PublicSchedulePage() {
 
                       return (
                         <div key={venueKey} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                          <div className={`px-4 py-2.5 ${isHome ? 'bg-red-800' : 'bg-gray-600'}`}>
-                            <h3 className="text-sm font-semibold text-white">{venueKey}</h3>
+                          <div className={`px-4 py-2.5 ${isHome ? 'bg-red-100' : 'bg-gray-100'}`}>
+                            <h3 className={`text-sm font-semibold ${isHome ? 'text-red-900' : 'text-gray-600'}`}>{venueKey}</h3>
                           </div>
                           <div className="divide-y divide-gray-50">
                             {pitchKeys.map(pitchKey => {
