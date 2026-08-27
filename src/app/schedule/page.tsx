@@ -63,6 +63,7 @@ export default async function PublicSchedulePage() {
       `)
       .gte('date', todayStr)
       .lte('date', cutoffStr)
+      .eq('confirmed', true)
       .order('date', { ascending: true })
       .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
