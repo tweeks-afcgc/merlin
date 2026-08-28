@@ -63,7 +63,6 @@ export default async function PublicSchedulePage() {
       `)
       .gte('date', todayStr)
       .lte('date', cutoffStr)
-      .eq('confirmed', true)
       .order('date', { ascending: true })
       .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
@@ -108,7 +107,7 @@ export default async function PublicSchedulePage() {
         <div className="max-w-3xl mx-auto flex items-center gap-3">
           <div>
             <h1 className="text-lg font-bold text-white leading-tight">AFC Green Court</h1>
-            <p className="text-sm text-red-200">Fixtures — next 14 days</p>
+            <p className="text-sm text-red-200">Fixtures - next 14 days</p>
           </div>
         </div>
       </div>
@@ -163,14 +162,21 @@ export default async function PublicSchedulePage() {
                                     </div>
                                   )}
                                   {pitchFixtures.map(f => (
-                                    <div key={f.id} className="flex items-center gap-2 px-3 py-3">
-                                      <span className={`text-sm font-bold w-10 flex-shrink-0 ${f.confirmed ? 'text-green-700' : 'text-gray-400'}`}>
+                                    <div key={f.id} className={`flex items-center gap-2 px-3 py-3 ${!f.confirmed ? 'border-l-4 border-amber-400' : ''}`}>
+                                      <span className={`text-sm font-bold w-10 flex-shrink-0 ${f.confirmed ? 'text-green-700' : 'text-amber-500'}`}>
                                         {formatTime(f.kickoff_time)}
                                       </span>
-                                      <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 leading-snug truncate">
-                                          {f.teamName}
-                                        </p>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <p className="text-sm font-semibold text-gray-900 leading-snug truncate">
+                                            {f.teamName}
+                                          </p>
+                                          {!f.confirmed && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 flex-shrink-0">
+                                              Provisional
+                                            </span>
+                                          )}
+                                        </div>
                                         <p className="text-xs text-gray-500 leading-snug truncate">
                                           vs {f.opponentName}
                                         </p>
