@@ -211,7 +211,7 @@ export default async function FixturesPage({
                       <td className="px-3 py-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-3">
                           <Link href={`/teams/${teamId}/fixtures/${f.id}/edit`} className="text-xs text-gray-400 hover:text-gray-700 transition">Edit</Link>
-                          <DeleteFixtureButton fixtureId={f.id} teamId={teamId} />
+                          <DeleteFixtureButton fixtureId={f.id} teamId={teamId} returnTo={`/teams/${teamId}/fixtures`} />
                         </div>
                       </td>
                       <FixtureNotesCell notes={(f as any).notes ?? null} />

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import ConfirmToggle from './ConfirmToggle'
 import EmailModal from './EmailModal'
 
@@ -449,6 +450,9 @@ export default function FixturesList({
   fixtures: Fixture[]
   canConfirm: boolean
 }) {
+  const searchParams = useSearchParams()
+  const deleted = searchParams.get('deleted') === '1'
+
   const [view, setView] = useState<ViewMode>('schedule')
   const [teamFilter, setTeamFilter] = useState<TeamFilter>('all')
   const [venueFilter, setVenueFilter] = useState<VenueFilter>('all')
@@ -473,37 +477,21 @@ export default function FixturesList({
 
   return (
     <div>
+      {deleted && (
+        <div className="mb-4 flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 text-sm font-medium rounded-xl px-4 py-3">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Fixture deleted successfully.
+        </div>
+      )}
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3 mb-6">
-        {/* Desktop filters */}
-        <div className="hidden sm:flex flex-wrap gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-400 font-medium mr-1">Period</span>
-            <FilterButton active={dateRange === 14} onClick={() => setDateRange(14)}>14 days</FilterButton>
-            <FilterButton active={dateRange === 30} onClick={() => setDateRange(30)}>30 days</FilterButton>
-            <FilterButton active={dateRange === 'all'} onClick={() => setDateRange('all')}>All</FilterButton>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-400 font-medium mr-1">Team</span>
-            <FilterButton active={teamFilter === 'all'} onClick={() => setTeamFilter('all')}>All</FilterButton>
-            <FilterButton active={teamFilter === 'senior'} onClick={() => setTeamFilter('senior')}>Senior</FilterButton>
-            <FilterButton active={teamFilter === 'junior'} onClick={() => setTeamFilter('junior')}>Junior</FilterButton>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-400 font-medium mr-1">Venue</span>
-            <FilterButton active={venueFilter === 'all'} onClick={() => setVenueFilter('all')}>All</FilterButton>
-            <FilterButton active={venueFilter === 'home'} onClick={() => setVenueFilter('home')}>Home</FilterButton>
-            <FilterButton active={venueFilter === 'away'} onClick={() => setVenueFilter('away')}>Away</FilterButton>
-          </div>
-        </div>
-        {/* Mobile filters */}
-        <div className="sm:hidden">
-          <MobileFilters
-            dateRange={dateRange} setDateRange={setDateRange}
-            teamFilter={teamFilter} setTeamFilter={setTeamFilter}
-            venueFilter={venueFilter} setVenueFilter={setVenueFilter}
-          />
-        </div>
+        <MobileFilters
+          dateRange={dateRange} setDateRange={setDateRange}
+          teamFilter={teamFilter} setTeamFilter={setTeamFilter}
+          venueFilter={venueFilter} setVenueFilter={setVenueFilter}
+        />
         <ViewDropdown view={view} onChange={setView} />
       </div>
 

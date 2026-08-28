@@ -520,7 +520,7 @@ export default function EditFixturePage() {
               </div>
               {!refereeId && (
                 <div className="flex justify-center pt-2">
-                  <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} />
+                  <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnTo} />
                 </div>
               )}
             </form>
