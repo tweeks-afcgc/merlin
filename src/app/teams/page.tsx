@@ -40,8 +40,16 @@ export default async function TeamsPage() {
     supabase.from('team_sponsors').select('team_id, name, season_id'),
   ])
 
-  if (teamsRes.error) throw new Error(`teams: ${teamsRes.error.message}`)
-  if (seasonsRes.error) throw new Error(`seasons: ${seasonsRes.error.message}`)
+  if (teamsRes.error || seasonsRes.error) {
+    const msg = teamsRes.error?.message ?? seasonsRes.error?.message
+    return (
+      <AppShell userName={profile?.full_name ?? null} isAdmin={profile?.role === 'admin'}>
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <p className="text-red-700 text-sm">Failed to load teams: {msg}</p>
+        </div>
+      </AppShell>
+    )
+  }
 
   const rawTeams = teamsRes.data
   const seasons = seasonsRes.data ?? []

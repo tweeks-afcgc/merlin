@@ -68,31 +68,17 @@ function FilterSelect({ label, value, onChange, options }: {
   )
 }
 
-export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
-  teams: any[]
-  isAdmin: boolean
+type FilterPanelProps = {
+  filterType: FilterType; setFilterType: (v: FilterType) => void
+  filterGender: FilterGender; setFilterGender: (v: FilterGender) => void
+  filterFormat: string; setFilterFormat: (v: string) => void
+  filterVenue: string; setFilterVenue: (v: string) => void
+  showFormat: boolean; formats: string[]
   venueNames: string[]
-  formats: string[]
-}) {
-  const [filterType, setFilterType] = useState<FilterType>('all')
-  const [filterGender, setFilterGender] = useState<FilterGender>('all')
-  const [filterFormat, setFilterFormat] = useState('all')
-  const [filterVenue, setFilterVenue] = useState('all')
-  const [filtersOpen, setFiltersOpen] = useState(false)
+}
 
-  const filtered = teams.filter(t => {
-    if (filterType !== 'all' && t.type !== filterType) return false
-    if (filterGender !== 'all' && t.gender !== filterGender) return false
-    if (filterFormat !== 'all' && t.format !== filterFormat) return false
-    if (filterVenue !== 'all' && t.venueName !== filterVenue) return false
-    return true
-  })
-
-  const activeCount = (filterType !== 'all' ? 1 : 0) + (filterGender !== 'all' ? 1 : 0) + (filterFormat !== 'all' ? 1 : 0) + (filterVenue !== 'all' ? 1 : 0)
-
-  const showFormat = (filterType === 'all' || filterType === 'junior') && formats.length > 0
-
-  const FilterPanel = () => (
+function FilterPanel({ filterType, setFilterType, filterGender, setFilterGender, filterFormat, setFilterFormat, filterVenue, setFilterVenue, showFormat, formats, venueNames }: FilterPanelProps) {
+  return (
     <div className="space-y-3">
       <FilterSelect
         label="Type"
@@ -125,6 +111,37 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
       )}
     </div>
   )
+}
+
+export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
+  teams: any[]
+  isAdmin: boolean
+  venueNames: string[]
+  formats: string[]
+}) {
+  const [filterType, setFilterType] = useState<FilterType>('all')
+  const [filterGender, setFilterGender] = useState<FilterGender>('all')
+  const [filterFormat, setFilterFormat] = useState('all')
+  const [filterVenue, setFilterVenue] = useState('all')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+
+  const filtered = teams.filter(t => {
+    if (filterType !== 'all' && t.type !== filterType) return false
+    if (filterGender !== 'all' && t.gender !== filterGender) return false
+    if (filterFormat !== 'all' && t.format !== filterFormat) return false
+    if (filterVenue !== 'all' && t.venueName !== filterVenue) return false
+    return true
+  })
+
+  const activeCount = (filterType !== 'all' ? 1 : 0) + (filterGender !== 'all' ? 1 : 0) + (filterFormat !== 'all' ? 1 : 0) + (filterVenue !== 'all' ? 1 : 0)
+
+  const showFormat = (filterType === 'all' || filterType === 'junior') && formats.length > 0
+
+  const filterPanelProps: FilterPanelProps = {
+    filterType, setFilterType, filterGender, setFilterGender,
+    filterFormat, setFilterFormat, filterVenue, setFilterVenue,
+    showFormat, formats, venueNames,
+  }
 
   return (
     <>
@@ -141,7 +158,7 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
         </button>
         {filtersOpen && (
           <div className="mt-2 p-4 bg-white rounded-xl border border-gray-100 shadow-sm space-y-3">
-            <FilterPanel />
+            <FilterPanel {...filterPanelProps} />
           </div>
         )}
       </div>
