@@ -375,7 +375,7 @@ export default async function TeamDashboardPage({
                 {trainingSlotsMapped.map((slot, i) => {
                   const start = slot.start_time ? slot.start_time.slice(0, 5) : null
                   const end = slot.end_time ? slot.end_time.slice(0, 5) : null
-                  const timeStr = start && end ? `${start}–${end}` : start ? `from ${start}` : null
+                  const timeStr = start && end ? `${start} - ${end}` : start ? `from ${start}` : null
                   const isAlt = slot.frequency === 'Alternate' || slot.frequency === 'bi-weekly'
                   const dayStr = slot.day_of_week + (isAlt ? ' (Alt)' : '')
                   const freqPart = !isAlt && slot.frequency !== 'weekly' ? slot.frequency : null

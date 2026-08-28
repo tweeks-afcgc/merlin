@@ -186,7 +186,7 @@ function TeamCardBody({ team }: { team: any }) {
           {team.slots.map((slot: any, i: number) => {
             const start = fmtTime(slot.start_time)
             const end = fmtTime(slot.end_time)
-            const timeStr = start && end ? `${start}–${end}` : start ? `from ${start}` : null
+            const timeStr = start && end ? `${start} - ${end}` : start ? `from ${start}` : null
             const isAlt = slot.frequency === 'Alternate' || slot.frequency === 'bi-weekly'
             const dayStr = slot.day_of_week + 's' + (isAlt ? ' (Alt)' : '')
             const freqPart = !isAlt && slot.frequency !== 'weekly' ? slot.frequency : null
