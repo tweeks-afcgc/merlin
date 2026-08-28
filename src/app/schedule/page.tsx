@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { teamDisplayName } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
@@ -42,7 +42,7 @@ function timeSort(a: any, b: any) {
 // ─── page ────────────────────────────────────────────────────────────────────
 
 export default async function PublicSchedulePage() {
-  const supabase = createAdminClient()
+  const supabase = await createClient()
 
   const today = new Date()
   const todayStr = today.toISOString().split('T')[0]
