@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import { teamDisplayName } from '@/lib/teamUtils'
+import ChangePasswordForm from './ChangePasswordForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,6 +68,8 @@ export default async function ProfilePage() {
             Edit profile
           </Link>
         </div>
+
+        <ChangePasswordForm />
 
         {managedTeams.length > 0 && (
           <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
