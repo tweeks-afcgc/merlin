@@ -258,7 +258,7 @@ export default async function RefereeDashboardPage({
                               <p className="text-sm font-semibold text-gray-900 truncate">
                                 {f.teams ? teamDisplayName(f.teams as any, seasons ?? []) : '—'}{' '}
                                 <span className="font-normal text-gray-500">
-                                  vs {f.club_teams ? [(f.club_teams as any).clubs?.name, (f.club_teams as any).name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown' : 'Unknown'}
+                                  vs {f.club_teams ? ([(f.club_teams as any).clubs?.name, (f.club_teams as any).name].filter((s: any) => s && s.trim()).join(' ') || 'Unknown').replace(/^\[Internal\]\s*/, '') : 'Unknown'}
                                 </span>
                               </p>
                               <p className="text-xs text-gray-400 mt-0.5">
