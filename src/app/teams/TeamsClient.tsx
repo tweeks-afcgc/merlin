@@ -59,7 +59,7 @@ function FilterSelect({ label, value, onChange, options }: {
   options: { value: string; label: string }[]
 }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5 flex-wrap">
       <span className="text-xs text-gray-400 font-medium">{label}</span>
       {options.map(o => (
         <FilterPill key={o.value} active={value === o.value} onClick={() => onChange(o.value)}>{o.label}</FilterPill>
@@ -113,11 +113,113 @@ function FilterPanel({ filterType, setFilterType, filterGender, setFilterGender,
   )
 }
 
-export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
+// Shared card body — used in both linked and read-only modes
+function TeamCardBody({ team }: { team: any }) {
+  return (
+    <div className="flex items-start gap-4">
+      {/* Kit circles — desktop left side, stacked */}
+      <div className="hidden sm:flex flex-col gap-1 flex-shrink-0 mt-0.5">
+        <KitCircle jersey={team.kit_jersey ?? null} shorts={team.kit_shorts ?? null} size="lg"
+          title={[team.kit_jersey, team.kit_shorts].filter(Boolean).join(' · ')} />
+        {team.away_kit_jersey ? (
+          <KitCircle jersey={team.away_kit_jersey ?? null} shorts={team.away_kit_shorts ?? null} size="lg"
+            title={[team.away_kit_jersey, team.away_kit_shorts].filter(Boolean).join(' · ')} />
+        ) : (
+          <div className="w-11 h-11" />
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        {/* Name row */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <p className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition">
+            {team.displayName}
+          </p>
+          {/* Kit circles — mobile inline after name */}
+          <div className="sm:hidden flex gap-1 flex-shrink-0">
+            <KitCircle jersey={team.kit_jersey ?? null} shorts={team.kit_shorts ?? null} size="sm"
+              title={[team.kit_jersey, team.kit_shorts].filter(Boolean).join(' · ')} />
+            {team.away_kit_jersey && (
+              <KitCircle jersey={team.away_kit_jersey ?? null} shorts={team.away_kit_shorts ?? null} size="sm"
+                title={[team.away_kit_jersey, team.away_kit_shorts].filter(Boolean).join(' · ')} />
+            )}
+          </div>
+        </div>
+
+        {/* Badges */}
+        {(team.format || team.gender) && (
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {team.gender && genderBadge(team.gender)}
+            {team.format && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                {team.format}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Detail rows */}
+        <div className="mt-1.5 space-y-1">
+          {team.roleLines.map((r: { label: string; names: string[] }, i: number) =>
+            r.names.map((name: string, j: number) => (
+              <div key={`${i}-${j}`} className="flex items-baseline gap-2">
+                <span className={`w-20 flex-shrink-0 text-xs ${j === 0 ? 'text-gray-400' : 'invisible'}`}>{r.label}</span>
+                <span className="text-xs text-gray-700">{name}</span>
+              </div>
+            ))
+          )}
+          {team.league && (
+            <div className="flex items-baseline gap-2">
+              <span className="w-20 flex-shrink-0 text-xs text-gray-400">League</span>
+              <span className="text-xs text-gray-700">
+                {team.league.abbr_name ?? team.league.name}{team.league.division ? ` - ${team.league.division}` : ''}
+              </span>
+            </div>
+          )}
+          {team.venueName && (
+            <div className="flex items-baseline gap-2">
+              <span className="w-20 flex-shrink-0 text-xs text-gray-400">Home</span>
+              <span className="text-xs text-gray-700">{team.venueName}</span>
+            </div>
+          )}
+          {team.slots.map((slot: any, i: number) => {
+            const start = fmtTime(slot.start_time)
+            const end = fmtTime(slot.end_time)
+            const timeStr = start && end ? `${start}–${end}` : start ? `from ${start}` : null
+            const isAlt = slot.frequency === 'Alternate' || slot.frequency === 'bi-weekly'
+            const dayStr = slot.day_of_week + 's' + (isAlt ? ' (Alt)' : '')
+            const freqPart = !isAlt && slot.frequency !== 'weekly' ? slot.frequency : null
+            const mainParts = [dayStr, freqPart, timeStr].filter(Boolean)
+            const venuePart = slot.venues?.name ? `@ ${slot.venues.name}` : null
+            const display = venuePart ? `${mainParts.join(' ')} ${venuePart}` : mainParts.join(' ')
+            return (
+              <div key={i} className="flex items-baseline gap-2">
+                <span className={`w-20 flex-shrink-0 text-xs ${i === 0 ? 'text-gray-400' : 'invisible'}`}>Training</span>
+                <span className="text-xs text-gray-700">{display}</span>
+              </div>
+            )
+          })}
+          {team.sponsors.map((name: string, i: number) => (
+            <div key={i} className="flex items-baseline gap-2">
+              <span className={`w-20 flex-shrink-0 text-xs ${i === 0 ? 'text-gray-400' : 'invisible'}`}>
+                {i === 0 ? (team.sponsors.length > 1 ? 'Sponsors' : 'Sponsor') : 'Sponsor'}
+              </span>
+              <span className="text-xs text-gray-700">{name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function TeamsClient({ teams, isAdmin, venueNames, formats, readOnly = false }: {
   teams: any[]
   isAdmin: boolean
   venueNames: string[]
   formats: string[]
+  readOnly?: boolean
 }) {
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [filterGender, setFilterGender] = useState<FilterGender>('all')
@@ -134,7 +236,6 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
   })
 
   const activeCount = (filterType !== 'all' ? 1 : 0) + (filterGender !== 'all' ? 1 : 0) + (filterFormat !== 'all' ? 1 : 0) + (filterVenue !== 'all' ? 1 : 0)
-
   const showFormat = (filterType === 'all' || filterType === 'junior') && formats.length > 0
 
   const filterPanelProps: FilterPanelProps = {
@@ -145,7 +246,7 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
 
   return (
     <>
-      {/* Filters — collapsible on all screen sizes */}
+      {/* Filters */}
       <div className="mb-4">
         <button
           onClick={() => setFiltersOpen(o => !o)}
@@ -167,106 +268,17 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats }: {
       <div className="space-y-3">
         {filtered.map((team: any) => (
           <div key={team.id} className="relative bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 transition group">
-            <Link href={`/teams/${team.id}`} className="block px-5 py-4 pr-14">
-              <div className="flex items-start gap-4">
-
-                {/* Kit circles — desktop left side, stacked */}
-                <div className="hidden sm:flex flex-col gap-1 flex-shrink-0 mt-0.5">
-                  <KitCircle jersey={team.kit_jersey ?? null} shorts={team.kit_shorts ?? null} size="lg"
-                    title={[team.kit_jersey, team.kit_shorts].filter(Boolean).join(' · ')} />
-                  {team.away_kit_jersey ? (
-                    <KitCircle jersey={team.away_kit_jersey ?? null} shorts={team.away_kit_shorts ?? null} size="lg"
-                      title={[team.away_kit_jersey, team.away_kit_shorts].filter(Boolean).join(' · ')} />
-                  ) : (
-                    <div className="w-11 h-11" />
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  {/* Name row */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition">
-                      {team.displayName}
-                    </p>
-                    {/* Kit circles — mobile inline after name */}
-                    <div className="sm:hidden flex gap-1 flex-shrink-0">
-                      <KitCircle jersey={team.kit_jersey ?? null} shorts={team.kit_shorts ?? null} size="sm"
-                        title={[team.kit_jersey, team.kit_shorts].filter(Boolean).join(' · ')} />
-                      {team.away_kit_jersey && (
-                        <KitCircle jersey={team.away_kit_jersey ?? null} shorts={team.away_kit_shorts ?? null} size="sm"
-                          title={[team.away_kit_jersey, team.away_kit_shorts].filter(Boolean).join(' · ')} />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Badges row — always on its own line so alignment is consistent */}
-                  {(team.format || team.gender) && (
-                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                      {team.gender && genderBadge(team.gender)}
-                      {team.format && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                          {team.format}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Detail rows */}
-                  <div className="mt-1.5 space-y-1">
-                    {team.roleLines.map((r: { label: string; names: string[] }, i: number) =>
-                      r.names.map((name: string, j: number) => (
-                        <div key={`${i}-${j}`} className="flex items-baseline gap-2">
-                          <span className={`w-20 flex-shrink-0 text-xs ${j === 0 ? 'text-gray-400' : 'invisible'}`}>{r.label}</span>
-                          <span className="text-xs text-gray-700">{name}</span>
-                        </div>
-                      ))
-                    )}
-                    {team.league && (
-                      <div className="flex items-baseline gap-2">
-                        <span className="w-20 flex-shrink-0 text-xs text-gray-400">League</span>
-                        <span className="text-xs text-gray-700">
-                          {team.league.abbr_name ?? team.league.name}{team.league.division ? ` - ${team.league.division}` : ''}
-                        </span>
-                      </div>
-                    )}
-                    {team.venueName && (
-                      <div className="flex items-baseline gap-2">
-                        <span className="w-20 flex-shrink-0 text-xs text-gray-400">Home</span>
-                        <span className="text-xs text-gray-700">{team.venueName}</span>
-                      </div>
-                    )}
-                    {team.slots.map((slot: any, i: number) => {
-                      const start = fmtTime(slot.start_time)
-                      const end = fmtTime(slot.end_time)
-                      const timeStr = start && end ? `${start}–${end}` : start ? `from ${start}` : null
-                      const isAlt = slot.frequency === 'Alternate' || slot.frequency === 'bi-weekly'
-                      const dayStr = slot.day_of_week + 's' + (isAlt ? ' (Alt)' : '')
-                      const freqPart = !isAlt && slot.frequency !== 'weekly' ? slot.frequency : null
-                      const mainParts = [dayStr, freqPart, timeStr].filter(Boolean)
-                      const venuePart = slot.venues?.name ? `@ ${slot.venues.name}` : null
-                      const display = venuePart ? `${mainParts.join(' ')} ${venuePart}` : mainParts.join(' ')
-                      return (
-                        <div key={i} className="flex items-baseline gap-2">
-                          <span className={`w-20 flex-shrink-0 text-xs ${i === 0 ? 'text-gray-400' : 'invisible'}`}>Training</span>
-                          <span className="text-xs text-gray-700">{display}</span>
-                        </div>
-                      )
-                    })}
-                    {team.sponsors.map((name: string, i: number) => (
-                      <div key={i} className="flex items-baseline gap-2">
-                        <span className={`w-20 flex-shrink-0 text-xs ${i === 0 ? 'text-gray-400' : 'invisible'}`}>
-                          {i === 0 ? (team.sponsors.length > 1 ? 'Sponsors' : 'Sponsor') : 'Sponsor'}
-                        </span>
-                        <span className="text-xs text-gray-700">{name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            {readOnly ? (
+              <div className="px-5 py-4">
+                <TeamCardBody team={team} />
               </div>
-            </Link>
+            ) : (
+              <Link href={`/teams/${team.id}`} className="block px-5 py-4 pr-14">
+                <TeamCardBody team={team} />
+              </Link>
+            )}
 
-            {isAdmin && (
+            {!readOnly && isAdmin && (
               <Link
                 href={`/admin/teams/${team.id}/edit?from=/teams`}
                 className="absolute top-3.5 right-4 p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition"
