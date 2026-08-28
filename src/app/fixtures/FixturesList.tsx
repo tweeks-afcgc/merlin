@@ -451,7 +451,7 @@ export default function FixturesList({
   canConfirm: boolean
 }) {
   const searchParams = useSearchParams()
-  const deleted = searchParams.get('deleted') === '1'
+  const [deletedBanner, setDeletedBanner] = useState(searchParams.get('deleted') === '1')
 
   const [view, setView] = useState<ViewMode>('schedule')
   const [teamFilter, setTeamFilter] = useState<TeamFilter>('all')
@@ -477,12 +477,17 @@ export default function FixturesList({
 
   return (
     <div>
-      {deleted && (
+      {deletedBanner && (
         <div className="mb-4 flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 text-sm font-medium rounded-xl px-4 py-3">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Fixture deleted successfully.
+          <span className="flex-1">Fixture deleted successfully.</span>
+          <button onClick={() => setDeletedBanner(false)} className="text-green-600 hover:text-green-800 transition flex-shrink-0" aria-label="Dismiss">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
       )}
       {/* Top bar */}
