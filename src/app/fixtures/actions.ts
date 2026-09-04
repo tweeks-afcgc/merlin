@@ -59,8 +59,9 @@ export async function confirmFixture(fixtureId: string): Promise<{ error?: strin
         const clashMinutes = ch * 60 + cm
         const clashTeam = (clash as any).teams
         const clashDuration = matchDurationMins(clashTeam?.type, clashTeam?.age_group)
-        // The required gap is the longer of the two match durations
-        const requiredGap = Math.max(matchDuration, clashDuration)
+        // Gap needed = duration of whichever fixture kicks off first
+        const firstDuration = fixtureMinutes < clashMinutes ? matchDuration : clashDuration
+        const requiredGap = firstDuration
         if (Math.abs(fixtureMinutes - clashMinutes) < requiredGap) {
           return { error: `Pitch clash: another confirmed fixture uses this pitch within ${requiredGap} minutes of this kick off time.` }
         }
