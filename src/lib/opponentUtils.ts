@@ -12,17 +12,18 @@ type ClubWithTeams = {
 /** Build a sorted list of opponent options from clubs+teams data. */
 export function buildOpponentOptions(clubs: ClubWithTeams[]): OpponentOption[] {
   const options: OpponentOption[] = []
-  for (const club of clubs) {
+  const sorted = [...clubs].sort((a, b) => a.name.localeCompare(b.name))
+  for (const club of sorted) {
     // Always list the club itself
     options.push({ value: `club:${club.id}`, label: club.name })
-    // List each team that has a non-empty name
-    for (const team of club.club_teams) {
-      if (team.name && team.name.trim()) {
-        options.push({ value: team.id, label: `${club.name} ${team.name}` })
-      }
+    // List each named team indented under the club, sorted by team name
+    const namedTeams = club.club_teams.filter(t => t.name && t.name.trim())
+      .sort((a, b) => a.name.localeCompare(b.name))
+    for (const team of namedTeams) {
+      options.push({ value: team.id, label: `↳ ${club.name} ${team.name}` })
     }
   }
-  return options.sort((a, b) => a.label.localeCompare(b.label))
+  return options
 }
 
 /** Display an opponent name, handling the case where a team has no name (club-only). */
