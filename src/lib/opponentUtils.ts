@@ -20,7 +20,7 @@ export function buildOpponentOptions(clubs: ClubWithTeams[]): OpponentOption[] {
     const namedTeams = club.club_teams.filter(t => t.name && t.name.trim())
       .sort((a, b) => a.name.localeCompare(b.name))
     for (const team of namedTeams) {
-      options.push({ value: team.id, label: `↳ ${club.name} ${team.name}` })
+      options.push({ value: team.id, label: `** ${club.name} ${team.name}` })
     }
   }
   return options
