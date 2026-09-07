@@ -3,27 +3,42 @@ export type OpponentOption = {
   label: string
 }
 
+export type OpponentGroup = {
+  clubId: string
+  clubName: string
+  clubValue: string  // 'club:${clubId}'
+  teams: OpponentOption[]  // empty if club has no named teams
+}
+
 type ClubWithTeams = {
   id: string
   name: string
   club_teams: { id: string; name: string }[]
 }
 
-/** Build a sorted list of opponent options from clubs+teams data. */
+/** Build grouped opponent data for rendering with <optgroup>. Clubs sorted A–Z, teams sorted A–Z within each club. */
+export function buildOpponentGroups(clubs: ClubWithTeams[]): OpponentGroup[] {
+  return [...clubs]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(club => ({
+      clubId: club.id,
+      clubName: club.name,
+      clubValue: `club:${club.id}`,
+      teams: club.club_teams
+        .filter(t => t.name && t.name.trim())
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(t => ({ value: t.id, label: `${club.name} ${t.name}` })),
+    }))
+}
+
+/** @deprecated use buildOpponentGroups */
 export function buildOpponentOptions(clubs: ClubWithTeams[]): OpponentOption[] {
-  const options: OpponentOption[] = []
-  const sorted = [...clubs].sort((a, b) => a.name.localeCompare(b.name))
-  for (const club of sorted) {
-    // Always list the club itself
-    options.push({ value: `club:${club.id}`, label: club.name })
-    // List each named team indented under the club, sorted by team name
-    const namedTeams = club.club_teams.filter(t => t.name && t.name.trim())
-      .sort((a, b) => a.name.localeCompare(b.name))
-    for (const team of namedTeams) {
-      options.push({ value: team.id, label: `↳ ${club.name} ${team.name}` })
-    }
+  const opts: OpponentOption[] = []
+  for (const g of buildOpponentGroups(clubs)) {
+    opts.push({ value: g.clubValue, label: g.clubName })
+    for (const t of g.teams) opts.push(t)
   }
-  return options
+  return opts
 }
 
 /** Display an opponent name, handling the case where a team has no name (club-only). */

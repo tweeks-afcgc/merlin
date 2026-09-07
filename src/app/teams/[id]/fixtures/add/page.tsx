@@ -7,7 +7,7 @@ import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { addFixture } from '../actions'
 
-import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
+import { buildOpponentGroups, type OpponentGroup } from '@/lib/opponentUtils'
 
 type Season = { id: string; name: string; is_current: boolean }
 
@@ -20,7 +20,7 @@ export default function AddFixturePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [seasons, setSeasons] = useState<Season[]>([])
-  const [opponents, setOpponents] = useState<OpponentOption[]>([])
+  const [opponents, setOpponents] = useState<OpponentGroup[]>([])
   const [seasonId, setSeasonId] = useState('')
   const [date, setDate] = useState('')
   const [tbc, setTbc] = useState(false)
@@ -38,7 +38,7 @@ export default function AddFixturePage() {
       const s = seasonsData ?? []
       setSeasons(s)
       setSeasonId(s.find(x => x.is_current)?.id ?? s[0]?.id ?? '')
-      setOpponents(buildOpponentOptions((clubsData ?? []) as any))
+      setOpponents(buildOpponentGroups((clubsData ?? []) as any))
       setLoading(false)
     }
     load()
@@ -145,9 +145,18 @@ export default function AddFixturePage() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                   >
                     <option value="">Select opponent...</option>
-                    {opponents.map(o => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
+                    {opponents.map(g =>
+                      g.teams.length === 0 ? (
+                        <option key={g.clubValue} value={g.clubValue}>{g.clubName}</option>
+                      ) : (
+                        <optgroup key={g.clubId} label={g.clubName}>
+                          <option value={g.clubValue}>{g.clubName}</option>
+                          {g.teams.map(t => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
+                          ))}
+                        </optgroup>
+                      )
+                    )}
                   </select>
                 )}
               </div>
