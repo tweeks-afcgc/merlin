@@ -13,12 +13,11 @@ type ClubWithTeams = {
 export function buildOpponentOptions(clubs: ClubWithTeams[]): OpponentOption[] {
   const options: OpponentOption[] = []
   for (const club of clubs) {
-    if (club.club_teams.length === 0) {
-      // No teams — list the club once
-      options.push({ value: `club:${club.id}`, label: club.name })
-    } else {
-      // Has teams — list each team (club name already prefixed in the label)
-      for (const team of club.club_teams) {
+    // Always list the club itself
+    options.push({ value: `club:${club.id}`, label: club.name })
+    // List each team that has a non-empty name
+    for (const team of club.club_teams) {
+      if (team.name && team.name.trim()) {
         options.push({ value: team.id, label: `${club.name} ${team.name}` })
       }
     }
