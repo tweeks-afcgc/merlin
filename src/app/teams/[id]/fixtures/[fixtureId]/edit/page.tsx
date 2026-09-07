@@ -7,7 +7,7 @@ import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { updateFixture, assignRefereeFromRequest, savePerformances, saveMatchNotes, type PlayerPerformance } from '../../actions'
 import DeleteFixtureButton from '../../DeleteFixtureButton'
-import { buildOpponentGroups, type OpponentGroup } from '@/lib/opponentUtils'
+import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 import { sortedTeams, teamDisplayName } from '@/lib/teamSort'
 
 type ClubTeam = { id: string; name: string; clubs: { name: string } }
@@ -30,7 +30,7 @@ export default function EditFixturePage() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   const [clubTeams, setClubTeams] = useState<ClubTeam[]>([])
-  const [opponents, setOpponents] = useState<OpponentGroup[]>([])
+  const [opponents, setOpponents] = useState<OpponentOption[]>([])
   const [internalTeams, setInternalTeams] = useState<{ id: string; label: string }[]>([])
   const [venues, setVenues] = useState<Venue[]>([])
   const [pitches, setPitches] = useState<Pitch[]>([])
@@ -112,7 +112,8 @@ export default function EditFixturePage() {
         }
       }
 
-      setOpponents(buildOpponentGroups((clubsData ?? []) as any))
+      const opts = buildOpponentOptions((clubsData ?? []) as any)
+      setOpponents(opts)
       setClubTeams((clubsData ?? []) as any) // keep for any legacy refs
       const allSeasons = seasonsData ?? []
       const ordered = sortedTeams(allTeamsData ?? [], allSeasons)
@@ -296,18 +297,9 @@ export default function EditFixturePage() {
                 >
                   <option value="">Select opponent...</option>
                   <option value="tbc">TBC</option>
-                  {opponents.map(g =>
-                    g.teams.length === 0 ? (
-                      <option key={g.clubValue} value={g.clubValue}>{g.clubName}</option>
-                    ) : (
-                      <optgroup key={g.clubId} label={g.clubName}>
-                        <option value={g.clubValue}>{g.clubName}</option>
-                        {g.teams.map(t => (
-                          <option key={t.value} value={t.value}>{t.label}</option>
-                        ))}
-                      </optgroup>
-                    )
-                  )}
+                  {opponents.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
                   {internalTeams.length > 0 && (
                     <optgroup label="── Internal Teams ──">
                       {internalTeams.map(t => (
