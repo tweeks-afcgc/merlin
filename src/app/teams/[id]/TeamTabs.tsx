@@ -264,6 +264,7 @@ export default function TeamTabs({
       {tab === 'playerstats' && (() => {
         const scorers = [...playerStats].filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
         const assisters = [...playerStats].filter(p => p.assists > 0).sort((a, b) => b.assists - a.assists || a.name.localeCompare(b.name))
+        const avgMinsRows = [...playerStats].filter(p => p.played > 0).map(p => ({ ...p, avgMins: Math.round(p.total_mins / p.played) })).filter(p => p.avgMins > 0).sort((a, b) => b.avgMins - a.avgMins || a.name.localeCompare(b.name))
         const allRows = [...playerStats].sort((a, b) => {
           if (a.player_number != null && b.player_number != null) return a.player_number - b.player_number
           if (a.player_number != null) return -1
@@ -274,6 +275,28 @@ export default function TeamTabs({
         if (!hasAnyData) return (
           <p className="px-5 py-4 text-sm text-gray-400">No player stats recorded for this season yet.</p>
         )
+
+        function BarRow({ rank, playerNumber, name, value, max, barColour, label }: {
+          rank: number; playerNumber: number | null; name: string; value: number; max: number; barColour: string; label: string
+        }) {
+          const pct = max > 0 ? Math.round((value / max) * 100) : 0
+          return (
+            <li className="px-5 py-2.5">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-4 text-xs font-bold text-gray-300 flex-shrink-0 text-right">{rank}</span>
+                <span className="w-6 text-right text-xs font-semibold text-gray-400 flex-shrink-0">
+                  {playerNumber != null ? `#${playerNumber}` : ''}
+                </span>
+                <span className="text-sm font-medium text-gray-800 flex-1 truncate">{name}</span>
+                <span className={`text-sm font-bold flex-shrink-0 ${label}`}>{value}</span>
+              </div>
+              <div className="ml-12 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full ${barColour}`} style={{ width: `${pct}%` }} />
+              </div>
+            </li>
+          )
+        }
+
         return (
           <div className="divide-y divide-gray-100">
             {/* Top Scorers */}
@@ -282,16 +305,9 @@ export default function TeamTabs({
                 <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Top Scorers</h3>
                 </div>
-                <ul className="divide-y divide-gray-50">
+                <ul className="divide-y divide-gray-50 py-1">
                   {scorers.map((p, i) => (
-                    <li key={p.player_id} className="px-5 py-2.5 flex items-center gap-3">
-                      <span className="w-5 text-xs font-bold text-gray-300 flex-shrink-0">{i + 1}</span>
-                      <span className="w-7 text-right text-xs font-semibold text-gray-400 flex-shrink-0">
-                        {p.player_number != null ? `#${p.player_number}` : ''}
-                      </span>
-                      <span className="text-sm text-gray-900 flex-1">{p.name}</span>
-                      <span className="text-sm font-bold text-red-800">{p.goals}</span>
-                    </li>
+                    <BarRow key={p.player_id} rank={i + 1} playerNumber={p.player_number} name={p.name} value={p.goals} max={scorers[0].goals} barColour="bg-red-700" label="text-red-800" />
                   ))}
                 </ul>
               </div>
@@ -303,16 +319,23 @@ export default function TeamTabs({
                 <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Top Assisters</h3>
                 </div>
-                <ul className="divide-y divide-gray-50">
+                <ul className="divide-y divide-gray-50 py-1">
                   {assisters.map((p, i) => (
-                    <li key={p.player_id} className="px-5 py-2.5 flex items-center gap-3">
-                      <span className="w-5 text-xs font-bold text-gray-300 flex-shrink-0">{i + 1}</span>
-                      <span className="w-7 text-right text-xs font-semibold text-gray-400 flex-shrink-0">
-                        {p.player_number != null ? `#${p.player_number}` : ''}
-                      </span>
-                      <span className="text-sm text-gray-900 flex-1">{p.name}</span>
-                      <span className="text-sm font-bold text-blue-700">{p.assists}</span>
-                    </li>
+                    <BarRow key={p.player_id} rank={i + 1} playerNumber={p.player_number} name={p.name} value={p.assists} max={assisters[0].assists} barColour="bg-blue-500" label="text-blue-700" />
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Average Minutes */}
+            {avgMinsRows.length > 0 && (
+              <div>
+                <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Average Minutes</h3>
+                </div>
+                <ul className="divide-y divide-gray-50 py-1">
+                  {avgMinsRows.map((p, i) => (
+                    <BarRow key={p.player_id} rank={i + 1} playerNumber={p.player_number} name={p.name} value={p.avgMins} max={avgMinsRows[0].avgMins} barColour="bg-emerald-500" label="text-emerald-700" />
                   ))}
                 </ul>
               </div>
@@ -338,7 +361,7 @@ export default function TeamTabs({
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {allRows.map(p => {
-                      const avgMins = p.played > 0 ? Math.round(p.total_mins / p.played) : 0
+                      const avg = p.played > 0 ? Math.round(p.total_mins / p.played) : 0
                       return (
                         <tr key={p.player_id} className="hover:bg-gray-50/50">
                           <td className="px-5 py-2 text-gray-900 whitespace-nowrap">
@@ -354,7 +377,7 @@ export default function TeamTabs({
                           <td className="px-2 py-2 text-center text-gray-700">{p.assists || '—'}</td>
                           <td className="px-2 py-2 text-center text-gray-700">{p.motm || '—'}</td>
                           <td className="px-2 py-2 text-center text-gray-500">{p.total_mins || '—'}</td>
-                          <td className="px-2 py-2 text-center text-gray-500">{p.played > 0 ? avgMins : '—'}</td>
+                          <td className="px-2 py-2 text-center text-gray-500">{p.played > 0 ? avg : '—'}</td>
                         </tr>
                       )
                     })}
