@@ -78,6 +78,7 @@ export default function TeamTabs({
   allFixtures,
   today,
   seasons,
+  isAllTime,
   allStats,
   exclFriendliesStats,
   leagueStats,
@@ -92,6 +93,7 @@ export default function TeamTabs({
   allFixtures: Fixture[]
   today: string
   seasons: Season[]
+  isAllTime: boolean
   allStats: Stats
   exclFriendliesStats: Stats
   leagueStats: Stats
@@ -161,15 +163,17 @@ export default function TeamTabs({
             <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
               {selectedSeasonName ?? ''}
             </span>
-            <Link
-              href={`/teams/${teamId}/fixtures/add`}
-              className="flex items-center gap-1 text-xs font-semibold text-red-800 hover:underline"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-              </svg>
-              Add fixture
-            </Link>
+            {!isAllTime && (
+              <Link
+                href={`/teams/${teamId}/fixtures/add`}
+                className="flex items-center gap-1 text-xs font-semibold text-red-800 hover:underline"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+                Add fixture
+              </Link>
+            )}
           </div>
 
           {allFixtures.length === 0 ? (

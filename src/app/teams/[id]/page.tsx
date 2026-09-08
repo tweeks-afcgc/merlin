@@ -130,23 +130,23 @@ export default async function TeamDashboardPage({
   // Seasons shown in the dropdown: those with fixtures + current season
   const statsSeasons = allSeasons.filter(s => s.is_current || seasonIdsWithFixtures.has(s.id))
 
-  // Resolve selected season — search ALL seasons so the URL param always wins,
-  // even if the season has no fixtures (e.g. it only has players or training slots)
-  const selectedStatsSeason =
-    allSeasons.find(s => s.id === seasonParam) ??
-    allSeasons.find(s => s.is_current) ??
-    allSeasons[0] ??
-    null
+  const isAllTime = seasonParam === 'all'
 
-  // Fetch results for the selected stats season
-  const { data: resultFixtures } = selectedStatsSeason ? await supabase
-    .from('fixtures')
-    .select('competition, goals_for, goals_against')
-    .eq('team_id', id)
-    .eq('season_id', selectedStatsSeason.id)
-    .not('goals_for', 'is', null)
-    .not('goals_against', 'is', null)
-    : { data: [] }
+  // Resolve selected season (null when all-time)
+  const selectedStatsSeason = isAllTime
+    ? null
+    : allSeasons.find(s => s.id === seasonParam) ??
+      allSeasons.find(s => s.is_current) ??
+      allSeasons[0] ??
+      null
+
+  // Fetch results for stats (filtered by season or all-time)
+  const resultFixturesQuery = isAllTime
+    ? supabase.from('fixtures').select('competition, goals_for, goals_against').eq('team_id', id).not('goals_for', 'is', null).not('goals_against', 'is', null)
+    : selectedStatsSeason
+      ? supabase.from('fixtures').select('competition, goals_for, goals_against').eq('team_id', id).eq('season_id', selectedStatsSeason.id).not('goals_for', 'is', null).not('goals_against', 'is', null)
+      : null
+  const { data: resultFixtures } = resultFixturesQuery ? await resultFixturesQuery : { data: [] }
 
   function calcStats(fixtures: { goals_for: number; goals_against: number }[]) {
     const p = fixtures.length
@@ -206,31 +206,38 @@ export default async function TeamDashboardPage({
     volunteerName: r.volunteers ? `${r.volunteers.first_name} ${r.volunteers.last_name}` : 'Unknown',
   }))
 
-  // Players for this team in the current season
-  const { data: playerRows } = selectedStatsSeason ? await supabase
-    .from('player_team_seasons')
-    .select('player_number, players(id, first_name, last_name, date_of_birth)')
-    .eq('team_id', id)
-    .eq('season_id', selectedStatsSeason.id)
-    : { data: [] }
+  // Players for this team (season-filtered or all-time)
+  const playerRowsQuery = isAllTime
+    ? supabase.from('player_team_seasons').select('player_number, season_id, players(id, first_name, last_name, date_of_birth)').eq('team_id', id)
+    : selectedStatsSeason
+      ? supabase.from('player_team_seasons').select('player_number, season_id, players(id, first_name, last_name, date_of_birth)').eq('team_id', id).eq('season_id', selectedStatsSeason.id)
+      : null
+  const { data: playerRows } = playerRowsQuery ? await playerRowsQuery : { data: [] }
 
-  const players = (playerRows ?? [])
-    .map((r: any) => r.players ? { ...r.players, player_number: r.player_number ?? null } : null)
-    .filter(Boolean)
-    .sort((a: any, b: any) => {
-      if (a.player_number != null && b.player_number != null) return a.player_number - b.player_number
-      if (a.player_number != null) return -1
-      if (b.player_number != null) return 1
-      return `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
-    })
+  // Deduplicate players across seasons (all-time) — keep latest player_number per player
+  const playerByIdMap = new Map<string, any>()
+  for (const r of (playerRows ?? []) as any[]) {
+    if (!r.players) continue
+    const existing = playerByIdMap.get(r.players.id)
+    // Keep the row: prefer non-null player_number, then most recent season
+    if (!existing || (r.player_number != null && existing.player_number == null)) {
+      playerByIdMap.set(r.players.id, { ...r.players, player_number: r.player_number ?? null })
+    }
+  }
+  const players = Array.from(playerByIdMap.values()).sort((a: any, b: any) => {
+    if (a.player_number != null && b.player_number != null) return a.player_number - b.player_number
+    if (a.player_number != null) return -1
+    if (b.player_number != null) return 1
+    return `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
+  })
 
-  // Player performance stats for the selected season
-  const { data: perfRows } = selectedStatsSeason ? await supabase
-    .from('fixture_player_performances')
-    .select('player_id, played, goals, assists, motm, mins_played, fixtures!inner(team_id, season_id)')
-    .eq('fixtures.team_id', id)
-    .eq('fixtures.season_id', selectedStatsSeason.id)
-    : { data: [] }
+  // Player performance stats (season-filtered or all-time)
+  const perfRowsQuery = isAllTime
+    ? supabase.from('fixture_player_performances').select('player_id, played, goals, assists, motm, mins_played, fixtures!inner(team_id)').eq('fixtures.team_id', id)
+    : selectedStatsSeason
+      ? supabase.from('fixture_player_performances').select('player_id, played, goals, assists, motm, mins_played, fixtures!inner(team_id, season_id)').eq('fixtures.team_id', id).eq('fixtures.season_id', selectedStatsSeason.id)
+      : null
+  const { data: perfRows } = perfRowsQuery ? await perfRowsQuery : { data: [] }
 
   // Aggregate per player
   type PlayerStat = {
@@ -261,14 +268,12 @@ export default async function TeamDashboardPage({
   const today = new Date().toISOString().split('T')[0]
   const FIXTURE_SELECT = 'id, date, kickoff_time, venue, confirmed, notes, goals_for, goals_against, season_id, club_teams(id, name, internal_team_id, clubs(name)), venues(name)'
 
-  const { data: allFixturesData } = selectedStatsSeason
-    ? await supabase
-        .from('fixtures')
-        .select(FIXTURE_SELECT)
-        .eq('team_id', id)
-        .eq('season_id', selectedStatsSeason.id)
-        .order('date', { ascending: false })
-    : { data: [] }
+  const fixturesQuery = isAllTime
+    ? supabase.from('fixtures').select(FIXTURE_SELECT).eq('team_id', id).order('date', { ascending: false })
+    : selectedStatsSeason
+      ? supabase.from('fixtures').select(FIXTURE_SELECT).eq('team_id', id).eq('season_id', selectedStatsSeason.id).order('date', { ascending: false })
+      : null
+  const { data: allFixturesData } = fixturesQuery ? await fixturesQuery : { data: [] }
 
   const rawFixtures = (allFixturesData as any[]) ?? []
 
@@ -290,9 +295,9 @@ export default async function TeamDashboardPage({
   })
 
   const displayName = teamDisplayName(team, seasons ?? [])
-  const seasonDisplayName = selectedStatsSeason
-    ? teamDisplayNameForSeason(team, seasons ?? [], selectedStatsSeason.id)
-    : displayName
+  const seasonDisplayName = isAllTime || !selectedStatsSeason
+    ? displayName
+    : teamDisplayNameForSeason(team, seasons ?? [], selectedStatsSeason.id)
 
   const ROLE_ORDER = ['manager', 'assistant', 'coach']
   const sortedRoles = [...teamRoles].sort((a, b) => {
@@ -413,22 +418,22 @@ export default async function TeamDashboardPage({
         </div>
 
         {/* Season selector */}
-        {statsSeasons.length > 1 && (
+        {statsSeasons.length > 0 && (
           <div className="flex items-center gap-3 mt-6 mb-3 flex-wrap">
             <span className="text-sm text-gray-500">Season</span>
             <SeasonSelect
               teamId={id}
               seasons={statsSeasons}
-              selectedId={selectedStatsSeason?.id ?? null}
+              selectedId={isAllTime ? 'all' : (selectedStatsSeason?.id ?? null)}
             />
-            <span className="text-sm font-semibold text-gray-700">{seasonDisplayName}</span>
+            {!isAllTime && <span className="text-sm font-semibold text-gray-700">{seasonDisplayName}</span>}
           </div>
         )}
 
         {/* Tabbed card: Fixtures | Season Stats | Players */}
-        <div className={statsSeasons.length > 1 ? '' : 'mt-6'}>
+        <div className={statsSeasons.length > 0 ? '' : 'mt-6'}>
           <TeamTabs
-            key={selectedStatsSeason?.id ?? 'no-season'}
+            key={isAllTime ? 'all-time' : (selectedStatsSeason?.id ?? 'no-season')}
             teamId={id}
             isAdmin={isAdmin}
             currentSeasonId={currentSeason?.id ?? null}
@@ -438,7 +443,8 @@ export default async function TeamDashboardPage({
             allStats={allStats}
             exclFriendliesStats={exclFriendliesStats}
             leagueStats={leagueStats}
-            selectedSeasonName={selectedStatsSeason?.name ?? null}
+            selectedSeasonName={isAllTime ? 'All Time' : (selectedStatsSeason?.name ?? null)}
+            isAllTime={isAllTime}
             players={players as any[]}
             playerStats={playerStats}
             currentSeasonName={selectedStatsSeason?.name ?? null}
