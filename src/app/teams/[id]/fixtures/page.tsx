@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
-import { teamDisplayName, fixtureOpponentName } from '@/lib/teamUtils'
+import { teamDisplayName, fixtureOpponentName, type Season } from '@/lib/teamUtils'
 import FixtureNotesCell from './FixtureNotesCell'
 
 export const dynamic = 'force-dynamic'
@@ -61,16 +61,32 @@ export default async function FixturesPage({
     : currentSeason ?? visibleSeasons[0]
   const activeSeasonId = activeSeason?.id ?? visibleSeasons[0]?.id
 
-  const { data: fixtures } = await supabase
+  const { data: rawFixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, notes, season_id, club_teams(id, name, internal_team_id, clubs(name), internal_team:teams!internal_team_id(id, name, type, founding_age_group, founding_season_id)), venues(name)')
+    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, notes, season_id, club_teams(id, name, internal_team_id, clubs(name)), venues(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
 
+  // Resolve internal opponent age groups server-side
+  const internalTeamIds = [...new Set((rawFixtures ?? []).map((f: any) => f.club_teams?.internal_team_id).filter(Boolean))]
+  let internalTeamDataMap: Map<string, any> = new Map()
+  if (internalTeamIds.length > 0) {
+    const { data: iTeams } = await supabase
+      .from('teams')
+      .select('id, name, type, founding_age_group, founding_season_id')
+      .in('id', internalTeamIds)
+    for (const t of iTeams ?? []) internalTeamDataMap.set(t.id, t)
+  }
+
+  const fixtures = (rawFixtures ?? []).map((f: any) => {
+    const ct = f.club_teams
+    const internalTeam = ct?.internal_team_id ? internalTeamDataMap.get(ct.internal_team_id) ?? null : null
+    return { ...f, club_teams: ct ? { ...ct, internal_team: internalTeam } : ct }
+  })
+
   const teamName = teamDisplayName(team, seasons ?? [])
   const today = new Date().toDateString()
-  const allSeasons = seasons ?? []
 
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin={isAdmin}>
@@ -183,7 +199,7 @@ export default async function FixturesPage({
                       </td>
                       <td className="px-3 py-3 text-gray-600 whitespace-nowrap">{formatTime(f.kickoff_time)}</td>
                       <td className="px-3 py-3 text-gray-900">
-                        {fixtureOpponentName(f.club_teams as any, allSeasons, (f as any).season_id)}
+                        {fixtureOpponentName((f as any).club_teams, seasons ?? [], (f as any).season_id)}
                       </td>
                       <td className="px-3 py-3 text-xs text-gray-500">
                         {f.venue === 'home'
