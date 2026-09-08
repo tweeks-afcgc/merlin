@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
 import { quickAddPlayer } from './players/actions'
 
 type Tab = 'fixtures' | 'stats' | 'playerstats' | 'players'
@@ -21,12 +22,12 @@ type Fixture = {
   date: string
   kickoff_time: string | null
   venue: string
-  referee_required: boolean
+  confirmed: boolean
+  notes: string | null
   goals_for: number | null
   goals_against: number | null
   club_teams: any
   venues: any
-  pitches: any
 }
 type Player = { id: string; first_name: string; last_name: string; date_of_birth: string | null; player_number: number | null }
 
@@ -39,13 +40,41 @@ function formatTime(t: string | null) {
   return `${h}:${m}`
 }
 
+function NotesIcon({ notes }: { notes: string | null }) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+  const ref = useRef<HTMLSpanElement>(null)
+  if (!notes?.trim()) return null
+  return (
+    <span
+      ref={ref}
+      className="text-gray-300 hover:text-gray-500 cursor-default select-none text-base leading-none flex-shrink-0"
+      onMouseEnter={() => {
+        if (!ref.current) return
+        const r = ref.current.getBoundingClientRect()
+        setPos({ top: r.top + window.scrollY - 8, left: r.left + r.width / 2 + window.scrollX })
+      }}
+      onMouseLeave={() => setPos(null)}
+    >
+      📋
+      {pos && typeof document !== 'undefined' && createPortal(
+        <div className="pointer-events-none" style={{ position: 'absolute', top: pos.top, left: pos.left, zIndex: 9999, transform: 'translate(-50%, -100%)' }}>
+          <div className="w-64 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-pre-wrap mb-2">
+            {notes}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+          </div>
+        </div>,
+        document.body
+      )}
+    </span>
+  )
+}
+
 export default function TeamTabs({
   teamId,
   isAdmin,
   currentSeasonId,
-  nextFixture,
-  recentFixtures,
-  refereeName,
+  allFixtures,
+  today,
   allStats,
   leagueStats,
   selectedSeasonName,
@@ -56,9 +85,8 @@ export default function TeamTabs({
   teamId: string
   isAdmin: boolean
   currentSeasonId: string | null
-  nextFixture: Fixture | null
-  recentFixtures: Fixture[]
-  refereeName: string | null
+  allFixtures: Fixture[]
+  today: string
   allStats: Stats
   leagueStats: Stats
   selectedSeasonName: string | null
@@ -127,86 +155,66 @@ export default function TeamTabs({
             <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
               {selectedSeasonName ?? ''}
             </span>
-            <Link href={`/teams/${teamId}/fixtures`} className="text-xs font-semibold text-red-800 hover:underline">
-              All fixtures →
+            <Link
+              href={`/teams/${teamId}/fixtures/add`}
+              className="flex items-center gap-1 text-xs font-semibold text-red-800 hover:underline"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              Add fixture
             </Link>
           </div>
 
-          {nextFixture === null && recentFixtures.length === 0 ? (
+          {allFixtures.length === 0 ? (
             <p className="px-5 py-4 text-sm text-gray-400">No fixtures recorded yet.</p>
           ) : (
             <ul className="divide-y divide-gray-50">
-              {nextFixture && (() => {
-                const opp = nextFixture.club_teams as any
-                const oppName = opp
-                  ? ([opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC').replace(/^\[Internal\]\s*/, '')
-                  : 'TBC'
-                return (
-                  <li>
-                    <Link
-                      href={`/teams/${teamId}/fixtures/${nextFixture.id}/edit`}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition group"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">NEXT</span>
-                          <span className="text-xs text-gray-400">{formatDate(nextFixture.date)} · {formatTime(nextFixture.kickoff_time)}</span>
-                          <span className={`text-xs font-medium ${nextFixture.venue === 'home' ? 'text-green-700' : 'text-gray-400'}`}>
-                            {nextFixture.venue === 'home' ? 'H' : nextFixture.venue === 'away' ? 'A' : 'N'}
-                          </span>
-                        </div>
-                        <p className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition truncate">{oppName}</p>
-                        <p className={`text-xs mt-0.5 ${refereeName ? 'text-gray-400' : nextFixture.referee_required ? 'text-amber-600 font-medium' : 'text-gray-300'}`}>
-                          {refereeName
-                            ? `Ref: ${refereeName}`
-                            : nextFixture.referee_required
-                              ? 'No referee assigned'
-                              : 'No referee requested'}
-                        </p>
-                      </div>
-                      <svg className="w-4 h-4 text-gray-300 group-hover:text-red-800 flex-shrink-0 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </Link>
-                  </li>
-                )
-              })()}
-
-              {recentFixtures.map((fx: any) => {
+              {allFixtures.map((fx: any) => {
                 const opp = fx.club_teams as any
                 const oppName = opp
                   ? ([opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC').replace(/^\[Internal\]\s*/, '')
                   : 'TBC'
+                const isUpcoming = fx.date >= today
                 const hasResult = fx.goals_for !== null && fx.goals_against !== null
                 const won = hasResult && fx.goals_for > fx.goals_against
                 const drew = hasResult && fx.goals_for === fx.goals_against
                 return (
-                  <li key={fx.id}>
+                  <li key={fx.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        {isUpcoming && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">NEXT</span>
+                        )}
+                        <span className="text-xs text-gray-400">{formatDate(fx.date)} · {formatTime(fx.kickoff_time)}</span>
+                        <span className={`text-xs font-medium ${fx.venue === 'home' ? 'text-green-700' : 'text-gray-400'}`}>
+                          {fx.venue === 'home' ? 'H' : fx.venue === 'away' ? 'A' : 'N'}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-gray-800 truncate">{oppName}</p>
+                    </div>
+                    {hasResult ? (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-sm font-bold text-gray-900">{fx.goals_for}–{fx.goals_against}</span>
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                          won ? 'bg-green-500 text-white' : drew ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'
+                        }`}>
+                          {won ? 'W' : drew ? 'D' : 'L'}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-300 flex-shrink-0">—</span>
+                    )}
+                    <NotesIcon notes={fx.notes ?? null} />
                     <Link
                       href={`/teams/${teamId}/fixtures/${fx.id}/edit`}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition group"
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition flex-shrink-0"
+                      title="Edit fixture"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-xs text-gray-400">{formatDate(fx.date)}</span>
-                          <span className={`text-xs font-medium ${fx.venue === 'home' ? 'text-green-700' : 'text-gray-400'}`}>
-                            {fx.venue === 'home' ? 'H' : fx.venue === 'away' ? 'A' : 'N'}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium text-gray-700 group-hover:text-red-800 transition truncate">{oppName}</p>
-                      </div>
-                      {hasResult ? (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-sm font-semibold text-gray-900">{fx.goals_for}–{fx.goals_against}</span>
-                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
-                            won ? 'bg-green-100 text-green-700' : drew ? 'bg-gray-100 text-gray-500' : 'bg-red-100 text-red-700'
-                          }`}>
-                            {won ? 'W' : drew ? 'D' : 'L'}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-300 flex-shrink-0">No result</span>
-                      )}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                     </Link>
                   </li>
                 )

@@ -258,52 +258,18 @@ export default async function TeamDashboardPage({
   const playerStats = Array.from(playerMap.values())
 
   const today = new Date().toISOString().split('T')[0]
-  const FIXTURE_SELECT = 'id, date, kickoff_time, venue, referee_required, referee_id, volunteer_referee_id, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name), pitches(name)'
+  const FIXTURE_SELECT = 'id, date, kickoff_time, venue, confirmed, notes, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name)'
 
-  const isCurrentSeason = selectedStatsSeason?.is_current ?? false
+  const { data: allFixturesData } = selectedStatsSeason
+    ? await supabase
+        .from('fixtures')
+        .select(FIXTURE_SELECT)
+        .eq('team_id', id)
+        .eq('season_id', selectedStatsSeason.id)
+        .order('date', { ascending: false })
+    : { data: [] }
 
-  const [nextFixtureResult, recentFixtureResult] = await Promise.all([
-    // Only fetch "next" fixture for the current season
-    isCurrentSeason && selectedStatsSeason
-      ? supabase
-          .from('fixtures')
-          .select(FIXTURE_SELECT)
-          .eq('team_id', id)
-          .eq('season_id', selectedStatsSeason.id)
-          .gte('date', today)
-          .order('date', { ascending: true })
-          .limit(1)
-      : Promise.resolve({ data: [] }),
-    // Recent fixtures: for current season use date < today, for past seasons just last 5 by date
-    selectedStatsSeason
-      ? (() => {
-          let q = supabase
-            .from('fixtures')
-            .select(FIXTURE_SELECT)
-            .eq('team_id', id)
-            .eq('season_id', selectedStatsSeason.id)
-            .order('date', { ascending: false })
-            .limit(5)
-          if (isCurrentSeason) q = q.lt('date', today) as typeof q
-          return q
-        })()
-      : Promise.resolve({ data: [] }),
-  ])
-
-  const nextFixture = (nextFixtureResult.data as any[])?.[0] ?? null
-  const recentFixtures = (recentFixtureResult.data as any[]) ?? []
-
-  // Fetch referee name for next fixture if assigned
-  let refereeName: string | null = null
-  if (nextFixture?.referee_id) {
-    const { data: ref } = await supabase
-      .from('profiles').select('full_name').eq('id', nextFixture.referee_id).single()
-    refereeName = ref?.full_name ?? null
-  } else if ((nextFixture as any)?.volunteer_referee_id) {
-    const { data: ref } = await supabase
-      .from('volunteers').select('first_name, last_name').eq('id', (nextFixture as any).volunteer_referee_id).single()
-    if (ref) refereeName = `${ref.first_name} ${ref.last_name}`
-  }
+  const allFixtures = (allFixturesData as any[]) ?? []
 
   const displayName = teamDisplayName(team, seasons ?? [])
 
@@ -444,9 +410,8 @@ export default async function TeamDashboardPage({
             teamId={id}
             isAdmin={isAdmin}
             currentSeasonId={currentSeason?.id ?? null}
-            nextFixture={nextFixture as any}
-            recentFixtures={recentFixtures as any[]}
-            refereeName={refereeName}
+            allFixtures={allFixtures}
+            today={today}
             allStats={allStats}
             leagueStats={leagueStats}
             selectedSeasonName={selectedStatsSeason?.name ?? null}
