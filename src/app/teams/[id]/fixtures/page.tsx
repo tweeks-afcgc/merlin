@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { teamDisplayName } from '@/lib/teamUtils'
+import FixtureNotesCell from './FixtureNotesCell'
 
 export const dynamic = 'force-dynamic'
 
@@ -129,6 +130,7 @@ export default async function FixturesPage({
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Venue</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Type</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Result</th>
+                  <th className="w-6 px-1 py-3"></th>
                   <th className="w-10 px-3 py-3"></th>
                   <th className="w-1 p-0"></th>
                 </tr>
@@ -204,6 +206,7 @@ export default async function FixturesPage({
                           ? <span className="text-base font-bold text-gray-800">{goalsFor} – {goalsAgainst}</span>
                           : <span className="text-gray-300">—</span>}
                       </td>
+                      <FixtureNotesCell notes={(f as any).notes ?? null} />
                       <td className="px-3 py-3 text-right whitespace-nowrap">
                         <Link href={`/teams/${teamId}/fixtures/${f.id}/edit`} className="p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition inline-flex" title="Edit fixture">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
