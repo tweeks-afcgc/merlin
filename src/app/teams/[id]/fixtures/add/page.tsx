@@ -8,8 +8,9 @@ import { createClient } from '@/lib/supabase/client'
 import { addFixture } from '../actions'
 
 import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
+import { sortedTeams, teamDisplayName } from '@/lib/teamSort'
 
-type Season = { id: string; name: string; is_current: boolean }
+type Season = { id: string; name: string; start_date: string; is_current: boolean }
 
 export default function AddFixturePage() {
   const { id: teamId } = useParams<{ id: string }>()
@@ -21,6 +22,7 @@ export default function AddFixturePage() {
   const [error, setError] = useState<string | null>(null)
   const [seasons, setSeasons] = useState<Season[]>([])
   const [opponents, setOpponents] = useState<OpponentOption[]>([])
+  const [internalTeams, setInternalTeams] = useState<{ id: string; label: string }[]>([])
   const [seasonId, setSeasonId] = useState('')
   const [date, setDate] = useState('')
   const [tbc, setTbc] = useState(false)
@@ -31,14 +33,17 @@ export default function AddFixturePage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: seasonsData }, { data: clubsData }] = await Promise.all([
-        supabase.from('seasons').select('id, name, is_current').order('start_date', { ascending: false }),
+      const [{ data: seasonsData }, { data: clubsData }, { data: allTeamsData }] = await Promise.all([
+        supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: false }),
         supabase.from('clubs').select('id, name, club_teams(id, name)').order('name'),
+        supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group').order('name'),
       ])
       const s = seasonsData ?? []
       setSeasons(s)
       setSeasonId(s.find(x => x.is_current)?.id ?? s[0]?.id ?? '')
       setOpponents(buildOpponentOptions((clubsData ?? []) as any))
+      const ordered = sortedTeams(allTeamsData ?? [], s)
+      setInternalTeams(ordered.map((t: any) => ({ id: `internal:${t.id}`, label: teamDisplayName(t, s) })))
       setLoading(false)
     }
     load()
@@ -148,6 +153,13 @@ export default function AddFixturePage() {
                     {opponents.map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
+                    {internalTeams.length > 0 && (
+                      <optgroup label="── Internal Teams ──">
+                        {internalTeams.map(t => (
+                          <option key={t.id} value={t.id}>{t.label}</option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                 )}
               </div>
