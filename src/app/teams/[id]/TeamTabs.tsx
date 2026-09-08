@@ -76,6 +76,7 @@ export default function TeamTabs({
   allFixtures,
   today,
   allStats,
+  exclFriendliesStats,
   leagueStats,
   selectedSeasonName,
   players: initialPlayers,
@@ -88,6 +89,7 @@ export default function TeamTabs({
   allFixtures: Fixture[]
   today: string
   allStats: Stats
+  exclFriendliesStats: Stats
   leagueStats: Stats
   selectedSeasonName: string | null
   players: Player[]
@@ -237,24 +239,21 @@ export default function TeamTabs({
                   <span key={h} className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center">{h}</span>
                 ))}
               </div>
-              <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5 border-b border-gray-50">
-                <span className="text-sm text-gray-700 font-medium">All</span>
-                {[allStats.p, allStats.w, allStats.d, allStats.l, allStats.gf, allStats.ga].map((v, i) => (
-                  <span key={i} className="text-sm text-gray-900 text-center">{v}</span>
-                ))}
-                <span className={`text-sm font-semibold text-center ${allStats.gd > 0 ? 'text-green-700' : allStats.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                  {allStats.gd > 0 ? `+${allStats.gd}` : allStats.gd}
-                </span>
-              </div>
-              <div className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5">
-                <span className="text-sm text-gray-500">League</span>
-                {[leagueStats.p, leagueStats.w, leagueStats.d, leagueStats.l, leagueStats.gf, leagueStats.ga].map((v, i) => (
-                  <span key={i} className="text-sm text-gray-700 text-center">{v}</span>
-                ))}
-                <span className={`text-sm font-medium text-center ${leagueStats.gd > 0 ? 'text-green-700' : leagueStats.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                  {leagueStats.p > 0 ? (leagueStats.gd > 0 ? `+${leagueStats.gd}` : leagueStats.gd) : '—'}
-                </span>
-              </div>
+              {([
+                { label: 'All (inc friendlies)', s: allStats, bold: true },
+                { label: 'All (exc friendlies)', s: exclFriendliesStats, bold: false },
+                { label: 'League', s: leagueStats, bold: false },
+              ] as const).map(({ label, s, bold }) => (
+                <div key={label} className="grid grid-cols-[1fr_repeat(7,_minmax(0,_2.5rem))] gap-x-2 py-2.5 border-b border-gray-50 last:border-b-0">
+                  <span className={`text-sm ${bold ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>{label}</span>
+                  {[s.p, s.w, s.d, s.l, s.gf, s.ga].map((v, i) => (
+                    <span key={i} className={`text-sm text-center ${bold ? 'text-gray-900' : 'text-gray-700'}`}>{v}</span>
+                  ))}
+                  <span className={`text-sm font-medium text-center ${s.gd > 0 ? 'text-green-700' : s.gd < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                    {s.p > 0 ? (s.gd > 0 ? `+${s.gd}` : s.gd) : '—'}
+                  </span>
+                </div>
+              ))}
             </>
           )}
         </div>

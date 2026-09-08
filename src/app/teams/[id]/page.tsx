@@ -159,6 +159,7 @@ export default async function TeamDashboardPage({
   }
 
   const allStats = calcStats((resultFixtures ?? []) as any)
+  const exclFriendliesStats = calcStats(((resultFixtures ?? []) as any).filter((f: any) => f.competition !== 'friendly'))
   const leagueStats = calcStats(((resultFixtures ?? []) as any).filter((f: any) => f.competition === 'league'))
 
   // Training slots — not season-filtered, always shows current plan
@@ -413,6 +414,7 @@ export default async function TeamDashboardPage({
             allFixtures={allFixtures}
             today={today}
             allStats={allStats}
+            exclFriendliesStats={exclFriendliesStats}
             leagueStats={leagueStats}
             selectedSeasonName={selectedStatsSeason?.name ?? null}
             players={players as any[]}
