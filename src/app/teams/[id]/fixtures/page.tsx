@@ -4,8 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { teamDisplayName } from '@/lib/teamUtils'
-import DeleteFixtureButton from './DeleteFixtureButton'
-import FixtureNotesCell from './FixtureNotesCell'
 
 export const dynamic = 'force-dynamic'
 
@@ -128,11 +126,10 @@ export default async function FixturesPage({
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide pl-2 pr-3 py-3">Date</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Time</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Opponent</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Venue · Pitch</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Venue</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Type</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide px-3 py-3">Result</th>
-                  <th className="px-3 py-3"></th>
-                  <th className="w-6 px-1 py-3"></th>
+                  <th className="w-10 px-3 py-3"></th>
                   <th className="w-1 p-0"></th>
                 </tr>
               </thead>
@@ -148,14 +145,14 @@ export default async function FixturesPage({
                   const competitionLabel = competition === 'league' ? 'League' : competition === 'cup' ? 'Cup' : competition === 'shield' ? 'Shield' : 'Friendly'
 
                   // Result badge
-                  let resultBadge: React.ReactNode = <div className="w-7 h-7" />
+                  let resultBadge: React.ReactNode = <div className="w-8 h-8" />
                   if (isPast && hasResult) {
                     if (goalsFor > goalsAgainst) {
-                      resultBadge = <div className="w-7 h-7 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">W</div>
+                      resultBadge = <div className="w-8 h-8 rounded-full bg-green-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">W</div>
                     } else if (goalsFor < goalsAgainst) {
-                      resultBadge = <div className="w-7 h-7 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">L</div>
+                      resultBadge = <div className="w-8 h-8 rounded-full bg-red-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">L</div>
                     } else {
-                      resultBadge = <div className="w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">D</div>
+                      resultBadge = <div className="w-8 h-8 rounded-full bg-amber-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">D</div>
                     }
                   }
 
@@ -188,10 +185,7 @@ export default async function FixturesPage({
                       </td>
                       <td className="px-3 py-3 text-xs text-gray-500">
                         {f.venue === 'home'
-                          ? <span>
-                              {(f as any).venues?.name ?? <span className="text-gray-300">Venue TBC</span>}
-                              {(f as any).pitches?.name ? ` · ${(f as any).pitches.name}` : ''}
-                            </span>
+                          ? (f as any).venues?.name ?? <span className="text-gray-300">TBC</span>
                           : <span className="text-gray-400">{f.venue === 'away' ? 'Away' : 'Neutral'}</span>
                         }
                       </td>
@@ -205,16 +199,19 @@ export default async function FixturesPage({
                           {competitionLabel}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-sm font-medium text-gray-700 whitespace-nowrap">
-                        {hasResult ? `${goalsFor} – ${goalsAgainst}` : <span className="text-gray-300">—</span>}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {hasResult
+                          ? <span className="text-base font-bold text-gray-800">{goalsFor} – {goalsAgainst}</span>
+                          : <span className="text-gray-300">—</span>}
                       </td>
                       <td className="px-3 py-3 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-3">
-                          <Link href={`/teams/${teamId}/fixtures/${f.id}/edit`} className="text-xs text-gray-400 hover:text-gray-700 transition">Edit</Link>
-                          <DeleteFixtureButton fixtureId={f.id} teamId={teamId} returnTo={`/teams/${teamId}/fixtures`} />
-                        </div>
+                        <Link href={`/teams/${teamId}/fixtures/${f.id}/edit`} className="p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition inline-flex" title="Edit fixture">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </Link>
                       </td>
-                      <FixtureNotesCell notes={(f as any).notes ?? null} />
                       <td className={`w-1 p-0 ${statusBar}`} />
                     </tr>
                   )
