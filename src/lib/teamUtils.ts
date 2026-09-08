@@ -45,10 +45,24 @@ export function fixtureOpponentName(
   if (!clubTeam) return 'TBC'
   const internalTeam = (clubTeam as any).internal_team
   if (internalTeam) {
-    if (internalTeam.type === 'junior' && internalTeam.founding_age_group && internalTeam.founding_season_id) {
-      return teamDisplayNameForSeason(internalTeam, seasons, seasonId)
+    if (internalTeam.type === 'junior') {
+      const sorted = [...seasons].sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+      const currentIndex = sorted.findIndex((s: Season) => s.is_current)
+      const targetIndex = sorted.findIndex((s: Season) => s.id === seasonId)
+      // Compute current age via founding data
+      const foundingIndex = internalTeam.founding_season_id
+        ? sorted.findIndex((s: Season) => s.id === internalTeam.founding_season_id)
+        : -1
+      const currentAge = (foundingIndex !== -1 && currentIndex !== -1 && internalTeam.founding_age_group)
+        ? internalTeam.founding_age_group + (currentIndex - foundingIndex)
+        : null
+      if (currentAge !== null && targetIndex !== -1 && currentIndex !== -1) {
+        // Delta from current season to fixture season
+        const targetAge = currentAge + (targetIndex - currentIndex)
+        return `Under ${targetAge} ${internalTeam.name}`
+      }
     }
-    // Internal but senior/unknown — strip [Internal] prefix from stored name
+    // Internal but senior, or insufficient founding data — strip stored prefix
     return clubTeam.name.replace(/^\[Internal\]\s*/, '')
   }
   // External club team

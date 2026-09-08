@@ -63,7 +63,7 @@ export default async function FixturesPage({
 
   const { data: fixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, notes, season_id, club_teams(id, name, internal_team_id, clubs(name), internal_team:teams!club_teams_internal_team_id_fkey(id, name, type, founding_age_group, founding_season_id)), venues(name)')
+    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, notes, season_id, club_teams(id, name, internal_team_id, clubs(name), internal_team:teams!internal_team_id(id, name, type, founding_age_group, founding_season_id)), venues(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
