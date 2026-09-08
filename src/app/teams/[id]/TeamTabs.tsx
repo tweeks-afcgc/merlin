@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { createPortal } from 'react-dom'
 import { quickAddPlayer } from './players/actions'
+import { fixtureOpponentName, type Season } from '@/lib/teamUtils'
 
 type Tab = 'fixtures' | 'stats' | 'playerstats' | 'players'
 type PlayerStat = {
@@ -26,6 +27,7 @@ type Fixture = {
   notes: string | null
   goals_for: number | null
   goals_against: number | null
+  season_id: string
   club_teams: any
   venues: any
 }
@@ -75,6 +77,7 @@ export default function TeamTabs({
   currentSeasonId,
   allFixtures,
   today,
+  seasons,
   allStats,
   exclFriendliesStats,
   leagueStats,
@@ -88,6 +91,7 @@ export default function TeamTabs({
   currentSeasonId: string | null
   allFixtures: Fixture[]
   today: string
+  seasons: Season[]
   allStats: Stats
   exclFriendliesStats: Stats
   leagueStats: Stats
@@ -173,10 +177,7 @@ export default function TeamTabs({
           ) : (
             <ul className="divide-y divide-gray-50">
               {allFixtures.map((fx: any) => {
-                const opp = fx.club_teams as any
-                const oppName = opp
-                  ? ([opp.clubs?.name, opp.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC').replace(/^\[Internal\]\s*/, '')
-                  : 'TBC'
+                const oppName = fixtureOpponentName(fx.club_teams, seasons, fx.season_id)
                 const isUpcoming = fx.date >= today
                 const hasResult = fx.goals_for !== null && fx.goals_against !== null
                 const won = hasResult && fx.goals_for > fx.goals_against

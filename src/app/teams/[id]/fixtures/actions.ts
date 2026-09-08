@@ -32,10 +32,10 @@ async function resolveOpponentId(supabase: any, opponentId: string): Promise<str
     }
     const name = `[Internal] ${displayName}`
     const { data: existing } = await supabase
-      .from('club_teams').select('id').is('club_id', null).eq('name', name).maybeSingle()
+      .from('club_teams').select('id').is('club_id', null).eq('internal_team_id', teamId).maybeSingle()
     if (existing) return existing.id
     const { data: created } = await supabase
-      .from('club_teams').insert({ club_id: null, name }).select('id').single()
+      .from('club_teams').insert({ club_id: null, name, internal_team_id: teamId }).select('id').single()
     return created!.id
   }
   return opponentId

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
-import { teamDisplayName } from '@/lib/teamUtils'
+import { teamDisplayName, fixtureOpponentName } from '@/lib/teamUtils'
 import FixtureNotesCell from './FixtureNotesCell'
 
 export const dynamic = 'force-dynamic'
@@ -63,13 +63,14 @@ export default async function FixturesPage({
 
   const { data: fixtures } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, notes, club_teams(id, name, clubs(name)), venues(name), pitches(name)')
+    .select('id, date, kickoff_time, venue, confirmed, competition, goals_for, goals_against, notes, season_id, club_teams(id, name, internal_team_id, clubs(name), internal_team:teams!club_teams_internal_team_id_fkey(id, name, type, founding_age_group, founding_season_id)), venues(name)')
     .eq('team_id', teamId)
     .eq('season_id', activeSeasonId ?? '')
     .order('date', { ascending: true })
 
   const teamName = teamDisplayName(team, seasons ?? [])
   const today = new Date().toDateString()
+  const allSeasons = seasons ?? []
 
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin={isAdmin}>
@@ -137,7 +138,6 @@ export default async function FixturesPage({
               </thead>
               <tbody>
                 {fixtures.map(f => {
-                  const opponent = f.club_teams as any
                   const confirmed = (f as any).confirmed
                   const isPast = new Date(f.date) < new Date(today)
                   const goalsFor = (f as any).goals_for
@@ -183,7 +183,7 @@ export default async function FixturesPage({
                       </td>
                       <td className="px-3 py-3 text-gray-600 whitespace-nowrap">{formatTime(f.kickoff_time)}</td>
                       <td className="px-3 py-3 text-gray-900">
-                        {opponent ? ([opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || '—').replace(/^\[Internal\]\s*/, '') : '—'}
+                        {fixtureOpponentName(f.club_teams as any, allSeasons, (f as any).season_id)}
                       </td>
                       <td className="px-3 py-3 text-xs text-gray-500">
                         {f.venue === 'home'

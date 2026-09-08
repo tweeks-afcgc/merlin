@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
-import { teamDisplayName, teamDisplayNameForSeason } from '@/lib/teamUtils'
+import { teamDisplayName, teamDisplayNameForSeason, type Season } from '@/lib/teamUtils'
 import BackButton from '@/components/BackButton'
 import SeasonSelect from './SeasonSelect'
 import TeamTabs from './TeamTabs'
@@ -259,7 +259,7 @@ export default async function TeamDashboardPage({
   const playerStats = Array.from(playerMap.values())
 
   const today = new Date().toISOString().split('T')[0]
-  const FIXTURE_SELECT = 'id, date, kickoff_time, venue, confirmed, notes, goals_for, goals_against, club_teams(id, name, clubs(name)), venues(name)'
+  const FIXTURE_SELECT = 'id, date, kickoff_time, venue, confirmed, notes, goals_for, goals_against, season_id, club_teams(id, name, internal_team_id, clubs(name), internal_team:teams!club_teams_internal_team_id_fkey(id, name, type, founding_age_group, founding_season_id)), venues(name)'
 
   const { data: allFixturesData } = selectedStatsSeason
     ? await supabase
@@ -417,6 +417,7 @@ export default async function TeamDashboardPage({
             currentSeasonId={currentSeason?.id ?? null}
             allFixtures={allFixtures}
             today={today}
+            seasons={allSeasons}
             allStats={allStats}
             exclFriendliesStats={exclFriendliesStats}
             leagueStats={leagueStats}

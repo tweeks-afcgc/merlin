@@ -36,6 +36,25 @@ export function teamDisplayName(team: Team, seasons: Season[]): string {
   return age !== null ? `Under ${age} ${team.name}` : team.name
 }
 
+/** Returns the display name for a fixture opponent, resolving internal team age groups for the fixture's season. */
+export function fixtureOpponentName(
+  clubTeam: { name: string; clubs?: { name: string } | null; internal_team?: { name: string; type: string; founding_age_group: number | null; founding_season_id: string | null } | null } | null,
+  seasons: Season[],
+  seasonId: string
+): string {
+  if (!clubTeam) return 'TBC'
+  const internalTeam = (clubTeam as any).internal_team
+  if (internalTeam) {
+    if (internalTeam.type === 'junior' && internalTeam.founding_age_group && internalTeam.founding_season_id) {
+      return teamDisplayNameForSeason(internalTeam, seasons, seasonId)
+    }
+    // Internal but senior/unknown — strip [Internal] prefix from stored name
+    return clubTeam.name.replace(/^\[Internal\]\s*/, '')
+  }
+  // External club team
+  return ([clubTeam.clubs?.name, clubTeam.name].filter(s => s && s.trim()).join(' ') || 'TBC').replace(/^\[Internal\]\s*/, '')
+}
+
 /** Like teamDisplayName but resolves the age group relative to a specific season, not the current one. */
 export function teamDisplayNameForSeason(team: Team, seasons: Season[], seasonId: string): string {
   if (team.type === 'senior') return team.name
