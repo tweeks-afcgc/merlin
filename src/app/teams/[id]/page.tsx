@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
-import { teamDisplayName } from '@/lib/teamUtils'
+import { teamDisplayName, teamDisplayNameForSeason } from '@/lib/teamUtils'
 import BackButton from '@/components/BackButton'
 import SeasonSelect from './SeasonSelect'
 import TeamTabs from './TeamTabs'
@@ -273,6 +273,9 @@ export default async function TeamDashboardPage({
   const allFixtures = (allFixturesData as any[]) ?? []
 
   const displayName = teamDisplayName(team, seasons ?? [])
+  const seasonDisplayName = selectedStatsSeason
+    ? teamDisplayNameForSeason(team, seasons ?? [], selectedStatsSeason.id)
+    : displayName
 
   const ROLE_ORDER = ['manager', 'assistant', 'coach']
   const sortedRoles = [...teamRoles].sort((a, b) => {
@@ -394,13 +397,14 @@ export default async function TeamDashboardPage({
 
         {/* Season selector */}
         {statsSeasons.length > 1 && (
-          <div className="flex items-center gap-3 mt-6 mb-3">
+          <div className="flex items-center gap-3 mt-6 mb-3 flex-wrap">
             <span className="text-sm text-gray-500">Season</span>
             <SeasonSelect
               teamId={id}
               seasons={statsSeasons}
               selectedId={selectedStatsSeason?.id ?? null}
             />
+            <span className="text-sm font-semibold text-gray-700">{seasonDisplayName}</span>
           </div>
         )}
 

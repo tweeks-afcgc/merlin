@@ -35,3 +35,19 @@ export function teamDisplayName(team: Team, seasons: Season[]): string {
   const age = computeAgeGroup(team, seasons)
   return age !== null ? `Under ${age} ${team.name}` : team.name
 }
+
+/** Like teamDisplayName but resolves the age group relative to a specific season, not the current one. */
+export function teamDisplayNameForSeason(team: Team, seasons: Season[], seasonId: string): string {
+  if (team.type === 'senior') return team.name
+  if (!team.founding_age_group || !team.founding_season_id) return team.name
+
+  const sorted = [...seasons].sort(
+    (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+  )
+  const foundingIndex = sorted.findIndex(s => s.id === team.founding_season_id)
+  const targetIndex = sorted.findIndex(s => s.id === seasonId)
+  if (foundingIndex === -1 || targetIndex === -1) return team.name
+
+  const age = team.founding_age_group + (targetIndex - foundingIndex)
+  return `Under ${age} ${team.name}`
+}
