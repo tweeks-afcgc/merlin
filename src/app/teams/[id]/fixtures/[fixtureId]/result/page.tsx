@@ -99,6 +99,17 @@ export default function ResultPage() {
     setPerfSaved(false)
   }
 
+  function markAllPlayed(played: boolean) {
+    setPerfs(prev => {
+      const next = { ...prev }
+      for (const id of Object.keys(next)) {
+        next[id] = { ...next[id], played }
+      }
+      return next
+    })
+    setPerfSaved(false)
+  }
+
   async function handleSaveScore(e: React.FormEvent) {
     e.preventDefault()
     setScoreSaving(true)
@@ -129,10 +140,11 @@ export default function ResultPage() {
   const hasScore = goalsFor !== '' && goalsAgainst !== ''
   const gf = Number(goalsFor)
   const ga = Number(goalsAgainst)
+  const allPlayed = players.length > 0 && players.every(p => perfs[p.id]?.played)
 
   return (
     <AppShell>
-      <div className="max-w-md mx-auto px-4 py-8">
+      <div className="w-full max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6"><BackButton /></div>
         <h1 className="text-xl font-bold text-gray-900 mb-6">Match result</h1>
 
@@ -142,12 +154,12 @@ export default function ResultPage() {
           <>
             {/* Score entry */}
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
-              <form onSubmit={handleSaveScore} className="space-y-5">
+              <form onSubmit={handleSaveScore}>
                 {scoreError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{scoreError}</div>
+                  <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-5">{scoreError}</div>
                 )}
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
+                <div className="flex items-end gap-4">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Our score</label>
                     <input
                       type="number"
@@ -155,11 +167,11 @@ export default function ResultPage() {
                       value={goalsFor}
                       onChange={e => { setGoalsFor(e.target.value); setScoreSaved(false) }}
                       placeholder="—"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      className="w-20 text-center border border-gray-300 rounded-lg px-3 py-2 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-red-700"
                     />
                   </div>
-                  <div className="pt-5 text-gray-400 font-bold text-lg">–</div>
-                  <div className="flex-1">
+                  <div className="pb-2.5 text-gray-400 font-bold text-2xl">–</div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Their score</label>
                     <input
                       type="number"
@@ -167,18 +179,17 @@ export default function ResultPage() {
                       value={goalsAgainst}
                       onChange={e => { setGoalsAgainst(e.target.value); setScoreSaved(false) }}
                       placeholder="—"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      className="w-20 text-center border border-gray-300 rounded-lg px-3 py-2 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-red-700"
                     />
                   </div>
+                  {hasScore && (
+                    <span className={`pb-2 text-sm font-semibold ${gf > ga ? 'text-green-700' : gf < ga ? 'text-red-600' : 'text-amber-600'}`}>
+                      {gf > ga ? '✓ Win' : gf < ga ? '✗ Loss' : '= Draw'}
+                    </span>
+                  )}
                 </div>
 
-                {hasScore && (
-                  <p className={`text-sm font-semibold ${gf > ga ? 'text-green-700' : gf < ga ? 'text-red-600' : 'text-amber-600'}`}>
-                    {gf > ga ? '✓ Win' : gf < ga ? '✗ Loss' : '= Draw'} ({goalsFor}–{goalsAgainst})
-                  </p>
-                )}
-
-                <div className="flex items-center justify-between gap-3 pt-1">
+                <div className="flex items-center justify-between gap-3 mt-5">
                   {scoreSaved && hasScore
                     ? <span className="text-xs text-green-700 font-medium">Score saved.</span>
                     : <span />
@@ -203,12 +214,43 @@ export default function ResultPage() {
               </form>
             </div>
 
-            {/* Player performances — shown once a result has been saved */}
-            {hasScore && players.length > 0 && (
+            {/* Match notes — between score and player stats */}
+            {hasScore && (
               <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
                 <div className="px-6 py-4 border-b border-gray-100">
-                  <h2 className="text-sm font-semibold text-gray-700">Player stats</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Total goals must not exceed {goalsFor}.</p>
+                  <h2 className="text-sm font-semibold text-gray-700">Match notes</h2>
+                </div>
+                <div className="px-6 py-4">
+                  <textarea
+                    value={matchNotes}
+                    onChange={e => { setMatchNotes(e.target.value); setNotesSaved(false) }}
+                    rows={3}
+                    placeholder="Enter any notes about the match…"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
+                  />
+                </div>
+                <div className="px-6 pb-4 flex items-center justify-between gap-3">
+                  {notesSaved ? <span className="text-xs text-green-700 font-medium">Notes saved.</span> : <span />}
+                  <button
+                    type="button"
+                    onClick={handleSaveNotes}
+                    disabled={notesSaving}
+                    className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
+                  >
+                    {notesSaving ? 'Saving…' : 'Save notes'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Player performances */}
+            {hasScore && players.length > 0 && (
+              <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-700">Player stats</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Total goals must not exceed {goalsFor}.</p>
+                  </div>
                 </div>
 
                 {perfError && (
@@ -220,7 +262,19 @@ export default function ResultPage() {
                     <thead>
                       <tr className="border-b border-gray-100">
                         <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Player</th>
-                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Played</th>
+                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-20">
+                          <div className="flex flex-col items-center gap-1">
+                            <span>Played</span>
+                            <button
+                              type="button"
+                              onClick={() => markAllPlayed(!allPlayed)}
+                              className="text-xs font-normal text-red-800 hover:underline leading-none"
+                              title={allPlayed ? 'Untick all' : 'Tick all'}
+                            >
+                              {allPlayed ? 'none' : 'all'}
+                            </button>
+                          </div>
+                        </th>
                         <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Goals</th>
                         <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Assists</th>
                         <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">MOTM</th>
@@ -231,7 +285,6 @@ export default function ResultPage() {
                       {players.map(p => {
                         const perf = perfs[p.id] ?? { player_id: p.id, played: false, goals: 0, assists: 0, motm: false, mins_played: 0 }
                         const totalGoals = Object.values(perfs).reduce((s, x) => s + (x.goals ?? 0), 0)
-                        const maxGoals = gf
                         return (
                           <tr key={p.id} className={perf.played ? 'bg-white' : 'bg-gray-50/50'}>
                             <td className="px-6 py-2.5 font-medium text-gray-900 whitespace-nowrap">
@@ -254,12 +307,12 @@ export default function ResultPage() {
                               <input
                                 type="number"
                                 min={0}
-                                max={maxGoals}
+                                max={gf}
                                 value={perf.goals}
                                 onChange={e => {
                                   const val = Math.max(0, parseInt(e.target.value) || 0)
                                   const otherGoals = totalGoals - perf.goals
-                                  updatePerf(p.id, 'goals', Math.min(val, maxGoals - otherGoals))
+                                  updatePerf(p.id, 'goals', Math.min(val, gf - otherGoals))
                                 }}
                                 className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                               />
@@ -323,35 +376,6 @@ export default function ResultPage() {
                     className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
                   >
                     {perfSaving ? 'Saving…' : 'Save player stats'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Match notes */}
-            {hasScore && (
-              <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
-                <div className="px-6 py-4 border-b border-gray-100">
-                  <h2 className="text-sm font-semibold text-gray-700">Match notes</h2>
-                </div>
-                <div className="px-6 py-4">
-                  <textarea
-                    value={matchNotes}
-                    onChange={e => { setMatchNotes(e.target.value); setNotesSaved(false) }}
-                    rows={4}
-                    placeholder="Enter any notes about the match…"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
-                  />
-                </div>
-                <div className="px-6 pb-4 flex items-center justify-between gap-3">
-                  {notesSaved ? <span className="text-xs text-green-700 font-medium">Notes saved.</span> : <span />}
-                  <button
-                    type="button"
-                    onClick={handleSaveNotes}
-                    disabled={notesSaving}
-                    className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
-                  >
-                    {notesSaving ? 'Saving…' : 'Save notes'}
                   </button>
                 </div>
               </div>
