@@ -201,14 +201,25 @@ export default function TeamTabs({
                       <p className="text-sm font-medium text-gray-800 truncate">{oppName}</p>
                     </div>
                     {hasResult ? (
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <Link
+                        href={`/teams/${teamId}/fixtures/${fx.id}/result`}
+                        className="flex items-center gap-2 flex-shrink-0 hover:opacity-75 transition"
+                        title="View / edit result"
+                      >
                         <span className="text-sm font-bold text-gray-900">{fx.goals_for}–{fx.goals_against}</span>
                         <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                           won ? 'bg-green-500 text-white' : drew ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'
                         }`}>
                           {won ? 'W' : drew ? 'D' : 'L'}
                         </span>
-                      </div>
+                      </Link>
+                    ) : !isUpcoming ? (
+                      <Link
+                        href={`/teams/${teamId}/fixtures/${fx.id}/result`}
+                        className="text-xs font-semibold text-red-800 hover:underline flex-shrink-0"
+                      >
+                        Result
+                      </Link>
                     ) : (
                       <span className="text-xs text-gray-300 flex-shrink-0">—</span>
                     )}
