@@ -129,6 +129,17 @@ export type PlayerPerformance = {
   mins_played: number
 }
 
+export async function saveResult(fixtureId: string, teamId: string, goalsFor: number, goalsAgainst: number) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('fixtures')
+    .update({ goals_for: goalsFor, goals_against: goalsAgainst })
+    .eq('id', fixtureId)
+  if (error) return { error: error.message }
+  revalidatePath(`/teams/${teamId}/fixtures`)
+  revalidatePath(`/teams/${teamId}`)
+}
+
 export async function saveMatchNotes(fixtureId: string, teamId: string, notes: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('fixtures').update({ notes }).eq('id', fixtureId)

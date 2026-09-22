@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
-import { updateFixture, savePerformances, saveMatchNotes, type PlayerPerformance } from '../../actions'
+import { saveResult, savePerformances, saveMatchNotes, type PlayerPerformance } from '../../actions'
 
 type Player = { id: string; first_name: string; last_name: string; player_number: number | null }
 
@@ -114,10 +114,7 @@ export default function ResultPage() {
     e.preventDefault()
     setScoreSaving(true)
     setScoreError(null)
-    const fd = new FormData()
-    fd.set('goals_for', goalsFor)
-    fd.set('goals_against', goalsAgainst)
-    const result = await updateFixture(fixtureId, teamId, fd)
+    const result = await saveResult(fixtureId, teamId, Number(goalsFor), Number(goalsAgainst))
     if (result?.error) { setScoreError(result.error); setScoreSaving(false) }
     else { setScoreSaved(true); setScoreSaving(false) }
   }
