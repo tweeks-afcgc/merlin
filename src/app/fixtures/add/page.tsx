@@ -52,7 +52,7 @@ export default function AddFixtureFromDashboardPage() {
   useEffect(() => {
     async function load() {
       const [{ data: teamsData }, { data: seasonsData }, { data: clubsData }, { data: venuesData }] = await Promise.all([
-        supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group, default_venue_id, default_pitch_id'),
+        supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group, default_venue_id, default_pitch_id, nickname'),
         supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: false }),
         supabase.from('clubs').select('id, name, club_teams(id, name)').order('name'),
         supabase.from('venues').select('id, name').order('name'),

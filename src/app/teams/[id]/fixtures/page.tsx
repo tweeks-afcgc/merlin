@@ -74,7 +74,7 @@ export default async function FixturesPage({
   if (internalTeamIds.length > 0) {
     const { data: iTeams } = await supabase
       .from('teams')
-      .select('id, name, type, founding_age_group, founding_season_id')
+      .select('id, name, type, founding_age_group, founding_season_id, nickname')
       .in('id', internalTeamIds)
     for (const t of iTeams ?? []) internalTeamDataMap.set(t.id, t)
   }

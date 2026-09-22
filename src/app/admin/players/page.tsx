@@ -20,7 +20,7 @@ export default async function AdminPlayersPage() {
       .from('players')
       .select('id, first_name, last_name, date_of_birth, player_team_seasons(id, team_id, season_id, player_number, teams(id, name, type, founding_age_group, founding_season_id, age_group), seasons(id, name, is_current))')
       .order('last_name', { ascending: true }),
-    supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group'),
+    supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group, nickname'),
     supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: false }),
   ])
 

@@ -8,6 +8,7 @@ type SortableTeam = {
   founding_age_group: number | null
   founding_season_id: string | null
   age_group: number | null
+  nickname?: string | null
 }
 
 type SortableSeason = {
@@ -26,9 +27,10 @@ export function computeAge(team: SortableTeam, seasons: SortableSeason[]): numbe
 }
 
 export function teamDisplayName(team: SortableTeam, seasons: SortableSeason[]): string {
-  if (team.type === 'senior') return team.name
+  const nick = team.nickname ? ` (${team.nickname})` : ''
+  if (team.type === 'senior') return `${team.name}${nick}`
   const age = computeAge(team, seasons)
-  return `Under ${age} ${team.name}`
+  return `Under ${age} ${team.name}${nick}`
 }
 
 export function sortedTeams<T extends SortableTeam>(teams: T[], seasons: SortableSeason[]): T[] {

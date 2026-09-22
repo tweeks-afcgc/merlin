@@ -72,7 +72,7 @@ export default function EditFixturePage() {
         supabase.from('profiles').select('id, full_name').eq('is_referee', true).order('full_name'),
         supabase.from('referee_requests').select('id, referee_id, created_at, profiles(full_name)').eq('fixture_id', fixtureId).order('created_at'),
         supabase.from('volunteers').select('id, first_name, last_name, profile_id').eq('is_referee', true),
-        supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group').order('name'),
+        supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group, nickname').order('name'),
         supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: false }),
       ])
 

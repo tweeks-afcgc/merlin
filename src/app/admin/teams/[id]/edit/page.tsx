@@ -133,6 +133,7 @@ export default function EditTeamPage() {
   const [type, setType] = useState<'senior' | 'junior'>('senior')
   const [name, setName] = useState('')
   const [nameOpen, setNameOpen] = useState(false)
+  const [nickname, setNickname] = useState('')
   const [foundingAgeGroup, setFoundingAgeGroup] = useState('')
   const [foundingSeasonName, setFoundingSeasonName] = useState('')
   const [currentAgeGroup, setCurrentAgeGroup] = useState<number | null>(null)
@@ -223,6 +224,7 @@ export default function EditTeamPage() {
 
       setType(team.type)
       setName(team.name)
+      setNickname((team as any).nickname ?? '')
       setFoundingAgeGroup(team.founding_age_group?.toString() ?? '')
       setKitJersey(team.kit_jersey ?? '')
       setKitShorts(team.kit_shorts ?? '')
@@ -298,6 +300,7 @@ export default function EditTeamPage() {
 
     const updates: Record<string, unknown> = {
       name,
+      nickname: nickname.trim() || null,
       gender: gender || null,
       default_venue_id: defaultVenueId || null,
       default_pitch_id: defaultPitchId || null,
@@ -519,6 +522,20 @@ export default function EditTeamPage() {
                     <option value="Female">Female</option>
                     <option value="Mixed">Mixed</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nickname <span className="font-normal text-gray-400">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={e => setNickname(e.target.value)}
+                    placeholder="e.g. Under 14X"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Shown in brackets after the team name across the system.</p>
                 </div>
 
                 {type === 'junior' && (
