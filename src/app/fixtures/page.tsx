@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import FixturesList from './FixturesList'
-import { teamDisplayName, computeAgeGroup } from '@/lib/teamUtils'
+import { teamDisplayName, fixtureOpponentName, computeAgeGroup, type Season } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,9 +27,9 @@ export default async function FixturesDashboardPage() {
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id,
         referee_required, referee_id,
-        team_id,
-        teams(id, name, type, founding_age_group, founding_season_id, age_group, kit_jersey, kit_shorts, kit_socks),
-        club_teams(id, name, clubs(name)),
+        team_id, season_id,
+        teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, kit_jersey, kit_shorts, kit_socks),
+        club_teams(id, name, internal_team_id, clubs(name)),
         venues(name, address),
         pitches(name, pitch_type)
       `)
@@ -41,6 +41,22 @@ export default async function FixturesDashboardPage() {
     supabase.from('profiles').select('id, full_name').eq('is_referee', true),
     supabase.from('referee_requests').select('fixture_id'),
   ])
+
+  // Enrich internal team opponents with their teams row (for nickname + age resolution)
+  const internalTeamIds = [...new Set((rawFixtures ?? []).map((f: any) => f.club_teams?.internal_team_id).filter(Boolean))]
+  const internalTeamDataMap = new Map<string, any>()
+  if (internalTeamIds.length > 0) {
+    const { data: iTeams } = await supabase
+      .from('teams')
+      .select('id, name, type, founding_age_group, founding_season_id, nickname')
+      .in('id', internalTeamIds)
+    for (const t of iTeams ?? []) internalTeamDataMap.set(t.id, t)
+  }
+  const enrichedFixtures = (rawFixtures ?? []).map((f: any) => {
+    const ct = f.club_teams
+    const internalTeam = ct?.internal_team_id ? internalTeamDataMap.get(ct.internal_team_id) ?? null : null
+    return { ...f, club_teams: ct ? { ...ct, internal_team: internalTeam } : ct }
+  })
 
   // Build a set of fixture_ids that have at least one referee request
   const fixturesWithRequests = new Set((allRequests ?? []).map((r: any) => r.fixture_id))
@@ -62,7 +78,7 @@ export default async function FixturesDashboardPage() {
 
   const SENIOR_ORDER = ['First XI', 'Sunday XI', 'Vets XI', 'Women']
 
-  const fixtures = (rawFixtures ?? []).map(f => {
+  const fixtures = enrichedFixtures.map((f: any) => {
     const team = f.teams as any
     const opponent = f.club_teams as any
     const venueData = f.venues as any
@@ -97,11 +113,7 @@ export default async function FixturesDashboardPage() {
       teamSortKey,
       ageGroupLabel,
       teamShortName: team?.name ?? '',
-      opponentName: (() => {
-        if (!opponent) return 'TBC'
-        const raw = [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC'
-        return raw.replace(/^\[Internal\]\s*/, '')
-      })(),
+      opponentName: fixtureOpponentName(opponent, (seasons ?? []) as Season[], f.season_id),
       venueName: venueData?.name ?? null,
       venueAddress: venueData?.address ?? null,
       pitchName: pitchData?.name ?? null,
