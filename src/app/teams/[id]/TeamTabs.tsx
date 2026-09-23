@@ -89,6 +89,7 @@ export default function TeamTabs({
   players: initialPlayers,
   playerStats,
   currentSeasonName,
+  teamName,
 }: {
   teamId: string
   isAdmin: boolean
