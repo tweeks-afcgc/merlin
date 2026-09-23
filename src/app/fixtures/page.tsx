@@ -21,12 +21,12 @@ export default async function FixturesDashboardPage() {
 
   const todayStr = new Date().toISOString().split('T')[0]
 
-  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }, { data: allRequests }] = await Promise.all([
+  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }, { data: allRequests }, { data: allVolunteerRefs }] = await Promise.all([
     supabase
       .from('fixtures')
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id,
-        referee_required, referee_id,
+        referee_required, referee_id, volunteer_referee_id,
         team_id, season_id,
         teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, kit_jersey, kit_shorts, kit_socks),
         club_teams(id, name, internal_team_id, clubs(name)),
@@ -40,6 +40,7 @@ export default async function FixturesDashboardPage() {
     supabase.from('team_managers').select('team_id, profiles(full_name)'),
     supabase.from('profiles').select('id, full_name').eq('is_referee', true),
     supabase.from('referee_requests').select('fixture_id'),
+    supabase.from('volunteers').select('id, first_name, last_name').eq('is_referee', true),
   ])
 
   // Enrich internal team opponents with their teams row (for nickname + age resolution)
@@ -61,10 +62,14 @@ export default async function FixturesDashboardPage() {
   // Build a set of fixture_ids that have at least one referee request
   const fixturesWithRequests = new Set((allRequests ?? []).map((r: any) => r.fixture_id))
 
-  // Build a map of referee_id -> name
+  // Build a map of referee_id / volunteer_referee_id -> name
   const refereeMap = new Map<string, string>()
   for (const r of allReferees ?? []) {
     if (r.full_name) refereeMap.set(r.id, r.full_name)
+  }
+  const volunteerRefMap = new Map<string, string>()
+  for (const v of allVolunteerRefs ?? []) {
+    volunteerRefMap.set(v.id, `${v.first_name} ${v.last_name}`.trim())
   }
 
   // Build a map of team_id -> first manager name
@@ -123,7 +128,11 @@ export default async function FixturesDashboardPage() {
       kitSocks: team?.kit_socks ?? null,
       managerName: managerMap.get(f.team_id) ?? null,
       refereeRequired: f.referee_required ?? true,
-      refereeName: f.referee_id ? (refereeMap.get(f.referee_id) ?? null) : null,
+      refereeName: f.referee_id
+        ? (refereeMap.get(f.referee_id) ?? null)
+        : f.volunteer_referee_id
+          ? (volunteerRefMap.get(f.volunteer_referee_id) ?? null)
+          : null,
       hasRefereeRequest: fixturesWithRequests.has(f.id),
     }
   })
