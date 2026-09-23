@@ -295,9 +295,10 @@ export default async function TeamDashboardPage({
   })
 
   const displayName = teamDisplayName(team, seasons ?? [])
+  const teamNoNick = { ...team, nickname: null }
   const seasonDisplayName = isAllTime || !selectedStatsSeason
-    ? displayName
-    : teamDisplayNameForSeason(team, seasons ?? [], selectedStatsSeason.id)
+    ? teamDisplayName(teamNoNick, seasons ?? [])
+    : teamDisplayNameForSeason(teamNoNick, seasons ?? [], selectedStatsSeason.id)
 
   const ROLE_ORDER = ['manager', 'assistant', 'coach']
   const sortedRoles = [...teamRoles].sort((a, b) => {
