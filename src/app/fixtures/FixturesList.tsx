@@ -31,6 +31,8 @@ type Fixture = {
   refereeRequired: boolean
   refereeName: string | null
   hasRefereeRequest: boolean
+  cancelled: boolean
+  cancellationReason: string | null
 }
 
 type ViewMode = 'schedule' | 'team' | 'pitch'
@@ -93,6 +95,25 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
   const needsPitch = f.venue === 'home' && !f.pitch_id
   const needsRef = f.refereeRequired && !f.refereeName
   const hasWarning = needsTime || (!needsTime && needsPitch)
+
+  if (f.cancelled) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 opacity-60">
+        <span className="text-sm font-bold w-10 flex-shrink-0 text-gray-300 line-through">{formatTime(f.kickoff_time)}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-gray-200 text-gray-600 uppercase tracking-wide">Cancelled</span>
+            <p className="text-sm font-semibold text-gray-400 line-through leading-snug truncate">
+              {showTeam ? f.teamName : f.opponentName}
+            </p>
+          </div>
+          {f.cancellationReason && (
+            <p className="text-xs text-gray-400 leading-snug">{f.cancellationReason}</p>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={`flex items-center justify-between gap-2 ${f.confirmed ? '' : 'border-l-4 border-red-400'}`}>

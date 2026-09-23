@@ -177,6 +177,32 @@ export async function savePerformances(fixtureId: string, teamId: string, perfor
   return {}
 }
 
+export async function cancelFixture(fixtureId: string, teamId: string, cancellationReason: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('fixtures')
+    .update({ cancelled: true, cancellation_reason: cancellationReason })
+    .eq('id', fixtureId)
+  if (error) return { error: error.message }
+  revalidatePath(`/teams/${teamId}/fixtures`)
+  revalidatePath(`/teams/${teamId}`)
+  revalidatePath('/schedule')
+  return {}
+}
+
+export async function uncancelFixture(fixtureId: string, teamId: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('fixtures')
+    .update({ cancelled: false, cancellation_reason: null })
+    .eq('id', fixtureId)
+  if (error) return { error: error.message }
+  revalidatePath(`/teams/${teamId}/fixtures`)
+  revalidatePath(`/teams/${teamId}`)
+  revalidatePath('/schedule')
+  return {}
+}
+
 export async function deleteFixture(fixtureId: string, teamId: string) {
   const supabase = await createClient()
   await supabase.from('fixtures').delete().eq('id', fixtureId)

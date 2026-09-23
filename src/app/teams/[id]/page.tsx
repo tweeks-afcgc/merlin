@@ -266,7 +266,7 @@ export default async function TeamDashboardPage({
   const playerStats = Array.from(playerMap.values())
 
   const today = new Date().toISOString().split('T')[0]
-  const FIXTURE_SELECT = 'id, date, kickoff_time, venue, confirmed, notes, goals_for, goals_against, season_id, club_teams(id, name, internal_team_id, clubs(name)), venues(name)'
+  const FIXTURE_SELECT = 'id, date, kickoff_time, venue, confirmed, notes, goals_for, goals_against, season_id, cancelled, cancellation_reason, club_teams(id, name, internal_team_id, clubs(name)), venues(name)'
 
   const fixturesQuery = isAllTime
     ? supabase.from('fixtures').select(FIXTURE_SELECT).eq('team_id', id).order('date', { ascending: false })
@@ -448,6 +448,7 @@ export default async function TeamDashboardPage({
             players={players as any[]}
             playerStats={playerStats}
             currentSeasonName={selectedStatsSeason?.name ?? null}
+            teamName={displayName}
           />
         </div>
 

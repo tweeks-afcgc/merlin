@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { createPortal } from 'react-dom'
 import { quickAddPlayer } from './players/actions'
+import { cancelFixture, uncancelFixture } from './fixtures/actions'
 import { fixtureOpponentName, type Season } from '@/lib/teamUtils'
 
 type Tab = 'fixtures' | 'stats' | 'playerstats' | 'players'
@@ -28,6 +29,8 @@ type Fixture = {
   goals_for: number | null
   goals_against: number | null
   season_id: string
+  cancelled: boolean | null
+  cancellation_reason: string | null
   club_teams: any
   venues: any
 }
@@ -101,6 +104,7 @@ export default function TeamTabs({
   players: Player[]
   playerStats: PlayerStat[]
   currentSeasonName: string | null
+  teamName: string
 }) {
   const [tab, setTab] = useState<Tab>('stats')
   const [players, setPlayers] = useState<Player[]>(initialPlayers)
@@ -108,6 +112,11 @@ export default function TeamTabs({
   const [showAddPlayer, setShowAddPlayer] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
   const [addSaving, setAddSaving] = useState(false)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState<'cannot_field_team' | 'waterlogged_pitch' | 'frozen_pitch'>('cannot_field_team')
+  const [cancelTeam, setCancelTeam] = useState<'ours' | 'theirs'>('ours')
+  const [cancelSaving, setCancelSaving] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
 
   function formatDob(dob: string | null) {
     if (!dob) return null
@@ -184,56 +193,160 @@ export default function TeamTabs({
                 const oppName = fixtureOpponentName(fx.club_teams, seasons, fx.season_id)
                 const isUpcoming = fx.date >= today
                 const hasResult = fx.goals_for !== null && fx.goals_against !== null
+                const isCancelled = !!fx.cancelled
                 const won = hasResult && fx.goals_for > fx.goals_against
                 const drew = hasResult && fx.goals_for === fx.goals_against
+                const isShowingCancel = cancellingId === fx.id
                 return (
-                  <li key={fx.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        {isUpcoming && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">NEXT</span>
+                  <li key={fx.id} className={`px-5 py-3 transition ${isCancelled ? 'bg-gray-50' : 'hover:bg-gray-50'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          {isCancelled ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-gray-200 text-gray-600 uppercase tracking-wide">Cancelled</span>
+                          ) : isUpcoming ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">NEXT</span>
+                          ) : null}
+                          <span className={`text-xs ${isCancelled ? 'text-gray-300 line-through' : 'text-gray-400'}`}>{formatDate(fx.date)} · {formatTime(fx.kickoff_time)}</span>
+                          <span className={`text-xs font-medium ${isCancelled ? 'text-gray-300' : fx.venue === 'home' ? 'text-green-700' : 'text-gray-400'}`}>
+                            {fx.venue === 'home' ? 'H' : fx.venue === 'away' ? 'A' : 'N'}
+                          </span>
+                        </div>
+                        <p className={`text-sm font-medium truncate ${isCancelled ? 'text-gray-400 line-through' : 'text-gray-800'}`}>{oppName}</p>
+                        {isCancelled && fx.cancellation_reason && (
+                          <p className="text-xs text-gray-400 mt-0.5">{fx.cancellation_reason}</p>
                         )}
-                        <span className="text-xs text-gray-400">{formatDate(fx.date)} · {formatTime(fx.kickoff_time)}</span>
-                        <span className={`text-xs font-medium ${fx.venue === 'home' ? 'text-green-700' : 'text-gray-400'}`}>
-                          {fx.venue === 'home' ? 'H' : fx.venue === 'away' ? 'A' : 'N'}
-                        </span>
                       </div>
-                      <p className="text-sm font-medium text-gray-800 truncate">{oppName}</p>
+                      {!isCancelled && (hasResult ? (
+                        <Link
+                          href={`/teams/${teamId}/fixtures/${fx.id}/result`}
+                          className="flex items-center gap-2 flex-shrink-0 hover:opacity-75 transition"
+                          title="View / edit result"
+                        >
+                          <span className="text-sm font-bold text-gray-900">{fx.goals_for}–{fx.goals_against}</span>
+                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                            won ? 'bg-green-500 text-white' : drew ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'
+                          }`}>
+                            {won ? 'W' : drew ? 'D' : 'L'}
+                          </span>
+                        </Link>
+                      ) : !isUpcoming ? (
+                        <Link
+                          href={`/teams/${teamId}/fixtures/${fx.id}/result`}
+                          className="text-xs font-semibold text-red-800 hover:underline flex-shrink-0"
+                        >
+                          Result
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-gray-300 flex-shrink-0">—</span>
+                      ))}
+                      <NotesIcon notes={fx.notes ?? null} />
+                      {isAdmin && isCancelled ? (
+                        <button
+                          onClick={async () => {
+                            await uncancelFixture(fx.id, teamId)
+                          }}
+                          className="text-xs text-gray-400 hover:text-gray-600 hover:underline flex-shrink-0"
+                          title="Uncancel fixture"
+                        >
+                          Uncancel
+                        </button>
+                      ) : isAdmin && !isCancelled ? (
+                        <button
+                          onClick={() => {
+                            setCancellingId(fx.id)
+                            setCancelReason('cannot_field_team')
+                            setCancelTeam('ours')
+                            setCancelError(null)
+                          }}
+                          className="p-1.5 rounded-lg text-gray-300 hover:text-orange-600 hover:bg-orange-50 transition flex-shrink-0"
+                          title="Cancel fixture"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      ) : null}
+                      {!isCancelled && (
+                        <Link
+                          href={`/teams/${teamId}/fixtures/${fx.id}/edit`}
+                          className="p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition flex-shrink-0"
+                          title="Edit fixture"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </Link>
+                      )}
                     </div>
-                    {hasResult ? (
-                      <Link
-                        href={`/teams/${teamId}/fixtures/${fx.id}/result`}
-                        className="flex items-center gap-2 flex-shrink-0 hover:opacity-75 transition"
-                        title="View / edit result"
-                      >
-                        <span className="text-sm font-bold text-gray-900">{fx.goals_for}–{fx.goals_against}</span>
-                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                          won ? 'bg-green-500 text-white' : drew ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'
-                        }`}>
-                          {won ? 'W' : drew ? 'D' : 'L'}
-                        </span>
-                      </Link>
-                    ) : !isUpcoming ? (
-                      <Link
-                        href={`/teams/${teamId}/fixtures/${fx.id}/result`}
-                        className="text-xs font-semibold text-red-800 hover:underline flex-shrink-0"
-                      >
-                        Result
-                      </Link>
-                    ) : (
-                      <span className="text-xs text-gray-300 flex-shrink-0">—</span>
+                    {isShowingCancel && (
+                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="text-xs font-semibold text-orange-800 mb-2">Cancel fixture — select reason</p>
+                        <div className="space-y-1.5 mb-3">
+                          {(['cannot_field_team', 'waterlogged_pitch', 'frozen_pitch'] as const).map(r => (
+                            <label key={r} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name={`cancel-reason-${fx.id}`}
+                                checked={cancelReason === r}
+                                onChange={() => setCancelReason(r)}
+                                className="accent-orange-600"
+                              />
+                              <span className="text-sm text-gray-700">
+                                {r === 'cannot_field_team' ? 'Cannot field a team' : r === 'waterlogged_pitch' ? 'Waterlogged pitch' : 'Frozen pitch'}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        {cancelReason === 'cannot_field_team' && (
+                          <div className="mb-3">
+                            <label className="text-xs text-gray-500 mb-1 block">Which team cannot field?</label>
+                            <div className="flex gap-3">
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <input type="radio" name={`cancel-team-${fx.id}`} checked={cancelTeam === 'ours'} onChange={() => setCancelTeam('ours')} className="accent-orange-600" />
+                                <span className="text-sm text-gray-700">{teamName}</span>
+                              </label>
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <input type="radio" name={`cancel-team-${fx.id}`} checked={cancelTeam === 'theirs'} onChange={() => setCancelTeam('theirs')} className="accent-orange-600" />
+                                <span className="text-sm text-gray-700">{oppName}</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                        {cancelError && <p className="text-xs text-red-600 mb-2">{cancelError}</p>}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              setCancelSaving(true)
+                              setCancelError(null)
+                              let reasonText = ''
+                              if (cancelReason === 'cannot_field_team') {
+                                const teamLabel = cancelTeam === 'ours' ? teamName : oppName
+                                reasonText = `Cannot field a team (${teamLabel})`
+                              } else if (cancelReason === 'waterlogged_pitch') {
+                                reasonText = 'Waterlogged pitch'
+                              } else {
+                                reasonText = 'Frozen pitch'
+                              }
+                              const res = await cancelFixture(fx.id, teamId, reasonText)
+                              setCancelSaving(false)
+                              if (res?.error) { setCancelError(res.error) } else { setCancellingId(null) }
+                            }}
+                            disabled={cancelSaving}
+                            className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold py-1.5 rounded-lg transition disabled:opacity-60"
+                          >
+                            {cancelSaving ? 'Saving…' : 'Confirm cancellation'}
+                          </button>
+                          <button
+                            onClick={() => setCancellingId(null)}
+                            className="flex-1 border border-gray-300 text-gray-600 text-xs font-semibold py-1.5 rounded-lg hover:bg-gray-50 transition"
+                          >
+                            Back
+                          </button>
+                        </div>
+                      </div>
                     )}
-                    <NotesIcon notes={fx.notes ?? null} />
-                    <Link
-                      href={`/teams/${teamId}/fixtures/${fx.id}/edit`}
-                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition flex-shrink-0"
-                      title="Edit fixture"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </Link>
                   </li>
                 )
               })}

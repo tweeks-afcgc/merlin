@@ -27,7 +27,7 @@ export default async function FixturesDashboardPage() {
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id,
         referee_required, referee_id, volunteer_referee_id,
-        team_id, season_id,
+        team_id, season_id, cancelled, cancellation_reason,
         teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, kit_jersey, kit_shorts, kit_socks),
         club_teams(id, name, internal_team_id, clubs(name)),
         venues(name, address),
@@ -134,6 +134,8 @@ export default async function FixturesDashboardPage() {
           ? (volunteerRefMap.get(f.volunteer_referee_id) ?? null)
           : null,
       hasRefereeRequest: fixturesWithRequests.has(f.id),
+      cancelled: f.cancelled ?? false,
+      cancellationReason: f.cancellation_reason ?? null,
     }
   })
 
