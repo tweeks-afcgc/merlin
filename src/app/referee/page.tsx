@@ -158,6 +158,7 @@ export default async function RefereeDashboardPage({
       .select(fixtureSelect)
       .eq('referee_required', true)
       .is('referee_id', null)
+      .is('volunteer_referee_id', null)
       .gte('date', today).lte('date', in14Str)
       .order('date').order('kickoff_time'),
     supabase.from('seasons').select('id, name, start_date, is_current'),
