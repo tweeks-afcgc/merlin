@@ -139,16 +139,14 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
               {needsTime ? 'Kick off TBC' : 'No pitch assigned'}
             </p>
           )}
-          {/* Referee — desktop shows all states, mobile only shows missing when required */}
+          {/* Referee — only show if assigned, requested, or required but missing */}
           {f.refereeName ? (
             <p className="hidden sm:block text-xs text-gray-400 leading-snug">Ref: {f.refereeName}</p>
           ) : f.hasRefereeRequest ? (
             <p className="hidden sm:block text-xs text-blue-600 font-medium leading-snug">Referee request made</p>
           ) : f.refereeRequired ? (
             <p className="text-xs text-amber-600 font-medium leading-snug">No referee</p>
-          ) : (
-            <p className="hidden sm:block text-xs text-amber-600 font-medium leading-snug">No referee requested</p>
-          )}
+          ) : null}
         </div>
       </Link>
       <div className="flex items-center gap-1.5 flex-shrink-0 pr-3">

@@ -56,6 +56,8 @@ export async function addFixture(teamId: string, formData: FormData) {
   const competition = competitionRaw.startsWith('cup:') ? 'cup' : competitionRaw
   const competitionId = competitionRaw.startsWith('cup:') ? competitionRaw.slice(4) : null
 
+  const refereeRequired = formData.get('referee_required') === 'true'
+
   const { data: inserted, error } = await supabase.from('fixtures').insert({
     team_id: teamId,
     season_id: formData.get('season_id') as string,
@@ -65,7 +67,7 @@ export async function addFixture(teamId: string, formData: FormData) {
     venue,
     competition,
     competition_id: competitionId,
-    referee_required: venue === 'home',
+    referee_required: refereeRequired,
     home_venue_id: venue === 'home' ? homeVenueId : null,
     pitch_id: venue === 'home' ? pitchId : null,
   }).select('id').single()

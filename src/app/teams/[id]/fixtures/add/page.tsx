@@ -47,6 +47,7 @@ export default function AddFixtureFromTeamPage() {
   const [homeVenueId, setHomeVenueId] = useState('')
   const [pitches, setPitches] = useState<{ id: string; name: string }[]>([])
   const [pitchId, setPitchId] = useState('')
+  const [refereeRequired, setRefereeRequired] = useState(true)
   const [teamCompetitions, setTeamCompetitions] = useState<{ id: string; type: 'league' | 'cup'; name: string; abbr_name: string | null; division: string | null }[]>([])
 
   useEffect(() => {
@@ -112,6 +113,7 @@ export default function AddFixtureFromTeamPage() {
     fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
     fd.set('competition', competition)
+    fd.set('referee_required', refereeRequired ? 'true' : 'false')
     const result = await addFixture(teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false) }
     else {
@@ -338,6 +340,20 @@ export default function AddFixtureFromTeamPage() {
                   })()}
                   <option value="shield">Shield</option>
                 </select>
+              </div>
+
+              {/* Referee */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Referee</label>
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={refereeRequired}
+                    onChange={e => setRefereeRequired(e.target.checked)}
+                    className="rounded border-gray-300 text-red-800 focus:ring-red-700"
+                  />
+                  Referee required
+                </label>
               </div>
 
               <div className="flex gap-3 pt-1">
