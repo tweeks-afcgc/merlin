@@ -56,7 +56,7 @@ export default async function PublicSchedulePage() {
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id,
         team_id,
-        teams(id, name, type, founding_age_group, founding_season_id, age_group, kit_jersey, kit_shorts),
+        teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, kit_jersey, kit_shorts),
         club_teams(id, name, clubs(name)),
         venues(name),
         pitches(name)
