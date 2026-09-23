@@ -7,6 +7,7 @@ import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { updateFixture, assignRefereeFromRequest, savePerformances, saveMatchNotes, type PlayerPerformance } from '../../actions'
 import DeleteFixtureButton from '../../DeleteFixtureButton'
+import CancelFixtureButton from '../../CancelFixtureButton'
 import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 import { sortedTeams, teamDisplayName } from '@/lib/teamSort'
 
@@ -51,6 +52,9 @@ export default function EditFixturePage() {
   const [goalsFor, setGoalsFor] = useState<string>('')
   const [goalsAgainst, setGoalsAgainst] = useState<string>('')
   const [isPast, setIsPast] = useState(false)
+  const [isCancelled, setIsCancelled] = useState(false)
+  const [cancellationReason, setCancellationReason] = useState<string | null>(null)
+  const [teamName, setTeamName] = useState('')
   const [matchNotes, setMatchNotes] = useState('')
   const [notesSaving, setNotesSaving] = useState(false)
   const [notesSaved, setNotesSaved] = useState(false)
@@ -104,6 +108,8 @@ export default function EditFixturePage() {
         setGoalsAgainst(fixture.goals_against != null ? String(fixture.goals_against) : '')
         setIsPast(fixture.date < new Date().toISOString().split('T')[0])
         setMatchNotes((fixture as any).notes ?? '')
+        setIsCancelled(!!(fixture as any).cancelled)
+        setCancellationReason((fixture as any).cancellation_reason ?? null)
 
         if (fixture.home_venue_id) {
           const { data: pitchData } = await supabase
@@ -131,6 +137,8 @@ export default function EditFixturePage() {
       const allSeasons = seasonsData ?? []
       const ordered = sortedTeams(allTeamsData ?? [], allSeasons)
       setInternalTeams(ordered.map((t: any) => ({ id: `internal:${t.id}`, label: teamDisplayName(t, allSeasons) })))
+      const thisTeam = (allTeamsData ?? []).find((t: any) => t.id === teamId)
+      if (thisTeam) setTeamName(teamDisplayName(thisTeam as any, allSeasons))
       setVenues(venuesData ?? [])
       // Combine profile referees + volunteer referees (exclude volunteers already in profiles to avoid duplicates)
       const profileRefIds = new Set((refereesData ?? []).map((r: any) => r.id))
@@ -531,11 +539,21 @@ export default function EditFixturePage() {
                   {saving ? 'Saving...' : 'Save changes'}
                 </button>
               </div>
-              {!refereeId && (
-                <div className="flex justify-center pt-2">
-                  <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnTo} />
+              <div className="flex justify-center pt-2">
+                <div className="w-full max-w-sm space-y-0">
+                  <CancelFixtureButton
+                    fixtureId={fixtureId}
+                    teamId={teamId}
+                    teamName={teamName}
+                    opponentName={opponents.find(o => o.value === opponentId)?.label ?? 'Opponent'}
+                    isCancelled={isCancelled}
+                    cancellationReason={cancellationReason}
+                  />
+                  {!refereeId && (
+                    <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnTo} />
+                  )}
                 </div>
-              )}
+              </div>
             </form>
           </div>
 
