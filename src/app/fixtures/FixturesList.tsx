@@ -75,9 +75,12 @@ function venueGroupSort(a: string, b: string): number {
 }
 
 function timeSort(a: Fixture, b: Fixture) {
+  if (!a.kickoff_time && !b.kickoff_time) return a.teamSortKey.localeCompare(b.teamSortKey)
   if (!a.kickoff_time) return 1
   if (!b.kickoff_time) return -1
-  return a.kickoff_time.localeCompare(b.kickoff_time)
+  const timeCmp = a.kickoff_time.localeCompare(b.kickoff_time)
+  if (timeCmp !== 0) return timeCmp
+  return a.teamSortKey.localeCompare(b.teamSortKey)
 }
 
 // ─── sub-components ─────────────────────────────────────────────────────────
