@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { teamDisplayName } from '@/lib/teamUtils'
+import { teamDisplayName, computeAgeGroup } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,9 +34,12 @@ function venueGroupSort(a: string, b: string): number {
 }
 
 function timeSort(a: any, b: any) {
+  if (!a.kickoff_time && !b.kickoff_time) return a.teamSortKey.localeCompare(b.teamSortKey)
   if (!a.kickoff_time) return 1
   if (!b.kickoff_time) return -1
-  return a.kickoff_time.localeCompare(b.kickoff_time)
+  const timeCmp = a.kickoff_time.localeCompare(b.kickoff_time)
+  if (timeCmp !== 0) return timeCmp
+  return a.teamSortKey.localeCompare(b.teamSortKey)
 }
 
 // ─── page ────────────────────────────────────────────────────────────────────
@@ -84,6 +87,12 @@ export default async function PublicSchedulePage() {
       pitch_id: f.pitch_id,
       team_id: f.team_id,
       teamName: team ? teamDisplayName(team, seasons ?? []) : '—',
+      teamSortKey: (() => {
+        if (!team) return 'z'
+        if (team.type === 'senior') return `0_${team.name}`
+        const age = computeAgeGroup(team, seasons ?? []) ?? 0
+        return `1_${String(999 - age).padStart(4, '0')}_${team.name}`
+      })(),
       opponentName: (() => {
         if (!opponent) return 'TBC'
         const raw = [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC'
