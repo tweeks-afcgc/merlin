@@ -114,7 +114,20 @@ export default function EditFixturePage() {
 
       const opts = buildOpponentOptions((clubsData ?? []) as any)
       setOpponents(opts)
-      setClubTeams((clubsData ?? []) as any) // keep for any legacy refs
+      setClubTeams((clubsData ?? []) as any)
+
+      // Convert a stored club_teams.id that represents a blank-name (club-level) row
+      // into the 'club:${clubId}' format that the select options use
+      if (fixture?.opponent_id && fixture.opponent_id !== 'tbc') {
+        const isKnownOption = opts.some(o => o.value === fixture.opponent_id)
+        if (!isKnownOption) {
+          // Look for a club that has this club_teams row as its blank-name entry
+          const matchingClub = (clubsData ?? []).find((c: any) =>
+            (c.club_teams ?? []).some((ct: any) => ct.id === fixture.opponent_id && (!ct.name || !ct.name.trim()))
+          ) as any
+          if (matchingClub) setOpponentId(`club:${matchingClub.id}`)
+        }
+      }
       const allSeasons = seasonsData ?? []
       const ordered = sortedTeams(allTeamsData ?? [], allSeasons)
       setInternalTeams(ordered.map((t: any) => ({ id: `internal:${t.id}`, label: teamDisplayName(t, allSeasons) })))
