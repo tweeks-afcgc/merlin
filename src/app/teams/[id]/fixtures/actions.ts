@@ -73,6 +73,7 @@ export async function addFixture(teamId: string, formData: FormData) {
   if (error) return { error: error.message }
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)
+  revalidatePath('/schedule')
   return { id: inserted.id }
 }
 
@@ -108,6 +109,7 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
   if (error) return { error: error.message }
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)
+  revalidatePath('/schedule')
 }
 
 export async function assignRefereeFromRequest(fixtureId: string, refereeId: string, teamId: string) {
