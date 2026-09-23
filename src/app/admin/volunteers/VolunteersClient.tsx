@@ -270,12 +270,18 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
 
   // Filters
+  const [filterName, setFilterName] = useState('')
   const [filterTeam, setFilterTeam] = useState('')
   const [filterRole, setFilterRole] = useState('')
   const [filterReferee, setFilterReferee] = useState(false)
 
   const sorted = [...volunteers]
     .filter(v => {
+      if (filterName) {
+        const q = filterName.toLowerCase()
+        const full = `${v.first_name} ${v.last_name}`.toLowerCase()
+        if (!full.includes(q)) return false
+      }
       if (filterReferee && !v.is_referee) return false
       if (filterTeam) {
         if (!v.roles.some(r => r.team_id === filterTeam)) return false
@@ -412,6 +418,13 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
       <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6">
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
+          <input
+            type="text"
+            value={filterName}
+            onChange={e => setFilterName(e.target.value)}
+            placeholder="Search by name…"
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 w-44"
+          />
           <select
             value={filterTeam}
             onChange={e => setFilterTeam(e.target.value)}
@@ -440,9 +453,9 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
             />
             Referees only
           </label>
-          {(filterTeam || filterRole || filterReferee) && (
+          {(filterName || filterTeam || filterRole || filterReferee) && (
             <button
-              onClick={() => { setFilterTeam(''); setFilterRole(''); setFilterReferee(false) }}
+              onClick={() => { setFilterName(''); setFilterTeam(''); setFilterRole(''); setFilterReferee(false) }}
               className="text-xs text-gray-400 hover:text-gray-600 transition"
             >
               Clear filters
