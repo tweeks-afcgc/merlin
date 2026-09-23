@@ -269,9 +269,27 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
   const [linkingError, setLinkingError] = useState<string | null>(null)
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
 
-  const sorted = [...volunteers].sort((a, b) =>
-    `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
-  )
+  // Filters
+  const [filterTeam, setFilterTeam] = useState('')
+  const [filterRole, setFilterRole] = useState('')
+  const [filterReferee, setFilterReferee] = useState(false)
+
+  const sorted = [...volunteers]
+    .filter(v => {
+      if (filterReferee && !v.is_referee) return false
+      if (filterTeam) {
+        if (!v.roles.some(r => r.team_id === filterTeam)) return false
+      }
+      if (filterRole) {
+        if (filterRole === 'club') {
+          if (!v.roles.some(r => r.role_type === 'club')) return false
+        } else {
+          if (!v.roles.some(r => r.role_name === filterRole)) return false
+        }
+      }
+      return true
+    })
+    .sort((a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`))
 
   async function handleAdd(fd: FormData) {
     setSaving(true)
@@ -392,9 +410,50 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
 
       {/* Volunteers list */}
       <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6">
-        <p className="text-xs text-gray-400 mb-4">{volunteers.length} volunteer{volunteers.length !== 1 ? 's' : ''}</p>
-        {sorted.length === 0 ? (
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <select
+            value={filterTeam}
+            onChange={e => setFilterTeam(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 bg-white"
+          >
+            <option value="">All teams</option>
+            {teams.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+          </select>
+          <select
+            value={filterRole}
+            onChange={e => setFilterRole(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 bg-white"
+          >
+            <option value="">All roles</option>
+            <option value="Manager">Managers</option>
+            <option value="Coach">Coaches</option>
+            <option value="Assistant">Assistants</option>
+            <option value="club">Club roles</option>
+          </select>
+          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filterReferee}
+              onChange={e => setFilterReferee(e.target.checked)}
+              className="rounded border-gray-300 text-red-800 focus:ring-red-700"
+            />
+            Referees only
+          </label>
+          {(filterTeam || filterRole || filterReferee) && (
+            <button
+              onClick={() => { setFilterTeam(''); setFilterRole(''); setFilterReferee(false) }}
+              className="text-xs text-gray-400 hover:text-gray-600 transition"
+            >
+              Clear filters
+            </button>
+          )}
+          <span className="text-xs text-gray-400 ml-auto">{sorted.length} of {volunteers.length}</span>
+        </div>
+        {volunteers.length === 0 ? (
           <p className="text-sm text-gray-400">No volunteers added yet.</p>
+        ) : sorted.length === 0 ? (
+          <p className="text-sm text-gray-400">No volunteers match the selected filters.</p>
         ) : (
           <div className="divide-y divide-gray-50">
             {sorted.map(v => {
