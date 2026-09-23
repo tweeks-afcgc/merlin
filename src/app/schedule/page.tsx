@@ -57,7 +57,7 @@ export default async function PublicSchedulePage() {
     supabase
       .from('fixtures')
       .select(`
-        id, date, kickoff_time, venue, confirmed, pitch_id,
+        id, date, kickoff_time, venue, confirmed, pitch_id, cancelled, cancellation_reason,
         team_id,
         teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, kit_jersey, kit_shorts),
         club_teams(id, name, clubs(name)),
@@ -66,7 +66,6 @@ export default async function PublicSchedulePage() {
       `)
       .gte('date', todayStr)
       .lte('date', cutoffStr)
-      .neq('cancelled', true)
       .order('date', { ascending: true })
       .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
@@ -100,6 +99,8 @@ export default async function PublicSchedulePage() {
       })(),
       venueName: venueData?.name ?? null,
       pitchName: pitchData?.name ?? null,
+      cancelled: !!(f as any).cancelled,
+      cancellationReason: (f as any).cancellation_reason ?? null,
     }
   })
 
@@ -172,24 +173,33 @@ export default async function PublicSchedulePage() {
                                     </div>
                                   )}
                                   {pitchFixtures.map(f => (
-                                    <div key={f.id} className={`flex items-center gap-2 px-3 py-3 ${!f.confirmed ? 'border-l-4 border-amber-400' : ''}`}>
-                                      <span className={`text-sm font-bold w-10 flex-shrink-0 ${f.confirmed ? 'text-green-700' : 'text-amber-500'}`}>
-                                        {formatTime(f.kickoff_time)}
+                                    <div key={f.id} className={`flex items-center gap-2 px-3 py-3 ${f.cancelled ? 'bg-gray-50' : !f.confirmed ? 'border-l-4 border-amber-400' : ''}`}>
+                                      <span className={`text-sm font-bold w-10 flex-shrink-0 ${f.cancelled ? 'text-gray-300' : f.confirmed ? 'text-green-700' : 'text-amber-500'}`}>
+                                        {f.cancelled ? (
+                                          <svg className="w-5 h-5 text-red-400 mx-auto" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" />
+                                          </svg>
+                                        ) : formatTime(f.kickoff_time)}
                                       </span>
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                          <p className="text-sm font-semibold text-gray-900 leading-snug truncate">
+                                          <p className={`text-sm font-semibold leading-snug truncate ${f.cancelled ? 'text-gray-400' : 'text-gray-900'}`}>
                                             {f.teamName}
                                           </p>
-                                          {!f.confirmed && (
+                                          {f.cancelled ? (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wide flex-shrink-0">Cancelled</span>
+                                          ) : !f.confirmed ? (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 flex-shrink-0">
                                               Provisional
                                             </span>
-                                          )}
+                                          ) : null}
                                         </div>
                                         <p className="text-xs text-gray-500 leading-snug truncate">
                                           vs {f.opponentName}
                                         </p>
+                                        {f.cancelled && f.cancellationReason && (
+                                          <p className="text-xs text-gray-400 leading-snug">{f.cancellationReason}</p>
+                                        )}
                                       </div>
                                     </div>
                                   ))}
