@@ -98,20 +98,25 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
 
   if (f.cancelled) {
     return (
-      <div className="flex items-center gap-2 px-3 py-3 bg-gray-50">
-        <span className="text-sm font-bold w-10 flex-shrink-0 text-gray-300 line-through">{formatTime(f.kickoff_time)}</span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-gray-200 text-gray-600 uppercase tracking-wide">Cancelled</span>
-            <p className="text-sm font-semibold text-gray-400 line-through leading-snug truncate">
-              {showTeam ? f.teamName : f.opponentName}
-            </p>
+      <Link href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`} className="flex items-center gap-2 min-w-0 flex-1 px-3 py-3 hover:bg-gray-50 transition">
+        <span className="w-10 flex-shrink-0 flex items-center justify-center">
+          <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" />
+          </svg>
+        </span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap leading-snug">
+            <p className="text-sm font-semibold text-gray-900 truncate">{showTeam ? f.teamName : f.opponentName}</p>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wide flex-shrink-0">Cancelled</span>
           </div>
+          {showTeam && (
+            <p className="text-xs text-gray-500 leading-snug truncate">vs {f.opponentName}</p>
+          )}
           {f.cancellationReason && (
             <p className="text-xs text-gray-400 leading-snug">{f.cancellationReason}</p>
           )}
         </div>
-      </div>
+      </Link>
     )
   }
 
