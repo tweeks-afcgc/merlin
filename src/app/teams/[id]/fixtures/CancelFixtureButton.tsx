@@ -31,7 +31,7 @@ export default function CancelFixtureButton({
     setError(null)
     let reasonText = ''
     if (reason === 'cannot_field_team') {
-      reasonText = `Cannot field a team (${team === 'ours' ? teamName : opponentName})`
+      reasonText = `${team === 'ours' ? teamName : opponentName} cannot field a team`
     } else if (reason === 'waterlogged_pitch') {
       reasonText = 'Waterlogged pitch'
     } else {
