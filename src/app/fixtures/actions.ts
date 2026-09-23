@@ -82,6 +82,34 @@ export async function confirmFixture(fixtureId: string): Promise<{ error?: strin
   return {}
 }
 
+export async function cancelFixture(fixtureId: string, teamId: string, cancellationReason: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('fixtures')
+    .update({ cancelled: true, cancellation_reason: cancellationReason })
+    .eq('id', fixtureId)
+  if (error) return { error: error.message }
+  revalidatePath('/fixtures')
+  revalidatePath(`/teams/${teamId}/fixtures`)
+  revalidatePath(`/teams/${teamId}`)
+  revalidatePath('/schedule')
+  return {}
+}
+
+export async function uncancelFixture(fixtureId: string, teamId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('fixtures')
+    .update({ cancelled: false, cancellation_reason: null })
+    .eq('id', fixtureId)
+  if (error) return { error: error.message }
+  revalidatePath('/fixtures')
+  revalidatePath(`/teams/${teamId}/fixtures`)
+  revalidatePath(`/teams/${teamId}`)
+  revalidatePath('/schedule')
+  return {}
+}
+
 export async function unconfirmFixture(fixtureId: string): Promise<{ error?: string }> {
   const supabase = await createClient()
 

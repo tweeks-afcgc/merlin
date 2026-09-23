@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import ConfirmToggle from './ConfirmToggle'
 import EmailModal from './EmailModal'
+import { cancelFixture, uncancelFixture } from './actions'
 
 type Fixture = {
   id: string
@@ -90,7 +91,13 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
   )
 }
 
-function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm: boolean; showTeam?: boolean }) {
+function FixtureRow({ f, canConfirm, showTeam = true, onCancelClick, onUncancelClick }: {
+  f: Fixture
+  canConfirm: boolean
+  showTeam?: boolean
+  onCancelClick?: () => void
+  onUncancelClick?: () => void
+}) {
   const needsTime = !f.kickoff_time
   const needsPitch = f.venue === 'home' && !f.pitch_id
   const needsRef = f.refereeRequired && !f.refereeName
@@ -98,7 +105,7 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
 
   if (f.cancelled) {
     return (
-      <div className="flex items-center gap-2 px-3 py-3 bg-gray-50 opacity-60">
+      <div className="flex items-center gap-2 px-3 py-3 bg-gray-50">
         <span className="text-sm font-bold w-10 flex-shrink-0 text-gray-300 line-through">{formatTime(f.kickoff_time)}</span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
@@ -111,6 +118,11 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
             <p className="text-xs text-gray-400 leading-snug">{f.cancellationReason}</p>
           )}
         </div>
+        {canConfirm && onUncancelClick && (
+          <button onClick={onUncancelClick} className="text-xs text-gray-400 hover:text-gray-600 hover:underline flex-shrink-0 pr-3">
+            Uncancel
+          </button>
+        )}
       </div>
     )
   }
@@ -150,10 +162,109 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
         {f.confirmed && f.venue === 'home' && (
           <EmailModal fixture={f} />
         )}
+        {canConfirm && onCancelClick && (
+          <button
+            onClick={onCancelClick}
+            className="p-1.5 rounded-lg text-gray-300 hover:text-orange-600 hover:bg-orange-50 transition"
+            title="Cancel fixture"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14" strokeLinecap="round"/>
+            </svg>
+          </button>
+        )}
         {canConfirm && (
           <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (needsTime || needsPitch)} />
         )}
       </div>
+    </div>
+  )
+}
+
+type CancelReason = 'cannot_field_team' | 'waterlogged_pitch' | 'frozen_pitch'
+
+function CancelModal({ fixture, onClose, onDone }: { fixture: Fixture; onClose: () => void; onDone: () => void }) {
+  const [reason, setReason] = useState<CancelReason>('cannot_field_team')
+  const [team, setTeam] = useState<'ours' | 'theirs'>('ours')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleConfirm() {
+    setSaving(true)
+    setError(null)
+    let reasonText = ''
+    if (reason === 'cannot_field_team') {
+      reasonText = `Cannot field a team (${team === 'ours' ? fixture.teamName : fixture.opponentName})`
+    } else if (reason === 'waterlogged_pitch') {
+      reasonText = 'Waterlogged pitch'
+    } else {
+      reasonText = 'Frozen pitch'
+    }
+    const res = await cancelFixture(fixture.id, fixture.team_id, reasonText)
+    setSaving(false)
+    if (res?.error) { setError(res.error) } else { onDone() }
+  }
+
+  return (
+    <div className="px-3 py-3 bg-orange-50 border-t border-orange-200">
+      <p className="text-xs font-semibold text-orange-800 mb-2">Cancel fixture — select reason</p>
+      <div className="space-y-1.5 mb-3">
+        {(['cannot_field_team', 'waterlogged_pitch', 'frozen_pitch'] as const).map(r => (
+          <label key={r} className="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name={`cancel-reason-${fixture.id}`} checked={reason === r} onChange={() => setReason(r)} className="accent-orange-600" />
+            <span className="text-sm text-gray-700">
+              {r === 'cannot_field_team' ? 'Cannot field a team' : r === 'waterlogged_pitch' ? 'Waterlogged pitch' : 'Frozen pitch'}
+            </span>
+          </label>
+        ))}
+      </div>
+      {reason === 'cannot_field_team' && (
+        <div className="mb-3">
+          <label className="text-xs text-gray-500 mb-1 block">Which team cannot field?</label>
+          <div className="flex gap-3 flex-wrap">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name={`cancel-team-${fixture.id}`} checked={team === 'ours'} onChange={() => setTeam('ours')} className="accent-orange-600" />
+              <span className="text-sm text-gray-700">{fixture.teamName}</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name={`cancel-team-${fixture.id}`} checked={team === 'theirs'} onChange={() => setTeam('theirs')} className="accent-orange-600" />
+              <span className="text-sm text-gray-700">{fixture.opponentName}</span>
+            </label>
+          </div>
+        </div>
+      )}
+      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+      <div className="flex gap-2">
+        <button onClick={handleConfirm} disabled={saving} className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold py-1.5 rounded-lg transition disabled:opacity-60">
+          {saving ? 'Saving…' : 'Confirm cancellation'}
+        </button>
+        <button onClick={onClose} className="flex-1 border border-gray-300 text-gray-600 text-xs font-semibold py-1.5 rounded-lg hover:bg-gray-50 transition">
+          Back
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function FixtureRowWithCancel({ f, canConfirm, showTeam }: { f: Fixture; canConfirm: boolean; showTeam?: boolean }) {
+  const [showCancel, setShowCancel] = useState(false)
+
+  async function handleUncancel() {
+    await uncancelFixture(f.id, f.team_id)
+  }
+
+  return (
+    <div>
+      <FixtureRow
+        f={f}
+        canConfirm={canConfirm}
+        showTeam={showTeam}
+        onCancelClick={canConfirm ? () => setShowCancel(true) : undefined}
+        onUncancelClick={canConfirm ? handleUncancel : undefined}
+      />
+      {showCancel && (
+        <CancelModal fixture={f} onClose={() => setShowCancel(false)} onDone={() => setShowCancel(false)} />
+      )}
     </div>
   )
 }
@@ -219,7 +330,7 @@ function ScheduleView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfir
                                 <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{pitchKey || 'Pitch TBC'}</span>
                               </div>
                             )}
-                            {pitchFixtures.map(f => <FixtureRow key={f.id} f={f} canConfirm={canConfirm} />)}
+                            {pitchFixtures.map(f => <FixtureRowWithCancel key={f.id} f={f} canConfirm={canConfirm} />)}
                           </div>
                         )
                       })}
@@ -252,44 +363,7 @@ function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCon
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
-          {dayFixtures.map(f => {
-            const needsTime = !f.kickoff_time
-            const needsPitch = f.venue === 'home' && !f.pitch_id
-            return (
-              <div key={f.id} className={`flex items-center justify-between gap-2 ${f.confirmed ? '' : 'border-l-4 border-red-400'}`}>
-                <Link href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`} className="flex items-center gap-2 min-w-0 flex-1 px-3 py-3 hover:bg-gray-50 transition">
-                  <span className={`text-sm font-bold w-10 flex-shrink-0 ${f.confirmed ? 'text-green-700' : 'text-red-600'}`}>
-                    {formatTime(f.kickoff_time)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate leading-snug">{f.teamName}</p>
-                    <p className="text-xs text-gray-500 truncate leading-snug">vs {f.opponentName}</p>
-                    <p className="text-xs text-gray-400 truncate leading-snug">
-                      {f.venue === 'home' ? 'H' : f.venue === 'away' ? 'A' : 'N'}
-                      {f.venueName ? ` · ${f.venueName}` : ''}
-                      {f.pitchName ? ` · ${f.pitchName}` : ''}
-                      <span className="hidden sm:inline">
-                        {f.refereeName
-                          ? ` · Ref: ${f.refereeName}`
-                          : f.hasRefereeRequest
-                            ? ' · Ref requested'
-                            : f.refereeRequired
-                              ? ' · No ref'
-                              : ''
-                        }
-                      </span>
-                    </p>
-                  </div>
-                </Link>
-                <div className="flex items-center gap-1.5 flex-shrink-0 pr-3">
-                  {f.confirmed && f.venue === 'home' && <EmailModal fixture={f} />}
-                  {canConfirm && (
-                    <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (needsTime || needsPitch)} />
-                  )}
-                </div>
-              </div>
-            )
-          })}
+          {dayFixtures.map(f => <FixtureRowWithCancel key={f.id} f={f} canConfirm={canConfirm} />)}
         </div>
       )}
     </div>
@@ -343,7 +417,7 @@ function PitchView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCo
                             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{pitchKey || 'Pitch TBC'}</span>
                           </div>
                         )}
-                        {pitchFixtures.map(f => <FixtureRow key={f.id} f={f} canConfirm={canConfirm} />)}
+                        {pitchFixtures.map(f => <FixtureRowWithCancel key={f.id} f={f} canConfirm={canConfirm} />)}
                       </div>
                     )
                   })}

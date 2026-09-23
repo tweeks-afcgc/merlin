@@ -448,7 +448,6 @@ export default async function TeamDashboardPage({
             players={players as any[]}
             playerStats={playerStats}
             currentSeasonName={selectedStatsSeason?.name ?? null}
-            teamName={displayName}
           />
         </div>
 
