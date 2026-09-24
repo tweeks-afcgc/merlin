@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
-import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { saveResult, savePerformances, saveMatchNotes, type PlayerPerformance } from '../../actions'
 
@@ -15,22 +14,15 @@ export default function ResultPage() {
   const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
-  const [scoreSaving, setScoreSaving] = useState(false)
-  const [scoreError, setScoreError] = useState<string | null>(null)
-  const [scoreSaved, setScoreSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
+  const [seasonId, setSeasonId] = useState('')
   const [goalsFor, setGoalsFor] = useState<string>('')
   const [goalsAgainst, setGoalsAgainst] = useState<string>('')
-
+  const [matchNotes, setMatchNotes] = useState('')
   const [players, setPlayers] = useState<Player[]>([])
   const [perfs, setPerfs] = useState<Record<string, PlayerPerformance>>({})
-  const [perfSaving, setPerfSaving] = useState(false)
-  const [perfError, setPerfError] = useState<string | null>(null)
-  const [perfSaved, setPerfSaved] = useState(false)
-
-  const [matchNotes, setMatchNotes] = useState('')
-  const [notesSaving, setNotesSaving] = useState(false)
-  const [notesSaved, setNotesSaved] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -42,10 +34,10 @@ export default function ResultPage() {
 
       if (!fixture) { setLoading(false); return }
 
+      setSeasonId(fixture.season_id ?? '')
       setGoalsFor(fixture.goals_for != null ? String(fixture.goals_for) : '')
       setGoalsAgainst(fixture.goals_against != null ? String(fixture.goals_against) : '')
       setMatchNotes((fixture as any).notes ?? '')
-      setScoreSaved(fixture.goals_for != null && fixture.goals_against != null)
 
       if (fixture.season_id) {
         const [{ data: playerRows }, { data: existingPerfs }] = await Promise.all([
@@ -96,42 +88,39 @@ export default function ResultPage() {
 
   function updatePerf(playerId: string, field: keyof Omit<PlayerPerformance, 'player_id'>, value: boolean | number) {
     setPerfs(prev => ({ ...prev, [playerId]: { ...prev[playerId], [field]: value } }))
-    setPerfSaved(false)
   }
 
   function markAllPlayed(played: boolean) {
     setPerfs(prev => {
       const next = { ...prev }
-      for (const id of Object.keys(next)) {
-        next[id] = { ...next[id], played }
-      }
+      for (const id of Object.keys(next)) next[id] = { ...next[id], played }
       return next
     })
-    setPerfSaved(false)
   }
 
-  async function handleSaveScore(e: React.FormEvent) {
-    e.preventDefault()
-    setScoreSaving(true)
-    setScoreError(null)
-    const result = await saveResult(fixtureId, teamId, Number(goalsFor), Number(goalsAgainst))
-    if (result?.error) { setScoreError(result.error); setScoreSaving(false) }
-    else { setScoreSaved(true); setScoreSaving(false) }
+  function returnUrl() {
+    return seasonId
+      ? `/teams/${teamId}?season=${seasonId}&tab=fixtures`
+      : `/teams/${teamId}?tab=fixtures`
   }
 
-  async function handleSavePerformances() {
-    setPerfSaving(true)
-    setPerfError(null)
-    const result = await savePerformances(fixtureId, teamId, Object.values(perfs))
-    if (result?.error) { setPerfError(result.error); setPerfSaving(false) }
-    else { setPerfSaved(true); setPerfSaving(false) }
-  }
+  async function handleSaveAndReturn() {
+    if (goalsFor === '' || goalsAgainst === '') {
+      setError('Please enter a score before saving.')
+      return
+    }
+    setSaving(true)
+    setError(null)
 
-  async function handleSaveNotes() {
-    setNotesSaving(true)
-    await saveMatchNotes(fixtureId, teamId, matchNotes)
-    setNotesSaved(true)
-    setNotesSaving(false)
+    const scoreResult = await saveResult(fixtureId, teamId, Number(goalsFor), Number(goalsAgainst))
+    if (scoreResult?.error) { setError(scoreResult.error); setSaving(false); return }
+
+    await Promise.all([
+      saveMatchNotes(fixtureId, teamId, matchNotes),
+      savePerformances(fixtureId, teamId, Object.values(perfs)),
+    ])
+
+    router.push(returnUrl())
   }
 
   const hasScore = goalsFor !== '' && goalsAgainst !== ''
@@ -142,118 +131,75 @@ export default function ResultPage() {
   return (
     <AppShell>
       <div className="w-full max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-6"><BackButton /></div>
         <h1 className="text-xl font-bold text-gray-900 mb-6">Match result</h1>
 
         {loading ? (
           <p className="text-sm text-gray-400">Loading...</p>
         ) : (
           <>
-            {/* Score entry */}
-            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
-              <form onSubmit={handleSaveScore}>
-                {scoreError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-5">{scoreError}</div>
-                )}
-                <div className="flex items-end gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Our score</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={goalsFor}
-                      onChange={e => { setGoalsFor(e.target.value); setScoreSaved(false) }}
-                      placeholder="—"
-                      className="w-20 text-center border border-gray-300 rounded-lg px-3 py-2 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-red-700"
-                    />
-                  </div>
-                  <div className="pb-2.5 text-gray-400 font-bold text-2xl">–</div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Their score</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={goalsAgainst}
-                      onChange={e => { setGoalsAgainst(e.target.value); setScoreSaved(false) }}
-                      placeholder="—"
-                      className="w-20 text-center border border-gray-300 rounded-lg px-3 py-2 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-red-700"
-                    />
-                  </div>
-                  {hasScore && (
-                    <span className={`pb-2 text-sm font-semibold ${gf > ga ? 'text-green-700' : gf < ga ? 'text-red-600' : 'text-amber-600'}`}>
-                      {gf > ga ? '✓ Win' : gf < ga ? '✗ Loss' : '= Draw'}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between gap-3 mt-5">
-                  {scoreSaved && hasScore
-                    ? <span className="text-xs text-green-700 font-medium">Score saved.</span>
-                    : <span />
-                  }
-                  <div className="flex gap-3 ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/teams/${teamId}`)}
-                      className="border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg text-sm transition"
-                    >
-                      Done
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={scoreSaving || !hasScore}
-                      className="bg-red-800 hover:bg-red-900 text-white font-semibold py-2 px-5 rounded-lg text-sm transition disabled:opacity-60"
-                    >
-                      {scoreSaving ? 'Saving…' : 'Save score'}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-
-            {/* Match notes — between score and player stats */}
-            {hasScore && (
-              <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
-                <div className="px-6 py-4 border-b border-gray-100">
-                  <h2 className="text-sm font-semibold text-gray-700">Match notes</h2>
-                </div>
-                <div className="px-6 py-4">
-                  <textarea
-                    value={matchNotes}
-                    onChange={e => { setMatchNotes(e.target.value); setNotesSaved(false) }}
-                    rows={3}
-                    placeholder="Enter any notes about the match…"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
-                  />
-                </div>
-                <div className="px-6 pb-4 flex items-center justify-between gap-3">
-                  {notesSaved ? <span className="text-xs text-green-700 font-medium">Notes saved.</span> : <span />}
-                  <button
-                    type="button"
-                    onClick={handleSaveNotes}
-                    disabled={notesSaving}
-                    className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
-                  >
-                    {notesSaving ? 'Saving…' : 'Save notes'}
-                  </button>
-                </div>
-              </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-5">{error}</div>
             )}
 
-            {/* Player performances */}
-            {hasScore && players.length > 0 && (
-              <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-semibold text-gray-700">Player stats</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">Total goals must not exceed {goalsFor}.</p>
-                  </div>
+            {/* Score */}
+            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
+              <div className="flex items-end gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Our score</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={goalsFor}
+                    onChange={e => setGoalsFor(e.target.value)}
+                    placeholder="—"
+                    className="w-20 text-center border border-gray-300 rounded-lg px-3 py-2 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-red-700"
+                  />
                 </div>
-
-                {perfError && (
-                  <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{perfError}</div>
+                <div className="pb-2.5 text-gray-400 font-bold text-2xl">–</div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Their score</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={goalsAgainst}
+                    onChange={e => setGoalsAgainst(e.target.value)}
+                    placeholder="—"
+                    className="w-20 text-center border border-gray-300 rounded-lg px-3 py-2 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-red-700"
+                  />
+                </div>
+                {hasScore && (
+                  <span className={`pb-2 text-sm font-semibold ${gf > ga ? 'text-green-700' : gf < ga ? 'text-red-600' : 'text-amber-600'}`}>
+                    {gf > ga ? '✓ Win' : gf < ga ? '✗ Loss' : '= Draw'}
+                  </span>
                 )}
+              </div>
+            </div>
 
+            {/* Match notes */}
+            <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="text-sm font-semibold text-gray-700">Match notes</h2>
+              </div>
+              <div className="px-6 py-4">
+                <textarea
+                  value={matchNotes}
+                  onChange={e => setMatchNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Enter any notes about the match…"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
+                />
+              </div>
+            </div>
+
+            {/* Player performances */}
+            {players.length > 0 && (
+              <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="text-sm font-semibold text-gray-700">Player stats</h2>
+                  {hasScore && (
+                    <p className="text-xs text-gray-400 mt-0.5">Total goals must not exceed {goalsFor}.</p>
+                  )}
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -266,7 +212,6 @@ export default function ResultPage() {
                               type="button"
                               onClick={() => markAllPlayed(!allPlayed)}
                               className="text-xs font-normal text-red-800 hover:underline leading-none"
-                              title={allPlayed ? 'Untick all' : 'Tick all'}
                             >
                               {allPlayed ? 'none' : 'all'}
                             </button>
@@ -304,12 +249,12 @@ export default function ResultPage() {
                               <input
                                 type="number"
                                 min={0}
-                                max={gf}
+                                max={hasScore ? gf : undefined}
                                 value={perf.goals}
                                 onChange={e => {
                                   const val = Math.max(0, parseInt(e.target.value) || 0)
                                   const otherGoals = totalGoals - perf.goals
-                                  updatePerf(p.id, 'goals', Math.min(val, gf - otherGoals))
+                                  updatePerf(p.id, 'goals', hasScore ? Math.min(val, gf - otherGoals) : val)
                                 }}
                                 className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                               />
@@ -352,31 +297,38 @@ export default function ResultPage() {
                         </td>
                         <td />
                         <td className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600">
-                          {Object.values(perfs).reduce((s, p) => s + p.goals, 0)}/{goalsFor}
+                          {Object.values(perfs).reduce((s, p) => s + p.goals, 0)}{hasScore ? `/${goalsFor}` : ''}
                         </td>
                         <td className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600">
                           {Object.values(perfs).reduce((s, p) => s + p.assists, 0)}
                         </td>
-                        <td />
-                        <td />
+                        <td /><td />
                       </tr>
                     </tfoot>
                   </table>
                 </div>
-
-                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
-                  {perfSaved ? <span className="text-xs text-green-700 font-medium">Stats saved.</span> : <span />}
-                  <button
-                    type="button"
-                    onClick={handleSavePerformances}
-                    disabled={perfSaving}
-                    className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
-                  >
-                    {perfSaving ? 'Saving…' : 'Save player stats'}
-                  </button>
-                </div>
               </div>
             )}
+
+            {/* Save / Cancel */}
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => router.push(returnUrl())}
+                disabled={saving}
+                className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+              >
+                Cancel &amp; Return
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAndReturn}
+                disabled={saving}
+                className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+              >
+                {saving ? 'Saving…' : 'Save & Return'}
+              </button>
+            </div>
           </>
         )}
       </div>
