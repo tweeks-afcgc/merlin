@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
-import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { updateFixture, assignRefereeFromRequest, savePerformances, saveMatchNotes, type PlayerPerformance } from '../../actions'
 import DeleteFixtureButton from '../../DeleteFixtureButton'
@@ -22,7 +21,6 @@ export default function EditFixturePage() {
   const { id: teamId, fixtureId } = useParams<{ id: string; fixtureId: string }>()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const returnTo = searchParams.get('from') ?? `/teams/${teamId}/fixtures`
   const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
@@ -30,7 +28,6 @@ export default function EditFixturePage() {
   const [error, setError] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  const [clubTeams, setClubTeams] = useState<ClubTeam[]>([])
   const [opponents, setOpponents] = useState<OpponentOption[]>([])
   const [internalTeams, setInternalTeams] = useState<{ id: string; label: string }[]>([])
   const [venues, setVenues] = useState<Venue[]>([])
@@ -39,6 +36,7 @@ export default function EditFixturePage() {
   const [refRequests, setRefRequests] = useState<RefRequest[]>([])
   const [assigningId, setAssigningId] = useState<string | null>(null)
 
+  const [seasonId, setSeasonId] = useState('')
   const [date, setDate] = useState('')
   const [tbc, setTbc] = useState(false)
   const [kickoffTime, setKickoffTime] = useState('')
@@ -56,15 +54,9 @@ export default function EditFixturePage() {
   const [cancellationReason, setCancellationReason] = useState<string | null>(null)
   const [teamName, setTeamName] = useState('')
   const [matchNotes, setMatchNotes] = useState('')
-  const [notesSaving, setNotesSaving] = useState(false)
-  const [notesSaved, setNotesSaved] = useState(false)
 
-  // Player performances
   const [players, setPlayers] = useState<Player[]>([])
   const [perfs, setPerfs] = useState<Record<string, PlayerPerformance>>({})
-  const [perfSaving, setPerfSaving] = useState(false)
-  const [perfError, setPerfError] = useState<string | null>(null)
-  const [perfSaved, setPerfSaved] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -86,6 +78,7 @@ export default function EditFixturePage() {
       }
 
       if (fixture) {
+        setSeasonId(fixture.season_id ?? '')
         setDate(fixture.date)
         setTbc(!fixture.kickoff_time)
         setKickoffTime(fixture.kickoff_time ?? '')
@@ -94,7 +87,6 @@ export default function EditFixturePage() {
         setCompetition(fixture.competition ?? 'friendly')
         setHomeVenueId(fixture.home_venue_id ?? '')
         setPitchId(fixture.pitch_id ?? '')
-        // Away/neutral fixtures default to no referee required
         const isHome = fixture.venue === 'home'
         setRefereeRequired(isHome ? (fixture.referee_required ?? true) : false)
         setRefereeId(
@@ -120,43 +112,36 @@ export default function EditFixturePage() {
 
       const opts = buildOpponentOptions((clubsData ?? []) as any)
       setOpponents(opts)
-      setClubTeams((clubsData ?? []) as any)
 
-      // Convert a stored club_teams.id that represents a blank-name (club-level) row
-      // into the 'club:${clubId}' format that the select options use
       if (fixture?.opponent_id && fixture.opponent_id !== 'tbc') {
         const isKnownOption = opts.some(o => o.value === fixture.opponent_id)
         if (!isKnownOption) {
-          // Look for a club that has this club_teams row as its blank-name entry
           const matchingClub = (clubsData ?? []).find((c: any) =>
             (c.club_teams ?? []).some((ct: any) => ct.id === fixture.opponent_id && (!ct.name || !ct.name.trim()))
           ) as any
           if (matchingClub) setOpponentId(`club:${matchingClub.id}`)
         }
       }
+
       const allSeasons = seasonsData ?? []
       const ordered = sortedTeams(allTeamsData ?? [], allSeasons)
       setInternalTeams(ordered.map((t: any) => ({ id: `internal:${t.id}`, label: teamDisplayName(t, allSeasons) })))
       const thisTeam = (allTeamsData ?? []).find((t: any) => t.id === teamId)
       if (thisTeam) setTeamName(teamDisplayName(thisTeam as any, allSeasons))
       setVenues(venuesData ?? [])
-      // Combine profile referees + volunteer referees (exclude volunteers already in profiles to avoid duplicates)
+
       const profileRefIds = new Set((refereesData ?? []).map((r: any) => r.id))
       const volRefs = (volunteerRefsData ?? [])
         .filter((v: any) => !v.profile_id || !profileRefIds.has(v.profile_id))
         .map((v: any) => ({ id: `vol:${v.id}`, full_name: `${v.first_name} ${v.last_name}`, isVolunteer: true }))
-      const combined = [
-        ...(refereesData ?? []),
-        ...volRefs,
-      ].sort((a: any, b: any) => (a.full_name ?? '').localeCompare(b.full_name ?? ''))
-      setReferees(combined)
+      setReferees([...(refereesData ?? []), ...volRefs].sort((a: any, b: any) => (a.full_name ?? '').localeCompare(b.full_name ?? '')))
       setRefRequests((requestsData ?? []).map((r: any) => ({
         id: r.id,
         referee_id: r.referee_id,
         refereeName: r.profiles?.full_name ?? '—',
         created_at: r.created_at,
       })))
-      // Load players for this team+season and existing performances
+
       if (fixture?.season_id) {
         const [{ data: playerRows }, { data: existingPerfs }] = await Promise.all([
           supabase
@@ -183,11 +168,9 @@ export default function EditFixturePage() {
         setPlayers(loadedPlayers)
 
         const perfMap: Record<string, PlayerPerformance> = {}
-        // Initialise all players with defaults
         for (const p of loadedPlayers) {
           perfMap[p.id] = { player_id: p.id, played: false, goals: 0, assists: 0, motm: false, mins_played: 0 }
         }
-        // Overwrite with any saved values
         for (const ep of existingPerfs ?? []) {
           perfMap[ep.player_id] = {
             player_id: ep.player_id,
@@ -208,22 +191,12 @@ export default function EditFixturePage() {
 
   function updatePerf(playerId: string, field: keyof Omit<PlayerPerformance, 'player_id'>, value: boolean | number) {
     setPerfs(prev => ({ ...prev, [playerId]: { ...prev[playerId], [field]: value } }))
-    setPerfSaved(false)
   }
 
-  async function handleSavePerformances() {
-    setPerfSaving(true)
-    setPerfError(null)
-    const result = await savePerformances(fixtureId, teamId, Object.values(perfs))
-    if (result?.error) { setPerfError(result.error); setPerfSaving(false) }
-    else { setPerfSaved(true); setPerfSaving(false) }
-  }
-
-  async function handleSaveNotes() {
-    setNotesSaving(true)
-    await saveMatchNotes(fixtureId, teamId, matchNotes)
-    setNotesSaved(true)
-    setNotesSaving(false)
+  function returnUrl() {
+    return seasonId
+      ? `/teams/${teamId}?season=${seasonId}&tab=fixtures`
+      : `/teams/${teamId}?tab=fixtures`
   }
 
   async function handleVenueChange(id: string) {
@@ -237,11 +210,10 @@ export default function EditFixturePage() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!opponentId && opponentId !== 'tbc') { setError('Please select an opponent.'); return }
+  async function handleSaveAndReturn() {
     setSaving(true)
     setError(null)
+
     const fd = new FormData()
     fd.set('date', date)
     fd.set('tbc', tbc ? 'true' : 'false')
@@ -253,18 +225,23 @@ export default function EditFixturePage() {
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
     fd.set('referee_required', refereeRequired ? 'true' : 'false')
     fd.set('referee_id', refereeRequired ? refereeId : '')
-    // volunteer_referee_id is derived server-side from vol: prefix
     fd.set('goals_for', goalsFor)
     fd.set('goals_against', goalsAgainst)
+
     const result = await updateFixture(fixtureId, teamId, fd)
-    if (result?.error) { setError(result.error); setSaving(false) }
-    else router.push(returnTo)
+    if (result?.error) { setError(result.error); setSaving(false); return }
+
+    await Promise.all([
+      saveMatchNotes(fixtureId, teamId, matchNotes),
+      savePerformances(fixtureId, teamId, Object.values(perfs)),
+    ])
+
+    router.push(returnUrl())
   }
 
   return (
     <AppShell>
       <div className="max-w-md mx-auto px-4 py-8">
-        <div className="mb-6"><BackButton /></div>
         <h1 className="text-xl font-bold text-gray-900 mb-6">Edit fixture</h1>
 
         {loading ? (
@@ -272,7 +249,7 @@ export default function EditFixturePage() {
         ) : (
           <>
           <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-5">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{error}</div>
               )}
@@ -350,7 +327,6 @@ export default function EditFixturePage() {
                 </div>
               </div>
 
-              {/* Competition */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
                 <select
@@ -365,11 +341,9 @@ export default function EditFixturePage() {
                 </select>
               </div>
 
-              {/* Pitch assignment — admin only, home fixtures only */}
               {isAdmin && venue === 'home' && (
                 <div className="border-t border-gray-100 pt-5 space-y-4">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Pitch assignment</p>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Home venue</label>
                     <select
@@ -383,7 +357,6 @@ export default function EditFixturePage() {
                       ))}
                     </select>
                   </div>
-
                   {homeVenueId && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Pitch</label>
@@ -406,7 +379,6 @@ export default function EditFixturePage() {
                 </div>
               )}
 
-              {/* Referee requests — admin only, shown when requests exist */}
               {isAdmin && refRequests.length > 0 && (
                 <div className="border-t border-gray-100 pt-5 space-y-3">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Referee requests</p>
@@ -440,11 +412,9 @@ export default function EditFixturePage() {
                 </div>
               )}
 
-              {/* Referee — admin only */}
               {isAdmin && (
                 <div className="border-t border-gray-100 pt-5 space-y-4">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Referee</p>
-
                   <div>
                     <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                       <input
@@ -456,7 +426,6 @@ export default function EditFixturePage() {
                       Referee required
                     </label>
                   </div>
-
                   {refereeRequired && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Assigned referee</label>
@@ -479,7 +448,7 @@ export default function EditFixturePage() {
                 </div>
               )}
 
-              {/* Result — shown for past fixtures */}
+              {/* Result */}
               {isPast && (
                 <div className="border-t border-gray-100 pt-5 space-y-4">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Result</p>
@@ -523,22 +492,6 @@ export default function EditFixturePage() {
                 </div>
               )}
 
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => router.push(returnTo)}
-                  className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
-                >
-                  {saving ? 'Saving...' : 'Save changes'}
-                </button>
-              </div>
               <div className="flex justify-center pt-2">
                 <div className="w-full max-w-sm space-y-0">
                   <CancelFixtureButton
@@ -550,25 +503,41 @@ export default function EditFixturePage() {
                     cancellationReason={cancellationReason}
                   />
                   {!refereeId && (
-                    <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnTo} />
+                    <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnUrl()} />
                   )}
                 </div>
               </div>
-            </form>
+            </div>
           </div>
 
-          {/* Player performances — shown once a result has been entered */}
-          {isPast && goalsFor !== '' && goalsAgainst !== '' && players.length > 0 && (
+          {/* Match notes */}
+          {isPast && (
+            <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="text-sm font-semibold text-gray-700">Match notes</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Any notes about the game.</p>
+              </div>
+              <div className="px-6 py-4">
+                <textarea
+                  value={matchNotes}
+                  onChange={e => setMatchNotes(e.target.value)}
+                  rows={4}
+                  placeholder="Enter any notes about the match…"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Player performances */}
+          {isPast && players.length > 0 && (
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
               <div className="px-6 py-4 border-b border-gray-100">
                 <h2 className="text-sm font-semibold text-gray-700">Player stats</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Total goals must not exceed {goalsFor}.</p>
+                {goalsFor !== '' && (
+                  <p className="text-xs text-gray-400 mt-0.5">Total goals must not exceed {goalsFor}.</p>
+                )}
               </div>
-
-              {perfError && (
-                <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{perfError}</div>
-              )}
-
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -585,7 +554,7 @@ export default function EditFixturePage() {
                     {players.map(p => {
                       const perf = perfs[p.id] ?? { player_id: p.id, played: false, goals: 0, assists: 0, motm: false, mins_played: 0 }
                       const totalGoals = Object.values(perfs).reduce((s, x) => s + (x.goals ?? 0), 0)
-                      const maxGoals = Number(goalsFor)
+                      const maxGoals = goalsFor !== '' ? Number(goalsFor) : Infinity
                       return (
                         <tr key={p.id} className={perf.played ? 'bg-white' : 'bg-gray-50/50'}>
                           <td className="px-6 py-2.5 font-medium text-gray-900 whitespace-nowrap">
@@ -608,12 +577,12 @@ export default function EditFixturePage() {
                             <input
                               type="number"
                               min={0}
-                              max={maxGoals}
+                              max={maxGoals === Infinity ? undefined : maxGoals}
                               value={perf.goals}
                               onChange={e => {
                                 const val = Math.max(0, parseInt(e.target.value) || 0)
                                 const otherGoals = totalGoals - perf.goals
-                                updatePerf(p.id, 'goals', Math.min(val, maxGoals - otherGoals))
+                                updatePerf(p.id, 'goals', maxGoals === Infinity ? val : Math.min(val, maxGoals - otherGoals))
                               }}
                               className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                             />
@@ -656,62 +625,38 @@ export default function EditFixturePage() {
                       </td>
                       <td />
                       <td className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600">
-                        {Object.values(perfs).reduce((s, p) => s + p.goals, 0)}/{goalsFor}
+                        {Object.values(perfs).reduce((s, p) => s + p.goals, 0)}{goalsFor !== '' ? `/${goalsFor}` : ''}
                       </td>
                       <td className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600">
                         {Object.values(perfs).reduce((s, p) => s + p.assists, 0)}
                       </td>
-                      <td />
-                      <td />
+                      <td /><td />
                     </tr>
                   </tfoot>
                 </table>
               </div>
-
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
-                {perfSaved && <span className="text-xs text-green-700 font-medium">Stats saved.</span>}
-                {!perfSaved && <span />}
-                <button
-                  type="button"
-                  onClick={handleSavePerformances}
-                  disabled={perfSaving}
-                  className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
-                >
-                  {perfSaving ? 'Saving…' : 'Save player stats'}
-                </button>
-              </div>
             </div>
           )}
 
-          {/* Match notes — shown once a result has been entered */}
-          {isPast && goalsFor !== '' && goalsAgainst !== '' && (
-            <div className="bg-white shadow-sm rounded-xl border border-gray-100 mt-6">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-sm font-semibold text-gray-700">Match notes</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Any notes about the game.</p>
-              </div>
-              <div className="px-6 py-4">
-                <textarea
-                  value={matchNotes}
-                  onChange={e => { setMatchNotes(e.target.value); setNotesSaved(false) }}
-                  rows={4}
-                  placeholder="Enter any notes about the match…"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
-                />
-              </div>
-              <div className="px-6 pb-4 flex items-center justify-between gap-3">
-                {notesSaved ? <span className="text-xs text-green-700 font-medium">Notes saved.</span> : <span />}
-                <button
-                  type="button"
-                  onClick={handleSaveNotes}
-                  disabled={notesSaving}
-                  className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
-                >
-                  {notesSaving ? 'Saving…' : 'Save notes'}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Save / Cancel */}
+          <div className="flex gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => router.push(returnUrl())}
+              disabled={saving}
+              className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+            >
+              Cancel &amp; Return
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAndReturn}
+              disabled={saving}
+              className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+            >
+              {saving ? 'Saving…' : 'Save & Return'}
+            </button>
+          </div>
 
           </>
         )}

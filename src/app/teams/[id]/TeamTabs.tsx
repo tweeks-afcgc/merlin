@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { createPortal } from 'react-dom'
+import { useSearchParams } from 'next/navigation'
 import { quickAddPlayer } from './players/actions'
 import { fixtureOpponentName, type Season } from '@/lib/teamUtils'
 
@@ -104,7 +105,9 @@ export default function TeamTabs({
   playerStats: PlayerStat[]
   currentSeasonName: string | null
 }) {
-  const [tab, setTab] = useState<Tab>('stats')
+  const searchParams = useSearchParams()
+  const initialTab = (['fixtures', 'stats', 'playerstats', 'players'].includes(searchParams.get('tab') ?? '') ? searchParams.get('tab') : 'stats') as Tab
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [players, setPlayers] = useState<Player[]>(initialPlayers)
   const [playerSort, setPlayerSort] = useState<'number' | 'alpha' | 'age'>('number')
   const [showAddPlayer, setShowAddPlayer] = useState(false)
