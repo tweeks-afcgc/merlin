@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
 import { createClient } from '@/lib/supabase/client'
@@ -53,6 +53,9 @@ export default function AddFixtureFromTeamPage() {
   const [pitches, setPitches] = useState<{ id: string; name: string }[]>([])
   const [pitchId, setPitchId] = useState('')
   const [refereeRequired, setRefereeRequired] = useState(true)
+  const [opponentQuery, setOpponentQuery] = useState('')
+  const [opponentOpen, setOpponentOpen] = useState(false)
+  const opponentRef = useRef<HTMLDivElement>(null)
   const [teamCompetitions, setTeamCompetitions] = useState<{ id: string; type: 'league' | 'cup'; name: string; abbr_name: string | null; division: string | null }[]>([])
 
   useEffect(() => {
@@ -111,6 +114,29 @@ export default function AddFixtureFromTeamPage() {
     supabase.from('team_competitions').select('id, type, name, abbr_name, division').eq('team_id', teamId).eq('season_id', seasonId).order('created_at')
       .then(({ data }) => setTeamCompetitions((data ?? []) as any))
   }, [teamId, seasonId])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (opponentRef.current && !opponentRef.current.contains(e.target as Node)) {
+        setOpponentOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Build flat list of all opponent options for filtering
+  const allOpponentOptions: { value: string; label: string; group?: string }[] = [
+    { value: 'tbc', label: 'TBC' },
+    ...opponents.map(o => ({ value: o.value, label: o.label })),
+    ...internalTeams.map(t => ({ value: t.id, label: t.label, group: 'Internal Teams' })),
+  ]
+  const opponentLabel = opponentId
+    ? (allOpponentOptions.find(o => o.value === opponentId)?.label ?? '')
+    : ''
+  const filteredOpponents = opponentQuery.trim()
+    ? allOpponentOptions.filter(o => o.label.toLowerCase().includes(opponentQuery.toLowerCase()))
+    : allOpponentOptions
 
   async function submit(): Promise<{ id: string } | null> {
     if (!teamId) { setError('Please select a team.'); return null }
@@ -269,27 +295,41 @@ export default function AddFixtureFromTeamPage() {
                 </div>
               </div>
 
-              {/* Opponent */}
-              <div>
+              {/* Opponent — live-filter combobox */}
+              <div ref={opponentRef}>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Opponent</label>
-                <select
-                  value={opponentId}
-                  onChange={e => setOpponentId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
-                >
-                  <option value="">Select opponent...</option>
-                  <option value="tbc">TBC</option>
-                  {opponents.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                  {internalTeams.length > 0 && (
-                    <optgroup label="── Internal Teams ──">
-                      {internalTeams.map(t => (
-                        <option key={t.id} value={t.id}>{t.label}</option>
-                      ))}
-                    </optgroup>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search opponent..."
+                    value={opponentOpen ? opponentQuery : opponentLabel}
+                    onFocus={() => { setOpponentOpen(true); setOpponentQuery('') }}
+                    onChange={e => { setOpponentQuery(e.target.value); setOpponentId('') }}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  />
+                  {opponentOpen && (
+                    <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
+                      {filteredOpponents.length === 0 ? (
+                        <li className="px-4 py-2.5 text-gray-400">No matches</li>
+                      ) : (
+                        filteredOpponents.map(o => (
+                          <li
+                            key={o.value}
+                            onMouseDown={() => {
+                              setOpponentId(o.value)
+                              setOpponentQuery('')
+                              setOpponentOpen(false)
+                            }}
+                            className={`px-4 py-2.5 cursor-pointer hover:bg-red-50 ${opponentId === o.value ? 'bg-red-50 font-medium text-red-800' : 'text-gray-700'}`}
+                          >
+                            {o.group && <span className="text-xs text-gray-400 mr-1.5">{o.group} ·</span>}
+                            {o.label}
+                          </li>
+                        ))
+                      )}
+                    </ul>
                   )}
-                </select>
+                </div>
               </div>
 
               {/* Venue */}
