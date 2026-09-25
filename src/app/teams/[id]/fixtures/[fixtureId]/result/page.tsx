@@ -219,7 +219,7 @@ export default function ResultPage() {
                         </th>
                         <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Goals</th>
                         <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">Assists</th>
-                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">MOTM</th>
+                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-16">POTM</th>
                         <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-20">Mins</th>
                       </tr>
                     </thead>
@@ -251,12 +251,13 @@ export default function ResultPage() {
                                 min={0}
                                 max={hasScore ? gf : undefined}
                                 value={perf.goals}
+                                disabled={!perf.played}
                                 onChange={e => {
                                   const val = Math.max(0, parseInt(e.target.value) || 0)
                                   const otherGoals = totalGoals - perf.goals
                                   updatePerf(p.id, 'goals', hasScore ? Math.min(val, gf - otherGoals) : val)
                                 }}
-                                className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                                className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed"
                               />
                             </td>
                             <td className="px-3 py-2.5 text-center">
@@ -264,16 +265,18 @@ export default function ResultPage() {
                                 type="number"
                                 min={0}
                                 value={perf.assists}
+                                disabled={!perf.played}
                                 onChange={e => updatePerf(p.id, 'assists', Math.max(0, parseInt(e.target.value) || 0))}
-                                className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                                className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed"
                               />
                             </td>
                             <td className="px-3 py-2.5 text-center">
                               <input
                                 type="checkbox"
                                 checked={perf.motm}
+                                disabled={!perf.played}
                                 onChange={e => updatePerf(p.id, 'motm', e.target.checked)}
-                                className="rounded border-gray-300 text-red-800 focus:ring-red-700"
+                                className="rounded border-gray-300 text-red-800 focus:ring-red-700 disabled:opacity-30 disabled:cursor-not-allowed"
                               />
                             </td>
                             <td className="px-3 py-2.5 text-center">
@@ -281,8 +284,9 @@ export default function ResultPage() {
                                 type="number"
                                 min={0}
                                 value={perf.mins_played}
+                                disabled={!perf.played}
                                 onChange={e => updatePerf(p.id, 'mins_played', Math.max(0, parseInt(e.target.value) || 0))}
-                                className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                                className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed"
                               />
                             </td>
                           </tr>
@@ -293,7 +297,7 @@ export default function ResultPage() {
                       <tr className="border-t border-gray-100 bg-gray-50">
                         <td className="px-6 py-2.5 text-xs text-gray-400">
                           {Object.values(perfs).filter(p => p.played).length} played ·{' '}
-                          {Object.values(perfs).filter(p => p.motm).length} MOTM
+                          {Object.values(perfs).filter(p => p.motm).length} POTM
                         </td>
                         <td />
                         <td className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600">
