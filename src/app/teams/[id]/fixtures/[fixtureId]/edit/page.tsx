@@ -194,6 +194,8 @@ export default function EditFixturePage() {
   }
 
   function returnUrl() {
+    const from = searchParams.get('from')
+    if (from) return from
     return seasonId
       ? `/teams/${teamId}?season=${seasonId}&tab=fixtures`
       : `/teams/${teamId}?tab=fixtures`
