@@ -3,13 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
-import BackButton from '@/components/BackButton'
 import { createClient } from '@/lib/supabase/client'
 import { addFixture } from '../actions'
 import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 import { sortedTeams, teamDisplayName } from '@/lib/teamSort'
 
-type Season = { id: string; name: string; start_date: string; is_current: boolean }
+type Season = { id: string; name: string; start_date: string; end_date: string; is_current: boolean }
 type Team = { id: string; name: string; type: string; founding_age_group: number | null; founding_season_id: string | null; age_group: number | null; default_venue_id: string | null; default_pitch_id: string | null }
 
 function nextWeekday(dayOfWeek: number): string {
@@ -18,6 +17,11 @@ function nextWeekday(dayOfWeek: number): string {
   const result = new Date(today)
   result.setDate(today.getDate() + diff)
   return result.toISOString().split('T')[0]
+}
+
+function seasonForDate(date: string, seasons: Season[]): Season | null {
+  if (!date) return null
+  return seasons.find(s => date >= s.start_date && date <= s.end_date) ?? null
 }
 
 export default function AddFixtureFromTeamPage() {
@@ -36,6 +40,7 @@ export default function AddFixtureFromTeamPage() {
 
   const [teamId, setTeamId] = useState(preselectedTeamId)
   const [seasonId, setSeasonId] = useState('')
+  const [seasonOverridden, setSeasonOverridden] = useState(false)
   const [seasonOpen, setSeasonOpen] = useState(false)
   const [date, setDate] = useState('')
   const [tbc, setTbc] = useState(false)
@@ -54,11 +59,11 @@ export default function AddFixtureFromTeamPage() {
     async function load() {
       const [{ data: teamsData }, { data: seasonsData }, { data: clubsData }, { data: venuesData }] = await Promise.all([
         supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group, default_venue_id, default_pitch_id, nickname'),
-        supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: false }),
+        supabase.from('seasons').select('id, name, start_date, end_date, is_current').order('start_date', { ascending: false }),
         supabase.from('clubs').select('id, name, club_teams(id, name)').order('name'),
         supabase.from('venues').select('id, name').order('name'),
       ])
-      const s = seasonsData ?? []
+      const s = (seasonsData ?? []) as Season[]
       const t = teamsData ?? []
       setTeams(t)
       setSeasons(s)
@@ -71,6 +76,16 @@ export default function AddFixtureFromTeamPage() {
     }
     load()
   }, [])
+
+  // Auto-detect season from date unless user has manually overridden it
+  function handleDateChange(newDate: string, quickPick = false) {
+    setDate(newDate)
+    if (quickPick) setSeasonOverridden(false) // quick-pick buttons reset override
+    if (!seasonOverridden || quickPick) {
+      const matched = seasonForDate(newDate, seasons)
+      if (matched) setSeasonId(matched.id)
+    }
+  }
 
   // Auto-set home venue + pitch from team defaults when team or venue changes
   useEffect(() => {
@@ -97,10 +112,10 @@ export default function AddFixtureFromTeamPage() {
       .then(({ data }) => setTeamCompetitions((data ?? []) as any))
   }, [teamId, seasonId])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!teamId) { setError('Please select a team.'); return }
-    if (!opponentId) { setError('Please select an opponent.'); return }
+  async function submit(): Promise<{ id: string } | null> {
+    if (!teamId) { setError('Please select a team.'); return null }
+    if (!opponentId) { setError('Please select an opponent.'); return null }
+    if (!date) { setError('Please enter a date.'); return null }
     setSaving(true)
     setError(null)
     const fd = new FormData()
@@ -115,42 +130,53 @@ export default function AddFixtureFromTeamPage() {
     fd.set('competition', competition)
     fd.set('referee_required', refereeRequired ? 'true' : 'false')
     const result = await addFixture(teamId, fd)
-    if (result?.error) { setError(result.error); setSaving(false) }
-    else {
-      const today = new Date().toISOString().split('T')[0]
-      if (date < today && result.id) {
-        router.push(`/teams/${teamId}/fixtures/${result.id}/edit?from=/teams/${teamId}`)
-      } else {
-        router.push(`/teams/${teamId}`)
-      }
-    }
+    if (result?.error) { setError(result.error); setSaving(false); return null }
+    return { id: result.id }
+  }
+
+  function returnUrl() {
+    return seasonId
+      ? `/teams/${teamId}?season=${seasonId}&tab=fixtures`
+      : `/teams/${teamId}?tab=fixtures`
+  }
+
+  async function handleAddAndReturn() {
+    const result = await submit()
+    if (result) router.push(returnUrl())
+  }
+
+  async function handleAddAndEnterResult() {
+    const result = await submit()
+    if (result) router.push(`/teams/${teamId}/fixtures/${result.id}/result`)
   }
 
   const orderedTeams = sortedTeams(teams, seasons)
+  const detectedSeason = date ? seasonForDate(date, seasons) : null
+  const selectedSeason = seasons.find(s => s.id === seasonId)
+  const seasonMismatch = detectedSeason && detectedSeason.id !== seasonId
 
   return (
     <AppShell>
       <div className="max-w-md mx-auto px-4 py-8">
-        <div className="mb-6"><BackButton /></div>
         <h1 className="text-xl font-bold text-gray-900 mb-6">Add fixture</h1>
 
         {loading ? (
           <p className="text-sm text-gray-400">Loading...</p>
         ) : (
           <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-5">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{error}</div>
               )}
 
-              {/* Season — collapsed by default, click to change */}
+              {/* Season — auto-detected from date, click to override */}
               <div className="flex items-center justify-between text-sm pb-1 border-b border-gray-100">
                 <span className="text-gray-400 text-xs font-medium uppercase tracking-wide">Season</span>
                 {seasonOpen ? (
                   <select
                     autoFocus
                     value={seasonId}
-                    onChange={e => { setSeasonId(e.target.value); setSeasonOpen(false) }}
+                    onChange={e => { setSeasonId(e.target.value); setSeasonOverridden(true); setSeasonOpen(false) }}
                     onBlur={() => setSeasonOpen(false)}
                     className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                   >
@@ -164,11 +190,16 @@ export default function AddFixtureFromTeamPage() {
                     onClick={() => setSeasonOpen(true)}
                     className="text-gray-500 hover:text-red-800 font-medium transition"
                   >
-                    {seasons.find(s => s.id === seasonId)?.name ?? '—'}
+                    {selectedSeason?.name ?? '—'}
                     <span className="ml-1.5 text-xs text-gray-300 font-normal">change</span>
                   </button>
                 )}
               </div>
+              {seasonMismatch && (
+                <p className="text-xs text-amber-600">
+                  Date falls in <strong>{detectedSeason!.name}</strong> — season updated automatically.
+                </p>
+              )}
 
               {/* Team — pre-selected but changeable */}
               <div>
@@ -193,20 +224,20 @@ export default function AddFixtureFromTeamPage() {
                   type="date"
                   required
                   value={date}
-                  onChange={e => setDate(e.target.value)}
+                  onChange={e => handleDateChange(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
                 <div className="flex gap-2 mt-2">
                   <button
                     type="button"
-                    onClick={() => setDate(nextWeekday(6))}
+                    onClick={() => handleDateChange(nextWeekday(6), true)}
                     className="flex-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg py-1.5 transition"
                   >
                     Next Saturday
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDate(nextWeekday(0))}
+                    onClick={() => handleDateChange(nextWeekday(0), true)}
                     className="flex-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg py-1.5 transition"
                   >
                     Next Sunday
@@ -356,23 +387,25 @@ export default function AddFixtureFromTeamPage() {
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-1">
+              <div className="flex flex-col gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => router.back()}
-                  className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition"
+                  onClick={handleAddAndReturn}
+                  disabled={saving}
+                  className="w-full bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
                 >
-                  Cancel
+                  {saving ? 'Saving...' : 'Add Fixture & Return'}
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleAddAndEnterResult}
                   disabled={saving}
-                  className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+                  className="w-full bg-white border border-red-800 text-red-800 hover:bg-red-50 font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : 'Add fixture'}
+                  {saving ? 'Saving...' : 'Add Fixture & Enter Result'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         )}
       </div>
