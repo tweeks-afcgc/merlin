@@ -404,6 +404,14 @@ export default function AddFixtureFromTeamPage() {
                 >
                   {saving ? 'Saving...' : 'Add Fixture & Enter Result'}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => router.push(returnUrl())}
+                  disabled={saving}
+                  className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+                >
+                  Cancel &amp; Return
+                </button>
               </div>
             </div>
           </div>
