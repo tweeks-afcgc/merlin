@@ -16,6 +16,7 @@ type Fixture = {
   team_id: string
   teamName: string
   teamType: string
+  teamGender: string | null
   teamSortKey: string
   ageGroupLabel: string
   teamShortName: string
@@ -37,6 +38,7 @@ type Fixture = {
 
 type ViewMode = 'schedule' | 'team' | 'pitch'
 type TeamFilter = 'all' | 'senior' | 'junior'
+type GenderFilter = 'all' | 'boys' | 'girls'
 type VenueFilter = 'all' | 'home' | 'away'
 type DateRange = 14 | 30 | 'all'
 
@@ -373,14 +375,16 @@ function ViewDropdown({ view, onChange }: { view: ViewMode; onChange: (v: ViewMo
 function MobileFilters({
   dateRange, setDateRange,
   teamFilter, setTeamFilter,
+  genderFilter, setGenderFilter,
   venueFilter, setVenueFilter,
 }: {
   dateRange: DateRange; setDateRange: (v: DateRange) => void
   teamFilter: TeamFilter; setTeamFilter: (v: TeamFilter) => void
+  genderFilter: GenderFilter; setGenderFilter: (v: GenderFilter) => void
   venueFilter: VenueFilter; setVenueFilter: (v: VenueFilter) => void
 }) {
   const [open, setOpen] = useState(false)
-  const activeCount = (dateRange !== 14 ? 1 : 0) + (teamFilter !== 'all' ? 1 : 0) + (venueFilter !== 'all' ? 1 : 0)
+  const activeCount = (dateRange !== 14 ? 1 : 0) + (teamFilter !== 'all' ? 1 : 0) + (genderFilter !== 'all' ? 1 : 0) + (venueFilter !== 'all' ? 1 : 0)
 
   return (
     <div className="relative">
@@ -409,6 +413,14 @@ function MobileFilters({
               <FilterButton active={teamFilter === 'all'} onClick={() => setTeamFilter('all')}>All</FilterButton>
               <FilterButton active={teamFilter === 'senior'} onClick={() => setTeamFilter('senior')}>Senior</FilterButton>
               <FilterButton active={teamFilter === 'junior'} onClick={() => setTeamFilter('junior')}>Junior</FilterButton>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Gender</p>
+            <div className="flex gap-1.5 flex-wrap">
+              <FilterButton active={genderFilter === 'all'} onClick={() => setGenderFilter('all')}>All</FilterButton>
+              <FilterButton active={genderFilter === 'boys'} onClick={() => setGenderFilter('boys')}>Boys</FilterButton>
+              <FilterButton active={genderFilter === 'girls'} onClick={() => setGenderFilter('girls')}>Girls</FilterButton>
             </div>
           </div>
           <div>
@@ -445,6 +457,7 @@ export default function FixturesList({
 
   const [view, setView] = useState<ViewMode>('schedule')
   const [teamFilter, setTeamFilter] = useState<TeamFilter>('all')
+  const [genderFilter, setGenderFilter] = useState<GenderFilter>('all')
   const [venueFilter, setVenueFilter] = useState<VenueFilter>('all')
   const [dateRange, setDateRange] = useState<DateRange>(14)
 
@@ -457,6 +470,11 @@ export default function FixturesList({
   const filtered = fixtures.filter(f => {
     if (cutoff && f.date > cutoff) return false
     if (teamFilter !== 'all' && f.teamType !== teamFilter) return false
+    if (genderFilter !== 'all') {
+      const g = f.teamGender?.toLowerCase() ?? ''
+      if (genderFilter === 'boys' && g !== 'male') return false
+      if (genderFilter === 'girls' && g !== 'female') return false
+    }
     const isHome = f.venue === 'home'
     if (venueFilter === 'home' && !isHome) return false
     if (venueFilter === 'away' && isHome) return false
@@ -485,6 +503,7 @@ export default function FixturesList({
         <MobileFilters
           dateRange={dateRange} setDateRange={setDateRange}
           teamFilter={teamFilter} setTeamFilter={setTeamFilter}
+          genderFilter={genderFilter} setGenderFilter={setGenderFilter}
           venueFilter={venueFilter} setVenueFilter={setVenueFilter}
         />
         <ViewDropdown view={view} onChange={setView} />
