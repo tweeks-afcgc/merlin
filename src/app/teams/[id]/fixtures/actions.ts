@@ -56,7 +56,8 @@ export async function addFixture(teamId: string, formData: FormData) {
   const competition = competitionRaw.startsWith('cup:') ? 'cup' : competitionRaw
   const competitionId = competitionRaw.startsWith('cup:') ? competitionRaw.slice(4) : null
 
-  const refereeRequired = formData.get('referee_required') === 'true'
+  const leagueAssignedReferee = formData.get('league_assigned_referee') === 'true'
+  const refereeRequired = !leagueAssignedReferee && formData.get('referee_required') === 'true'
 
   const { data: inserted, error } = await supabase.from('fixtures').insert({
     team_id: teamId,
@@ -68,6 +69,7 @@ export async function addFixture(teamId: string, formData: FormData) {
     competition,
     competition_id: competitionId,
     referee_required: refereeRequired,
+    league_assigned_referee: leagueAssignedReferee,
     home_venue_id: venue === 'home' ? homeVenueId : null,
     pitch_id: venue === 'home' ? pitchId : null,
   }).select('id').single()
@@ -86,7 +88,8 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
   const tbc = formData.get('tbc') === 'true'
   const homeVenueId = formData.get('home_venue_id') as string
   const pitchId = formData.get('pitch_id') as string
-  const refereeRequired = formData.get('referee_required') === 'true'
+  const leagueAssignedReferee = formData.get('league_assigned_referee') === 'true'
+  const refereeRequired = !leagueAssignedReferee && formData.get('referee_required') === 'true'
   const refereeIdRaw = (formData.get('referee_id') as string) || ''
   const goalsForRaw = formData.get('goals_for') as string
   const goalsAgainstRaw = formData.get('goals_against') as string
@@ -102,6 +105,7 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
     home_venue_id: homeVenueId || null,
     pitch_id: pitchId || null,
     referee_required: refereeRequired,
+    league_assigned_referee: leagueAssignedReferee,
     referee_id: refereeRequired && refereeIdRaw && !refereeIdRaw.startsWith('vol:') ? refereeIdRaw : null,
     volunteer_referee_id: refereeRequired && refereeIdRaw.startsWith('vol:') ? refereeIdRaw.slice(4) : null,
     goals_for: goalsForRaw !== '' ? parseInt(goalsForRaw) : null,

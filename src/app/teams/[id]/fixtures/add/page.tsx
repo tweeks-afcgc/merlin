@@ -53,6 +53,7 @@ export default function AddFixtureFromTeamPage() {
   const [pitches, setPitches] = useState<{ id: string; name: string }[]>([])
   const [pitchId, setPitchId] = useState('')
   const [refereeRequired, setRefereeRequired] = useState(true)
+  const [leagueAssignedReferee, setLeagueAssignedReferee] = useState(false)
   const [opponentQuery, setOpponentQuery] = useState('')
   const [opponentOpen, setOpponentOpen] = useState(false)
   const opponentRef = useRef<HTMLDivElement>(null)
@@ -154,7 +155,8 @@ export default function AddFixtureFromTeamPage() {
     fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
     fd.set('competition', competition)
-    fd.set('referee_required', refereeRequired ? 'true' : 'false')
+    fd.set('league_assigned_referee', leagueAssignedReferee ? 'true' : 'false')
+    fd.set('referee_required', (!leagueAssignedReferee && refereeRequired) ? 'true' : 'false')
     const result = await addFixture(teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false); return null }
     return { id: result.id }
@@ -416,15 +418,30 @@ export default function AddFixtureFromTeamPage() {
               {/* Referee */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Referee</label>
-                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={refereeRequired}
-                    onChange={e => setRefereeRequired(e.target.checked)}
-                    className="rounded border-gray-300 text-red-800 focus:ring-red-700"
-                  />
-                  Referee required
-                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={refereeRequired}
+                      disabled={leagueAssignedReferee}
+                      onChange={e => setRefereeRequired(e.target.checked)}
+                      className="rounded border-gray-300 text-red-800 focus:ring-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    />
+                    Referee required
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={leagueAssignedReferee}
+                      onChange={e => {
+                        setLeagueAssignedReferee(e.target.checked)
+                        if (e.target.checked) setRefereeRequired(false)
+                      }}
+                      className="rounded border-gray-300 text-red-800 focus:ring-red-700"
+                    />
+                    League assigned referee
+                  </label>
+                </div>
               </div>
 
               <div className="flex flex-col gap-2 pt-1">
