@@ -29,6 +29,7 @@ type Fixture = {
   kitShorts: string | null
   kitSocks: string | null
   managerName: string | null
+  leagueAssignedReferee: boolean
   refereeRequired: boolean
   refereeName: string | null
   hasRefereeRequest: boolean
@@ -144,9 +145,11 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
               {needsTime ? 'Kick off TBC' : 'No pitch assigned'}
             </p>
           )}
-          {/* Referee — only show if assigned, requested, or required but missing */}
+          {/* Referee — only show if assigned, league-assigned, requested, or required but missing */}
           {f.refereeName ? (
             <p className="hidden sm:block text-xs text-gray-400 leading-snug">Ref: {f.refereeName}</p>
+          ) : f.leagueAssignedReferee ? (
+            <p className="hidden sm:block text-xs text-gray-400 leading-snug">Ref: League assigned</p>
           ) : f.hasRefereeRequest ? (
             <p className="hidden sm:block text-xs text-blue-600 font-medium leading-snug">Referee request made</p>
           ) : f.refereeRequired ? (

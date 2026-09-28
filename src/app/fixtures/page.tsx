@@ -26,7 +26,7 @@ export default async function FixturesDashboardPage() {
       .from('fixtures')
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id,
-        referee_required, referee_id, volunteer_referee_id,
+        referee_required, league_assigned_referee, referee_id, volunteer_referee_id,
         team_id, season_id, cancelled, cancellation_reason,
         teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, kit_jersey, kit_shorts, kit_socks),
         club_teams(id, name, internal_team_id, clubs(name)),
@@ -128,6 +128,7 @@ export default async function FixturesDashboardPage() {
       kitShorts: team?.kit_shorts ?? null,
       kitSocks: team?.kit_socks ?? null,
       managerName: managerMap.get(f.team_id) ?? null,
+      leagueAssignedReferee: (f as any).league_assigned_referee ?? false,
       refereeRequired: f.referee_required ?? true,
       refereeName: f.referee_id
         ? (refereeMap.get(f.referee_id) ?? null)
