@@ -38,7 +38,7 @@ type Fixture = {
 
 type ViewMode = 'schedule' | 'team' | 'pitch'
 type TeamFilter = 'all' | 'senior' | 'junior'
-type GenderFilter = 'all' | 'boys' | 'girls'
+type GenderFilter = 'all' | 'mixed' | 'girls'
 type VenueFilter = 'all' | 'home' | 'away'
 type DateRange = 14 | 30 | 'all'
 
@@ -419,7 +419,7 @@ function MobileFilters({
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Gender</p>
             <div className="flex gap-1.5 flex-wrap">
               <FilterButton active={genderFilter === 'all'} onClick={() => setGenderFilter('all')}>All</FilterButton>
-              <FilterButton active={genderFilter === 'boys'} onClick={() => setGenderFilter('boys')}>Boys</FilterButton>
+              <FilterButton active={genderFilter === 'mixed'} onClick={() => setGenderFilter('mixed')}>Mixed</FilterButton>
               <FilterButton active={genderFilter === 'girls'} onClick={() => setGenderFilter('girls')}>Girls</FilterButton>
             </div>
           </div>
@@ -472,7 +472,7 @@ export default function FixturesList({
     if (teamFilter !== 'all' && f.teamType !== teamFilter) return false
     if (genderFilter !== 'all') {
       const g = f.teamGender?.toLowerCase() ?? ''
-      if (genderFilter === 'boys' && g !== 'male') return false
+      if (genderFilter === 'mixed' && g !== 'mixed') return false
       if (genderFilter === 'girls' && g !== 'female') return false
     }
     const isHome = f.venue === 'home'
