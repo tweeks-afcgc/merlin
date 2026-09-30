@@ -15,6 +15,7 @@ type Fixture = {
   pitch_id: string | null
   team_id: string
   teamName: string
+  teamFormat: string | null
   teamType: string
   teamGender: string | null
   teamSortKey: string
@@ -112,7 +113,10 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
         </span>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap leading-snug">
-            <p className="text-sm font-semibold text-gray-900 truncate">{showTeam ? f.teamName : f.opponentName}</p>
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {showTeam ? f.teamName : f.opponentName}
+              {showTeam && f.teamFormat && <span className="font-normal text-gray-400"> ({f.teamFormat})</span>}
+            </p>
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wide flex-shrink-0">Cancelled</span>
           </div>
           {showTeam && (
@@ -135,6 +139,7 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 leading-snug truncate">
             {showTeam ? f.teamName : f.opponentName}
+            {showTeam && f.teamFormat && <span className="font-normal text-gray-400"> ({f.teamFormat})</span>}
           </p>
           {showTeam && (
             <p className="text-xs text-gray-500 leading-snug truncate">vs {f.opponentName}</p>

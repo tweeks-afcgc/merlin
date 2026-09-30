@@ -28,7 +28,7 @@ export default async function FixturesDashboardPage() {
         id, date, kickoff_time, venue, confirmed, pitch_id,
         referee_required, league_assigned_referee, referee_id, volunteer_referee_id,
         team_id, season_id, cancelled, cancellation_reason,
-        teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, kit_jersey, kit_shorts, kit_socks),
+        teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format, kit_jersey, kit_shorts, kit_socks),
         club_teams(id, name, internal_team_id, clubs(name)),
         venues(name, address),
         pitches(name, pitch_type)
@@ -114,6 +114,7 @@ export default async function FixturesDashboardPage() {
       pitch_id: f.pitch_id,
       team_id: f.team_id,
       teamName: team ? teamDisplayName(team, seasons ?? []) : '—',
+      teamFormat: (team?.format as string | null) ?? null,
       teamType: team?.type ?? 'senior',
       teamGender: (team?.gender as string | null) ?? null,
       teamSortKey,

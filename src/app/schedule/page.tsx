@@ -59,7 +59,7 @@ export default async function PublicSchedulePage() {
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id, cancelled, cancellation_reason,
         team_id,
-        teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, kit_jersey, kit_shorts),
+        teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, format, kit_jersey, kit_shorts),
         club_teams(id, name, clubs(name)),
         venues(name),
         pitches(name)
@@ -86,6 +86,7 @@ export default async function PublicSchedulePage() {
       pitch_id: f.pitch_id,
       team_id: f.team_id,
       teamName: team ? teamDisplayName(team, seasons ?? []) : '—',
+      teamFormat: (team as any)?.format ?? null,
       teamSortKey: (() => {
         if (!team) return 'z'
         if (team.type === 'senior') return `0_${team.name}`
@@ -185,6 +186,7 @@ export default async function PublicSchedulePage() {
                                         <div className="flex items-center gap-2 flex-wrap">
                                           <p className={`text-sm font-semibold leading-snug truncate ${f.cancelled ? 'text-gray-400' : 'text-gray-900'}`}>
                                             {f.teamName}
+                                            {f.teamFormat && <span className="font-normal text-gray-400"> ({f.teamFormat})</span>}
                                           </p>
                                           {f.cancelled ? (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wide flex-shrink-0">Cancelled</span>
