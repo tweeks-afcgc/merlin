@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import ConfirmToggle from './ConfirmToggle'
 import EmailModal from './EmailModal'
+import RefereeModal from './RefereeModal'
 
 type Fixture = {
   id: string
@@ -30,6 +31,9 @@ type Fixture = {
   kitShorts: string | null
   kitSocks: string | null
   managerName: string | null
+  managerFirstName: string | null
+  managerMobile: string | null
+  venueNotes: string | null
   leagueAssignedReferee: boolean
   refereeRequired: boolean
   refereeName: string | null
@@ -163,6 +167,9 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
         </div>
       </Link>
       <div className="flex items-center gap-1.5 flex-shrink-0 pr-3">
+        {(f.refereeName || f.leagueAssignedReferee) && (
+          <RefereeModal fixture={f} />
+        )}
         {f.confirmed && f.venue === 'home' && (
           <EmailModal fixture={f} />
         )}

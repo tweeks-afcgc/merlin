@@ -21,7 +21,7 @@ export default async function FixturesDashboardPage() {
 
   const todayStr = new Date().toISOString().split('T')[0]
 
-  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }, { data: allRequests }, { data: allVolunteerRefs }] = await Promise.all([
+  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }, { data: allRequests }, { data: allVolunteerRefs }, { data: allVolunteers }] = await Promise.all([
     supabase
       .from('fixtures')
       .select(`
@@ -30,17 +30,18 @@ export default async function FixturesDashboardPage() {
         team_id, season_id, cancelled, cancellation_reason,
         teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format, kit_jersey, kit_shorts, kit_socks),
         club_teams(id, name, internal_team_id, clubs(name)),
-        venues(name, address),
+        venues(name, address, notes),
         pitches(name, pitch_type)
       `)
       .gte('date', todayStr)
       .order('date', { ascending: true })
       .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
-    supabase.from('team_managers').select('team_id, profiles(full_name)'),
+    supabase.from('team_managers').select('team_id, user_id, profiles(full_name)'),
     supabase.from('profiles').select('id, full_name').eq('is_referee', true),
     supabase.from('referee_requests').select('fixture_id'),
-    supabase.from('volunteers').select('id, first_name, last_name').eq('is_referee', true),
+    supabase.from('volunteers').select('id, first_name, last_name, mobile, profile_id').eq('is_referee', true),
+    supabase.from('volunteers').select('first_name, mobile, profile_id'),
   ])
 
   // Enrich internal team opponents with their teams row (for nickname + age resolution)
@@ -72,12 +73,23 @@ export default async function FixturesDashboardPage() {
     volunteerRefMap.set(v.id, `${v.first_name} ${v.last_name}`.trim())
   }
 
-  // Build a map of team_id -> first manager name
-  const managerMap = new Map<string, string>()
+  // Build profile_id -> volunteer mobile map for manager lookups
+  const volunteerByProfileId = new Map<string, { firstName: string; mobile: string | null }>()
+  for (const v of allVolunteers ?? []) {
+    if ((v as any).profile_id) volunteerByProfileId.set((v as any).profile_id, { firstName: (v as any).first_name, mobile: (v as any).mobile ?? null })
+  }
+
+  // Build a map of team_id -> first manager { name, firstName, mobile }
+  type ManagerInfo = { name: string; firstName: string; mobile: string | null }
+  const managerMap = new Map<string, ManagerInfo>()
   for (const m of allManagers ?? []) {
     if (!managerMap.has(m.team_id)) {
       const name = (m.profiles as any)?.full_name
-      if (name) managerMap.set(m.team_id, name)
+      const userId = (m as any).user_id
+      const vol = userId ? volunteerByProfileId.get(userId) : null
+      const firstName = vol?.firstName ?? (name ? name.split(' ')[0] : null) ?? ''
+      const mobile = vol?.mobile ?? null
+      if (name) managerMap.set(m.team_id, { name, firstName, mobile })
     }
   }
 
@@ -123,12 +135,15 @@ export default async function FixturesDashboardPage() {
       opponentName: fixtureOpponentName(opponent, (seasons ?? []) as Season[], f.season_id),
       venueName: venueData?.name ?? null,
       venueAddress: venueData?.address ?? null,
+      venueNotes: venueData?.notes ?? null,
       pitchName: pitchData?.name ?? null,
       pitchType: pitchData?.pitch_type ?? null,
       kitJersey: team?.kit_jersey ?? null,
       kitShorts: team?.kit_shorts ?? null,
       kitSocks: team?.kit_socks ?? null,
-      managerName: managerMap.get(f.team_id) ?? null,
+      managerName: managerMap.get(f.team_id)?.name ?? null,
+      managerFirstName: managerMap.get(f.team_id)?.firstName ?? null,
+      managerMobile: managerMap.get(f.team_id)?.mobile ?? null,
       leagueAssignedReferee: (f as any).league_assigned_referee ?? false,
       refereeRequired: f.referee_required ?? true,
       refereeName: f.referee_id
