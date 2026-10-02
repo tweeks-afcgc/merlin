@@ -499,10 +499,12 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-medium text-gray-900">{fullName}</p>
                             {v.mobile && (
-                              <svg title={v.mobile} className="w-3.5 h-3.5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <rect x="7" y="2" width="10" height="20" rx="2" ry="2" />
-                                <line x1="12" y1="18" x2="12" y2="18" strokeLinecap="round" strokeWidth="2.5" />
-                              </svg>
+                              <span title={v.mobile} className="inline-flex items-center text-green-600 flex-shrink-0">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <rect x="7" y="2" width="10" height="20" rx="2" ry="2" />
+                                  <line x1="12" y1="18" x2="12" y2="18" strokeLinecap="round" strokeWidth="2.5" />
+                                </svg>
+                              </span>
                             )}
                             {v.is_referee && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Referee</span>
