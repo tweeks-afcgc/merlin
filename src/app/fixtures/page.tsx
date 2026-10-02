@@ -21,7 +21,7 @@ export default async function FixturesDashboardPage() {
 
   const todayStr = new Date().toISOString().split('T')[0]
 
-  const [{ data: rawFixtures }, { data: seasons }, { data: allManagers }, { data: allReferees }, { data: allRequests }, { data: allVolunteerRefs }, { data: allVolunteers }] = await Promise.all([
+  const [{ data: rawFixtures }, { data: seasons }, { data: allManagerRoles }, { data: allReferees }, { data: allRequests }, { data: allVolunteerRefs }] = await Promise.all([
     supabase
       .from('fixtures')
       .select(`
@@ -37,11 +37,10 @@ export default async function FixturesDashboardPage() {
       .order('date', { ascending: true })
       .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
-    supabase.from('team_managers').select('team_id, user_id, profiles(full_name)'),
+    supabase.from('volunteer_roles').select('team_id, volunteers(first_name, last_name, mobile)').eq('role_name', 'Manager').eq('role_type', 'team'),
     supabase.from('profiles').select('id, full_name').eq('is_referee', true),
     supabase.from('referee_requests').select('fixture_id'),
     supabase.from('volunteers').select('id, first_name, last_name, mobile, profile_id').eq('is_referee', true),
-    supabase.from('volunteers').select('first_name, mobile, profile_id'),
   ])
 
   // Enrich internal team opponents with their teams row (for nickname + age resolution)
@@ -73,24 +72,18 @@ export default async function FixturesDashboardPage() {
     volunteerRefMap.set(v.id, `${v.first_name} ${v.last_name}`.trim())
   }
 
-  // Build profile_id -> volunteer mobile map for manager lookups
-  const volunteerByProfileId = new Map<string, { firstName: string; mobile: string | null }>()
-  for (const v of allVolunteers ?? []) {
-    if ((v as any).profile_id) volunteerByProfileId.set((v as any).profile_id, { firstName: (v as any).first_name, mobile: (v as any).mobile ?? null })
-  }
-
   // Build a map of team_id -> first manager { name, firstName, mobile }
   type ManagerInfo = { name: string; firstName: string; mobile: string | null }
   const managerMap = new Map<string, ManagerInfo>()
-  for (const m of allManagers ?? []) {
-    if (!managerMap.has(m.team_id)) {
-      const name = (m.profiles as any)?.full_name
-      const userId = (m as any).user_id
-      const vol = userId ? volunteerByProfileId.get(userId) : null
-      const firstName = vol?.firstName ?? (name ? name.split(' ')[0] : null) ?? ''
-      const mobile = vol?.mobile ?? null
-      if (name) managerMap.set(m.team_id, { name, firstName, mobile })
-    }
+  for (const m of allManagerRoles ?? []) {
+    const teamId = (m as any).team_id
+    if (!teamId || managerMap.has(teamId)) continue
+    const vol = (m as any).volunteers as any
+    if (!vol) continue
+    const firstName = vol.first_name ?? ''
+    const lastName = vol.last_name ?? ''
+    const name = [firstName, lastName].filter(Boolean).join(' ')
+    if (name) managerMap.set(teamId, { name, firstName, mobile: vol.mobile ?? null })
   }
 
   const SENIOR_ORDER = ['First XI', 'Sunday XI', 'Vets XI', 'Women']
