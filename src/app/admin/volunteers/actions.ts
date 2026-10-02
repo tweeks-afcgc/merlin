@@ -12,6 +12,7 @@ export async function addVolunteer(formData: FormData) {
 
   const isAppUser = formData.get('is_app_user') === 'true'
   const email = (formData.get('email') as string | null)?.trim() || null
+  const mobile = (formData.get('mobile') as string | null)?.trim() || null
   const userRole = (formData.get('user_role') as string | null) || null
   const isReferee = formData.get('is_referee') === 'true'
 
@@ -19,7 +20,7 @@ export async function addVolunteer(formData: FormData) {
 
   const { data: volunteer, error } = await supabase
     .from('volunteers')
-    .insert({ first_name: firstName, last_name: lastName, email: isAppUser ? email : null, is_app_user: isAppUser, user_role: isAppUser ? userRole : null, is_referee: isReferee })
+    .insert({ first_name: firstName, last_name: lastName, email: isAppUser ? email : null, mobile, is_app_user: isAppUser, user_role: isAppUser ? userRole : null, is_referee: isReferee })
     .select('id')
     .single()
 
@@ -52,12 +53,13 @@ export async function updateVolunteer(volunteerId: string, formData: FormData) {
 
   const isAppUser = formData.get('is_app_user') === 'true'
   const email = (formData.get('email') as string | null)?.trim() || null
+  const mobile = (formData.get('mobile') as string | null)?.trim() || null
   const userRole = (formData.get('user_role') as string | null) || null
   const isReferee = formData.get('is_referee') === 'true'
 
   const { error } = await supabase
     .from('volunteers')
-    .update({ first_name: firstName, last_name: lastName, email: isAppUser ? email : null, is_app_user: isAppUser, user_role: isAppUser ? userRole : null, is_referee: isReferee })
+    .update({ first_name: firstName, last_name: lastName, email: isAppUser ? email : null, mobile, is_app_user: isAppUser, user_role: isAppUser ? userRole : null, is_referee: isReferee })
     .eq('id', volunteerId)
 
   if (error) return { error: error.message }
@@ -121,6 +123,7 @@ export async function createVolunteerFromProfile(formData: FormData) {
   const firstName = (formData.get('first_name') as string).trim()
   const lastName = (formData.get('last_name') as string).trim()
   const email = (formData.get('email') as string | null)?.trim() || null
+  const mobile = (formData.get('mobile') as string | null)?.trim() || null
   const userRole = (formData.get('user_role') as string | null) || null
   const isReferee = formData.get('is_referee') === 'true'
 
@@ -128,7 +131,7 @@ export async function createVolunteerFromProfile(formData: FormData) {
 
   const { data: volunteer, error } = await supabase
     .from('volunteers')
-    .insert({ profile_id: profileId, first_name: firstName, last_name: lastName, email, is_app_user: true, user_role: userRole, is_referee: isReferee })
+    .insert({ profile_id: profileId, first_name: firstName, last_name: lastName, email, mobile, is_app_user: true, user_role: userRole, is_referee: isReferee })
     .select('id')
     .single()
 

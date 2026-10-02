@@ -6,7 +6,7 @@ import { addVolunteer, updateVolunteer, deleteVolunteer, addVolunteerRole, updat
 type VolunteerRole = { id: string; role_type: string; role_name: string; team_id: string | null; teamName: string | null }
 type Volunteer = {
   id: string; first_name: string; last_name: string
-  email: string | null; is_app_user: boolean; user_role: string | null; is_referee: boolean
+  email: string | null; mobile: string | null; is_app_user: boolean; user_role: string | null; is_referee: boolean
   roles: VolunteerRole[]
 }
 type UnlinkedProfile = { id: string; first_name: string; last_name: string; email: string | null; user_role: string | null }
@@ -31,6 +31,7 @@ function VolunteerForm({
 }) {
   const [firstName, setFirstName] = useState(initial?.first_name ?? '')
   const [lastName, setLastName] = useState(initial?.last_name ?? '')
+  const [mobile, setMobile] = useState(initial?.mobile ?? '')
   const [isAppUser, setIsAppUser] = useState(initial?.is_app_user ?? false)
   const [email, setEmail] = useState(initial?.email ?? '')
   const [userRole, setUserRole] = useState(initial?.user_role ?? 'standard')
@@ -41,6 +42,7 @@ function VolunteerForm({
     const fd = new FormData()
     fd.set('first_name', firstName)
     fd.set('last_name', lastName)
+    fd.set('mobile', mobile)
     fd.set('is_app_user', isAppUser ? 'true' : 'false')
     fd.set('email', email)
     fd.set('user_role', userRole)
@@ -56,6 +58,9 @@ function VolunteerForm({
         <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name" required
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
       </div>
+      <input value={mobile} onChange={e => setMobile(e.target.value)} placeholder="Mobile number (optional)"
+        type="tel"
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
 
       {/* Referee */}
       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -313,12 +318,13 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
     if (result?.error) { setError(result.error); setSaving(false); return }
     const firstName = fd.get('first_name') as string
     const lastName = fd.get('last_name') as string
+    const mobile = (fd.get('mobile') as string | null)?.trim() || null
     const isAppUser = fd.get('is_app_user') === 'true'
     const email = fd.get('email') as string
     const userRole = fd.get('user_role') as string
     const isReferee = fd.get('is_referee') === 'true'
     setVolunteers(vs => vs.map(v => v.id === volunteerId
-      ? { ...v, first_name: firstName, last_name: lastName, email: isAppUser ? email : null, is_app_user: isAppUser, user_role: isAppUser ? userRole : null, is_referee: isReferee }
+      ? { ...v, first_name: firstName, last_name: lastName, mobile, email: isAppUser ? email : null, is_app_user: isAppUser, user_role: isAppUser ? userRole : null, is_referee: isReferee }
       : v))
     setEditingId(null)
     setSaving(false)
@@ -499,7 +505,11 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">App user</span>
                             )}
                           </div>
-                          {v.email && <p className="text-xs text-gray-400 mt-0.5">{v.email}{v.is_app_user && v.user_role ? ` Â· ${userRoleLabel(v.user_role)}` : ''}</p>}
+                          {(v.email || v.mobile) && (
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {v.email}{v.is_app_user && v.user_role ? ` · ${userRoleLabel(v.user_role)}` : ''}{v.mobile ? (v.email ? ` · ${v.mobile}` : v.mobile) : ''}
+                            </p>
+                          )}
                           {v.roles.length > 0 && (
                             <p className="text-xs text-gray-500 mt-0.5">
                               {v.roles.map(r => r.role_type === 'team' ? `${r.teamName}: ${r.role_name}` : r.role_name).join(' Â· ')}
