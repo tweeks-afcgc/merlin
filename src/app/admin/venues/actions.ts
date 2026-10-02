@@ -8,7 +8,8 @@ export async function addVenue(formData: FormData) {
   const name = (formData.get('name') as string).trim()
   if (!name) return { error: 'Name is required' }
   const address = (formData.get('address') as string).trim() || null
-  const { error } = await supabase.from('venues').insert({ name, address })
+  const notes = (formData.get('notes') as string).trim() || null
+  const { error } = await supabase.from('venues').insert({ name, address, notes })
   if (error) return { error: error.message }
   revalidatePath('/admin/venues')
 }
@@ -18,7 +19,8 @@ export async function updateVenue(id: string, formData: FormData) {
   const name = (formData.get('name') as string).trim()
   if (!name) return { error: 'Name is required' }
   const address = (formData.get('address') as string).trim() || null
-  const { error } = await supabase.from('venues').update({ name, address }).eq('id', id)
+  const notes = (formData.get('notes') as string).trim() || null
+  const { error } = await supabase.from('venues').update({ name, address, notes }).eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/venues')
 }

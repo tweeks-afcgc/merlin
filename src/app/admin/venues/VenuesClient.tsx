@@ -4,19 +4,20 @@ import { useState } from 'react'
 import { addVenue, deleteVenue, addPitch, setPitchActive, renamePitch, updateVenue } from './actions'
 
 type Pitch = { id: string; name: string; pitch_type: string; is_active: boolean }
-type Venue = { id: string; name: string; address: string | null; pitches: Pitch[] }
+type Venue = { id: string; name: string; address: string | null; notes: string | null; pitches: Pitch[] }
 
 export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
   const [venues, setVenues] = useState(initial)
   const [venueName, setVenueName] = useState('')
   const [venueAddress, setVenueAddress] = useState('')
+  const [venueNotes, setVenueNotes] = useState('')
   const [pitchNames, setPitchNames] = useState<Record<string, string>>({})
   const [pitchTypes, setPitchTypes] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Per-venue edit state
-  const [editing, setEditing] = useState<Record<string, { name: string; address: string }>>({})
+  const [editing, setEditing] = useState<Record<string, { name: string; address: string; notes: string }>>({})
   const [editSaving, setEditSaving] = useState<Record<string, boolean>>({})
 
   // Per-pitch rename state
@@ -31,10 +32,12 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
     const fd = new FormData()
     fd.set('name', venueName)
     fd.set('address', venueAddress)
+    fd.set('notes', venueNotes)
     const result = await addVenue(fd)
     if (result?.error) { setError(result.error); setSaving(false); return }
     setVenueName('')
     setVenueAddress('')
+    setVenueNotes('')
     setSaving(false)
     window.location.reload()
   }
@@ -46,7 +49,7 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
   }
 
   function startEdit(venue: Venue) {
-    setEditing(e => ({ ...e, [venue.id]: { name: venue.name, address: venue.address ?? '' } }))
+    setEditing(e => ({ ...e, [venue.id]: { name: venue.name, address: venue.address ?? '', notes: venue.notes ?? '' } }))
   }
 
   function cancelEdit(id: string) {
@@ -61,9 +64,10 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
     const fd = new FormData()
     fd.set('name', vals.name)
     fd.set('address', vals.address)
+    fd.set('notes', vals.notes)
     const result = await updateVenue(id, fd)
     if (result?.error) { alert(result.error); setEditSaving(s => ({ ...s, [id]: false })); return }
-    setVenues(v => v.map(venue => venue.id === id ? { ...venue, name: vals.name, address: vals.address || null } : venue))
+    setVenues(v => v.map(venue => venue.id === id ? { ...venue, name: vals.name, address: vals.address || null, notes: vals.notes || null } : venue))
     setEditSaving(s => ({ ...s, [id]: false }))
     cancelEdit(id)
   }
@@ -127,10 +131,19 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
               placeholder="Address (optional)"
               className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             />
+          </div>
+          <div className="flex gap-3">
+            <textarea
+              value={venueNotes}
+              onChange={e => setVenueNotes(e.target.value)}
+              placeholder="Notes (optional) — e.g. parking info, access instructions"
+              rows={2}
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
+            />
             <button
               type="submit"
               disabled={saving}
-              className="bg-red-800 hover:bg-red-900 text-white font-semibold px-4 py-2 rounded-lg text-sm transition disabled:opacity-60 whitespace-nowrap"
+              className="bg-red-800 hover:bg-red-900 text-white font-semibold px-4 py-2 rounded-lg text-sm transition disabled:opacity-60 whitespace-nowrap self-end"
             >
               Add venue
             </button>
@@ -163,6 +176,13 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
                     placeholder="Address (optional)"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
+                  <textarea
+                    value={editVals.notes}
+                    onChange={e => setEditing(ed => ({ ...ed, [venue.id]: { ...ed[venue.id], notes: e.target.value } }))}
+                    placeholder="Notes (optional)"
+                    rows={2}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
+                  />
                   <div className="flex gap-2">
                     <button type="submit" disabled={editSaving[venue.id]} className="bg-red-800 hover:bg-red-900 text-white font-semibold px-4 py-1.5 rounded-lg text-sm transition disabled:opacity-60">
                       Save
@@ -177,6 +197,7 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
                   <div>
                     <h3 className="text-base font-semibold text-gray-900">{venue.name}</h3>
                     {venue.address && <p className="text-xs text-gray-400 mt-0.5">{venue.address}</p>}
+                    {venue.notes && <p className="text-xs text-gray-500 mt-1 whitespace-pre-wrap">{venue.notes}</p>}
                   </div>
                   <div className="flex gap-3 flex-shrink-0 ml-4">
                     <button onClick={() => startEdit(venue)} className="text-xs text-gray-400 hover:text-gray-700 transition">Edit</button>

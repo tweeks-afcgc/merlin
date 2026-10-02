@@ -16,13 +16,14 @@ export default async function AdminVenuesPage() {
 
   const { data: venuesRaw } = await supabase
     .from('venues')
-    .select('id, name, address, pitches(id, name, pitch_type, is_active)')
+    .select('id, name, address, notes, pitches(id, name, pitch_type, is_active)')
     .order('name', { ascending: true })
 
   const venues = (venuesRaw ?? []).map(v => ({
     id: v.id,
     name: v.name,
     address: (v as any).address ?? null,
+    notes: (v as any).notes ?? null,
     pitches: Array.isArray(v.pitches)
       ? [...v.pitches].sort((a: any, b: any) => {
           if (a.is_active === b.is_active) return a.name.localeCompare(b.name)
