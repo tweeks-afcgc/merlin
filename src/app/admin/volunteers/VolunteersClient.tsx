@@ -498,6 +498,12 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-medium text-gray-900">{fullName}</p>
+                            {v.mobile && (
+                              <svg title={v.mobile} className="w-3.5 h-3.5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <rect x="7" y="2" width="10" height="20" rx="2" ry="2" />
+                                <line x1="12" y1="18" x2="12" y2="18" strokeLinecap="round" strokeWidth="2.5" />
+                              </svg>
+                            )}
                             {v.is_referee && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Referee</span>
                             )}
@@ -505,11 +511,7 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">App user</span>
                             )}
                           </div>
-                          {(v.email || v.mobile) && (
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {v.email}{v.is_app_user && v.user_role ? ` · ${userRoleLabel(v.user_role)}` : ''}{v.mobile ? (v.email ? ` · ${v.mobile}` : v.mobile) : ''}
-                            </p>
-                          )}
+                          {v.email && <p className="text-xs text-gray-400 mt-0.5">{v.email}{v.is_app_user && v.user_role ? ` · ${userRoleLabel(v.user_role)}` : ''}</p>}
                           {v.roles.length > 0 && (
                             <p className="text-xs text-gray-500 mt-0.5">
                               {v.roles.map(r => r.role_type === 'team' ? `${r.teamName}: ${r.role_name}` : r.role_name).join(' Â· ')}
