@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { addPlayer, updatePlayer, deletePlayer, addPlayerTeamSeason, updatePlayerTeamSeason, removePlayerTeamSeason } from './actions'
@@ -114,8 +114,8 @@ export default function PlayersClient({
       id: crypto.randomUUID(),
       team_id: teamId,
       season_id: seasonId,
-      teamName: team?.displayName ?? '—',
-      seasonName: season?.name ?? '—',
+      teamName: team?.displayName ?? 'â€”',
+      seasonName: season?.name ?? 'â€”',
       player_number: numRaw ? parseInt(numRaw) : null,
     }
     setPlayers(ps => ps.map(p => p.id === playerId ? { ...p, teamSeasons: [...p.teamSeasons, newLink] } : p))
@@ -184,12 +184,12 @@ export default function PlayersClient({
             <input
               value={addFirst} onChange={e => setAddFirst(e.target.value)}
               placeholder="First name" required
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
             />
             <input
               value={addLast} onChange={e => setAddLast(e.target.value)}
               placeholder="Last name" required
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
             />
           </div>
           <div className="flex gap-3">
@@ -197,7 +197,7 @@ export default function PlayersClient({
               <label className="block text-xs text-gray-500 mb-1">Date of birth</label>
               <input
                 type="date" value={addDob} onChange={e => setAddDob(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
               />
             </div>
             <div className="flex items-end">
@@ -283,7 +283,7 @@ export default function PlayersClient({
                     )}
                   </div>
 
-                  {/* Expanded — team-season links */}
+                  {/* Expanded â€” team-season links */}
                   {isExpanded && !isEditing && (
                     <div className="pb-4 pl-3 space-y-3">
                       {/* Existing links */}
@@ -328,7 +328,7 @@ export default function PlayersClient({
                                             type="number" min={1} max={99}
                                             value={editLinkNumber}
                                             onChange={e => setEditLinkNumber(e.target.value)}
-                                            placeholder="—"
+                                            placeholder="â€”"
                                             className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                                           />
                                         </div>
@@ -338,7 +338,7 @@ export default function PlayersClient({
                                             disabled={editLinkSaving}
                                             className="bg-red-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-900 disabled:opacity-50"
                                           >
-                                            {editLinkSaving ? 'Saving…' : 'Save'}
+                                            {editLinkSaving ? 'Savingâ€¦' : 'Save'}
                                           </button>
                                           <button
                                             onClick={() => setEditingLinkId(null)}
@@ -417,7 +417,7 @@ export default function PlayersClient({
                             type="number" min={1} max={99}
                             value={linkNumber[player.id] ?? ''}
                             onChange={e => setLinkNumber(n => ({ ...n, [player.id]: e.target.value }))}
-                            placeholder="—"
+                            placeholder="â€”"
                             className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
                           />
                         </div>

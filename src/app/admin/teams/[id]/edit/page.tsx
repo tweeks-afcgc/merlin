@@ -515,7 +515,7 @@ export default function EditTeamPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
                   <select
                     value={gender} onChange={e => setGender(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   >
                     <option value="">Not specified</option>
                     <option value="Male">Male</option>
@@ -533,7 +533,7 @@ export default function EditTeamPage() {
                     value={nickname}
                     onChange={e => setNickname(e.target.value)}
                     placeholder="e.g. Under 14X"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                   <p className="text-xs text-gray-400 mt-1">Shown in brackets after the team name across the system.</p>
                 </div>
@@ -544,7 +544,7 @@ export default function EditTeamPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
                       <select
                         value={format} onChange={e => setFormat(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                       >
                         <option value="">Not specified</option>
                         {['3v3','5v5','7v7','9v9','11v11'].map(f => (
@@ -562,7 +562,7 @@ export default function EditTeamPage() {
                     <select
                       value={defaultVenueId}
                       onChange={e => { setDefaultVenueId(e.target.value); setDefaultPitchId('') }}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                     >
                       <option value="">None</option>
                       {venues.map(v => (
@@ -576,7 +576,7 @@ export default function EditTeamPage() {
                       <select
                         value={defaultPitchId}
                         onChange={e => setDefaultPitchId(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                       >
                         <option value="">No default</option>
                         {pitches.map(p => (
@@ -713,13 +713,13 @@ export default function EditTeamPage() {
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">Day</label>
-                            <select value={eDay} onChange={e => setEDay(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                            <select value={eDay} onChange={e => setEDay(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                               {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d}>{d}</option>)}
                             </select>
                           </div>
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">Frequency</label>
-                            <select value={eFreq} onChange={e => setEFreq(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                            <select value={eFreq} onChange={e => setEFreq(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                               <option value="weekly">Weekly</option>
                               <option value="Alternate">Alternate</option>
                               <option value="monthly">Monthly</option>
@@ -727,23 +727,23 @@ export default function EditTeamPage() {
                           </div>
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">Start <span className="text-gray-400">(opt)</span></label>
-                            <input type="time" value={eStart} onChange={e => setEStart(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                            <input type="time" value={eStart} onChange={e => setEStart(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
                           </div>
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">End <span className="text-gray-400">(opt)</span></label>
-                            <input type="time" value={eEnd} onChange={e => setEEnd(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                            <input type="time" value={eEnd} onChange={e => setEEnd(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
                           </div>
                         </div>
                         <div>
                           <label className="block text-xs text-gray-500 mb-1">Venue <span className="text-gray-400">(opt)</span></label>
-                          <select value={eVenueId} onChange={e => setEVenueId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                          <select value={eVenueId} onChange={e => setEVenueId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                             <option value="">None</option>
                             {venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                           </select>
                         </div>
                         <div>
                           <label className="block text-xs text-gray-500 mb-1">Notes <span className="text-gray-400">(opt)</span></label>
-                          <input type="text" value={eNotes} onChange={e => setENotes(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                          <input type="text" value={eNotes} onChange={e => setENotes(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
                         </div>
                         <div className="flex gap-2">
                           <button type="button" onClick={saveSlot} disabled={eSaving} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-800 text-white hover:bg-red-900 disabled:opacity-50 transition">{eSaving ? 'Saving…' : 'Save'}</button>
@@ -778,13 +778,13 @@ export default function EditTeamPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">Day</label>
-                      <select value={tDay} onChange={e => setTDay(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                      <select value={tDay} onChange={e => setTDay(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                         {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d}>{d}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">Frequency</label>
-                      <select value={tFreq} onChange={e => setTFreq(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                      <select value={tFreq} onChange={e => setTFreq(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                         <option value="weekly">Weekly</option>
                         <option value="Alternate">Alternate</option>
                         <option value="monthly">Monthly</option>
@@ -792,23 +792,23 @@ export default function EditTeamPage() {
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">Start <span className="text-gray-400">(opt)</span></label>
-                      <input type="time" value={tStart} onChange={e => setTStart(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                      <input type="time" value={tStart} onChange={e => setTStart(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">End <span className="text-gray-400">(opt)</span></label>
-                      <input type="time" value={tEnd} onChange={e => setTEnd(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                      <input type="time" value={tEnd} onChange={e => setTEnd(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Venue <span className="text-gray-400">(opt)</span></label>
-                    <select value={tVenueId} onChange={e => setTVenueId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                    <select value={tVenueId} onChange={e => setTVenueId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                       <option value="">None</option>
                       {venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Notes <span className="text-gray-400">(opt)</span></label>
-                    <input type="text" value={tNotes} onChange={e => setTNotes(e.target.value)} placeholder="e.g. Bottom pitch" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                    <input type="text" value={tNotes} onChange={e => setTNotes(e.target.value)} placeholder="e.g. Bottom pitch" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
                   </div>
                   <div className="flex gap-2">
                     <button type="button" onClick={addSlot} disabled={tSaving} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-800 text-white hover:bg-red-900 disabled:opacity-50 transition">{tSaving ? 'Saving…' : 'Add'}</button>

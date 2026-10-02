@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -64,7 +64,7 @@ export default function AddFixtureFromDashboardPage() {
       setSeasonId(s.find(x => x.is_current)?.id ?? s[0]?.id ?? '')
       setOpponents(buildOpponentOptions((clubsData ?? []) as any))
       setVenues(venuesData ?? [])
-      // Internal teams for friendly fixtures — sorted same way as team picker
+      // Internal teams for friendly fixtures â€” sorted same way as team picker
       const sorted = sortedTeams(t, s)
       setInternalTeams(sorted.map(tm => ({ id: `internal:${tm.id}`, label: teamDisplayName(tm, s) })))
       setLoading(false)
@@ -142,7 +142,7 @@ export default function AddFixtureFromDashboardPage() {
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{error}</div>
               )}
 
-              {/* Season — collapsed by default, click to change */}
+              {/* Season â€” collapsed by default, click to change */}
               <div className="flex items-center justify-between text-sm pb-1 border-b border-gray-100">
                 <span className="text-gray-400 text-xs font-medium uppercase tracking-wide">Season</span>
                 {seasonOpen ? (
@@ -163,7 +163,7 @@ export default function AddFixtureFromDashboardPage() {
                     onClick={() => setSeasonOpen(true)}
                     className="text-gray-500 hover:text-red-800 font-medium transition"
                   >
-                    {seasons.find(s => s.id === seasonId)?.name ?? '—'}
+                    {seasons.find(s => s.id === seasonId)?.name ?? 'â€”'}
                     <span className="ml-1.5 text-xs text-gray-300 font-normal">change</span>
                   </button>
                 )}
@@ -176,7 +176,7 @@ export default function AddFixtureFromDashboardPage() {
                   value={teamId}
                   onChange={e => setTeamId(e.target.value)}
                   required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="">Select team...</option>
                   {orderedTeams.map(t => (
@@ -193,7 +193,7 @@ export default function AddFixtureFromDashboardPage() {
                   required
                   value={date}
                   onChange={e => setDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
                 <div className="flex gap-2 mt-2">
                   <button
@@ -222,7 +222,7 @@ export default function AddFixtureFromDashboardPage() {
                       type="time"
                       value={kickoffTime}
                       onChange={e => setKickoffTime(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                     />
                   )}
                   <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
@@ -243,7 +243,7 @@ export default function AddFixtureFromDashboardPage() {
                 <select
                   value={opponentId}
                   onChange={e => setOpponentId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="">Select opponent...</option>
                   <option value="tbc">TBC</option>
@@ -251,7 +251,7 @@ export default function AddFixtureFromDashboardPage() {
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                   {internalTeams.length > 0 && (
-                    <optgroup label="── Internal Teams ──">
+                    <optgroup label="â”€â”€ Internal Teams â”€â”€">
                       {internalTeams.map(t => (
                         <option key={t.id} value={t.id}>{t.label}</option>
                       ))}
@@ -285,7 +285,7 @@ export default function AddFixtureFromDashboardPage() {
                       <select
                         value={homeVenueId}
                         onChange={e => { setHomeVenueId(e.target.value); setPitchId('') }}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                       >
                         <option value="">Not assigned</option>
                         {venues.map(v => (
@@ -299,7 +299,7 @@ export default function AddFixtureFromDashboardPage() {
                         <select
                           value={pitchId}
                           onChange={e => setPitchId(e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                         >
                           <option value="">Not assigned</option>
                           {pitches.map(p => (
@@ -318,7 +318,7 @@ export default function AddFixtureFromDashboardPage() {
                 <select
                   value={competition}
                   onChange={e => setCompetition(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="friendly">Friendly</option>
                   {(() => {

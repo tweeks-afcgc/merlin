@@ -236,7 +236,7 @@ export default function AddFixtureFromTeamPage() {
                   value={teamId}
                   onChange={e => setTeamId(e.target.value)}
                   required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="">Select team...</option>
                   {orderedTeams.map(t => (
@@ -253,7 +253,7 @@ export default function AddFixtureFromTeamPage() {
                   required
                   value={date}
                   onChange={e => handleDateChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
                 <div className="flex gap-2 mt-2">
                   <button
@@ -282,7 +282,7 @@ export default function AddFixtureFromTeamPage() {
                       type="time"
                       value={kickoffTime}
                       onChange={e => setKickoffTime(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                     />
                   )}
                   <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
@@ -307,7 +307,7 @@ export default function AddFixtureFromTeamPage() {
                     value={opponentOpen ? opponentQuery : opponentLabel}
                     onFocus={() => { setOpponentOpen(true); setOpponentQuery('') }}
                     onChange={e => { setOpponentQuery(e.target.value); setOpponentId('') }}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                   {opponentOpen && (
                     <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
@@ -359,7 +359,7 @@ export default function AddFixtureFromTeamPage() {
                       <select
                         value={homeVenueId}
                         onChange={e => { setHomeVenueId(e.target.value); setPitchId('') }}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                       >
                         <option value="">Not assigned</option>
                         {venues.map(v => (
@@ -373,7 +373,7 @@ export default function AddFixtureFromTeamPage() {
                         <select
                           value={pitchId}
                           onChange={e => setPitchId(e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                         >
                           <option value="">Not assigned</option>
                           {pitches.map(p => (
@@ -392,7 +392,7 @@ export default function AddFixtureFromTeamPage() {
                 <select
                   value={competition}
                   onChange={e => setCompetition(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="friendly">Friendly</option>
                   {(() => {

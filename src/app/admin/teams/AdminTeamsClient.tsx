@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
@@ -50,7 +50,7 @@ function ConfirmDeleteModal({ teamName, onConfirm, onCancel, loading, error }: {
             disabled={loading}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg text-sm transition disabled:opacity-50"
           >
-            {loading ? 'Deleting…' : 'Delete'}
+            {loading ? 'Deletingâ€¦' : 'Delete'}
           </button>
         </div>
       </div>
@@ -104,7 +104,7 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
         className="w-full flex items-center justify-between px-6 py-4 text-left"
       >
         <span className="text-base font-semibold text-gray-900">Add team</span>
-        <span className="text-gray-400 text-lg leading-none">{open ? '−' : '+'}</span>
+        <span className="text-gray-400 text-lg leading-none">{open ? 'âˆ’' : '+'}</span>
       </button>
 
       {open && (
@@ -124,7 +124,7 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
                 <select
                   value={type}
                   onChange={e => { setType(e.target.value as 'senior' | 'junior'); setName(''); setAgeGroup('') }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="senior">Senior</option>
                   <option value="junior">Junior</option>
@@ -143,7 +143,7 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
                     value={ageGroup}
                     onChange={e => setAgeGroup(e.target.value)}
                     placeholder="12"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 </div>
               ) : (
@@ -155,7 +155,7 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="First XI"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 </div>
               )}
@@ -168,7 +168,7 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Knights"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 </div>
               )}
@@ -178,7 +178,7 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
               <select
                 value={gender}
                 onChange={e => setGender(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
               >
                 <option value="">Not specified</option>
                 <option value="Male">Male</option>
@@ -199,7 +199,7 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
                 disabled={loading || (type === 'junior' && !currentSeason)}
                 className="flex-1 bg-red-800 hover:bg-red-900 text-white font-semibold py-2 rounded-lg text-sm transition disabled:opacity-60"
               >
-                {loading ? 'Adding…' : 'Add team'}
+                {loading ? 'Addingâ€¦' : 'Add team'}
               </button>
             </div>
           </form>
@@ -245,7 +245,7 @@ function TeamGroup({ label, teams, expanded, onToggle }: {
         <span className="font-semibold text-gray-800 text-sm">{label}</span>
         <span className="flex items-center gap-2">
           <span className="text-xs text-gray-400">{teams.length} team{teams.length !== 1 ? 's' : ''}</span>
-          <span className="text-gray-400 text-sm">{expanded ? '▲' : '▼'}</span>
+          <span className="text-gray-400 text-sm">{expanded ? 'â–²' : 'â–¼'}</span>
         </span>
       </button>
 
@@ -317,7 +317,7 @@ export default function AdminTeamsClient({ teams, seasons, currentSeason }: Prop
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search teams…"
+          placeholder="Search teamsâ€¦"
           value={query}
           onChange={e => setQuery(e.target.value)}
           className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 bg-white shadow-sm"

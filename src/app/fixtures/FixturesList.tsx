@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
@@ -44,7 +44,7 @@ type GenderFilter = 'all' | 'mixed' | 'girls'
 type VenueFilter = 'all' | 'home' | 'away'
 type DateRange = 14 | 30 | 'all'
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function formatDateLong(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -87,7 +87,7 @@ function timeSort(a: Fixture, b: Fixture) {
   return a.teamSortKey.localeCompare(b.teamSortKey)
 }
 
-// ─── sub-components ─────────────────────────────────────────────────────────
+// â”€â”€â”€ sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -144,13 +144,13 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
           {showTeam && (
             <p className="text-xs text-gray-500 leading-snug truncate">vs {f.opponentName}</p>
           )}
-          {/* Warnings — desktop always shown, mobile only for blocking issues */}
+          {/* Warnings â€” desktop always shown, mobile only for blocking issues */}
           {hasWarning && (
             <p className="text-xs text-amber-600 font-medium leading-snug">
               {needsTime ? 'Kick off TBC' : 'No pitch assigned'}
             </p>
           )}
-          {/* Referee — only show if assigned, league-assigned, requested, or required but missing */}
+          {/* Referee â€” only show if assigned, league-assigned, requested, or required but missing */}
           {f.refereeName ? (
             <p className="hidden sm:block text-xs text-gray-400 leading-snug">Ref: {f.refereeName}</p>
           ) : f.leagueAssignedReferee ? (
@@ -179,14 +179,14 @@ function DateSelect({ dates, value, onChange }: { dates: string[]; value: string
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 bg-white"
+      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 bg-white"
     >
       {dates.map(d => <option key={d} value={d}>{formatDateShort(d)}</option>)}
     </select>
   )
 }
 
-// ─── Schedule view ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Schedule view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ScheduleView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: boolean }) {
   const byDate = new Map<string, Fixture[]>()
@@ -251,7 +251,7 @@ function ScheduleView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfir
   )
 }
 
-// ─── Team view ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Team view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canConfirm: boolean; dates: string[] }) {
   const [selectedDate, setSelectedDate] = useState(dates[0] ?? '')
@@ -275,7 +275,7 @@ function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCon
   )
 }
 
-// ─── Pitch view ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Pitch view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function PitchView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canConfirm: boolean; dates: string[] }) {
   const [selectedDate, setSelectedDate] = useState(dates[0] ?? '')
@@ -336,7 +336,7 @@ function PitchView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCo
   )
 }
 
-// ─── View dropdown ───────────────────────────────────────────────────────────
+// â”€â”€â”€ View dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ViewDropdown({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
   const [open, setOpen] = useState(false)
@@ -378,7 +378,7 @@ function ViewDropdown({ view, onChange }: { view: ViewMode; onChange: (v: ViewMo
   )
 }
 
-// ─── Mobile filter panel ─────────────────────────────────────────────────────
+// â”€â”€â”€ Mobile filter panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function MobileFilters({
   dateRange, setDateRange,
@@ -451,7 +451,7 @@ function MobileFilters({
   )
 }
 
-// ─── Main export ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function FixturesList({
   fixtures,

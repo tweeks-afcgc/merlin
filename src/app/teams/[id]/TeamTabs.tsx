@@ -477,14 +477,14 @@ export default function TeamTabs({
                   <label className="block text-xs text-gray-500 mb-1">First name</label>
                   <input
                     name="first_name" required autoFocus
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Last name</label>
                   <input
                     name="last_name" required
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 </div>
               </div>
@@ -493,14 +493,14 @@ export default function TeamTabs({
                   <label className="block text-xs text-gray-500 mb-1">Date of birth <span className="font-normal text-gray-400">(optional)</span></label>
                   <input
                     name="date_of_birth" type="date"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Shirt number <span className="font-normal text-gray-400">(optional)</span></label>
                   <input
                     name="player_number" type="number" min={1} max={99}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 </div>
               </div>

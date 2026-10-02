@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { addVenue, deleteVenue, addPitch, setPitchActive, renamePitch, updateVenue } from './actions'
@@ -121,7 +121,7 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
               onChange={e => setVenueName(e.target.value)}
               placeholder="Venue name e.g. Flamingo Park"
               required
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
             />
           </div>
           <div className="flex gap-3">
@@ -129,16 +129,16 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
               value={venueAddress}
               onChange={e => setVenueAddress(e.target.value)}
               placeholder="Address (optional)"
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
             />
           </div>
           <div className="flex gap-3">
             <textarea
               value={venueNotes}
               onChange={e => setVenueNotes(e.target.value)}
-              placeholder="Notes (optional) — e.g. parking info, access instructions"
+              placeholder="Notes (optional) â€” e.g. parking info, access instructions"
               rows={2}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
             />
             <button
               type="submit"
@@ -168,20 +168,20 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
                     onChange={e => setEditing(ed => ({ ...ed, [venue.id]: { ...ed[venue.id], name: e.target.value } }))}
                     required
                     placeholder="Venue name"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                   <input
                     value={editVals.address}
                     onChange={e => setEditing(ed => ({ ...ed, [venue.id]: { ...ed[venue.id], address: e.target.value } }))}
                     placeholder="Address (optional)"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                   <textarea
                     value={editVals.notes}
                     onChange={e => setEditing(ed => ({ ...ed, [venue.id]: { ...ed[venue.id], notes: e.target.value } }))}
                     placeholder="Notes (optional)"
                     rows={2}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
                   />
                   <div className="flex gap-2">
                     <button type="submit" disabled={editSaving[venue.id]} className="bg-red-800 hover:bg-red-900 text-white font-semibold px-4 py-1.5 rounded-lg text-sm transition disabled:opacity-60">
@@ -215,9 +215,9 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
                         <div className="space-y-2">
                           {/* Warning banner */}
                           <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                            <span className="text-amber-500 mt-0.5 flex-shrink-0">⚠</span>
+                            <span className="text-amber-500 mt-0.5 flex-shrink-0">âš </span>
                             <p className="text-xs text-amber-800">
-                              <strong>Admin use only.</strong> Only rename this pitch to correct a typo or spelling mistake. If the pitch has changed size or type, <strong>retire this pitch</strong> and add a new one instead — renaming will update all historical fixture records.
+                              <strong>Admin use only.</strong> Only rename this pitch to correct a typo or spelling mistake. If the pitch has changed size or type, <strong>retire this pitch</strong> and add a new one instead â€” renaming will update all historical fixture records.
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -284,12 +284,12 @@ export default function VenuesClient({ venues: initial }: { venues: Venue[] }) {
                   onChange={e => setPitchNames(p => ({ ...p, [venue.id]: e.target.value }))}
                   placeholder="e.g. Pitch 1"
                   required
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
                 <select
                   value={pitchTypes[venue.id] ?? 'grass'}
                   onChange={e => setPitchTypes(p => ({ ...p, [venue.id]: e.target.value }))}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="grass">Grass</option>
                   <option value="3g">3G</option>

@@ -267,7 +267,7 @@ export default function EditFixturePage() {
                   required
                   value={date}
                   onChange={e => setDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 />
               </div>
 
@@ -287,7 +287,7 @@ export default function EditFixturePage() {
                     type="time"
                     value={kickoffTime}
                     onChange={e => setKickoffTime(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                   />
                 )}
               </div>
@@ -297,7 +297,7 @@ export default function EditFixturePage() {
                 <select
                   value={opponentId}
                   onChange={e => setOpponentId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="">Select opponent...</option>
                   <option value="tbc">TBC</option>
@@ -338,7 +338,7 @@ export default function EditFixturePage() {
                 <select
                   value={competition}
                   onChange={e => setCompetition(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                 >
                   <option value="friendly">Friendly</option>
                   <option value="league">League</option>
@@ -355,7 +355,7 @@ export default function EditFixturePage() {
                     <select
                       value={homeVenueId}
                       onChange={e => handleVenueChange(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                     >
                       <option value="">Not assigned</option>
                       {venues.map(v => (
@@ -372,7 +372,7 @@ export default function EditFixturePage() {
                         <select
                           value={pitchId}
                           onChange={e => setPitchId(e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                         >
                           <option value="">Not assigned</option>
                           {pitches.map(p => (
@@ -454,7 +454,7 @@ export default function EditFixturePage() {
                         <select
                           value={refereeId}
                           onChange={e => setRefereeId(e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                         >
                           <option value="">Not assigned</option>
                           {referees.map(r => (
@@ -480,7 +480,7 @@ export default function EditFixturePage() {
                         value={goalsFor}
                         onChange={e => setGoalsFor(e.target.value)}
                         placeholder="—"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                       />
                     </div>
                     <div className="pt-5 text-gray-400 font-bold text-lg">–</div>
@@ -492,7 +492,7 @@ export default function EditFixturePage() {
                         value={goalsAgainst}
                         onChange={e => setGoalsAgainst(e.target.value)}
                         placeholder="—"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                       />
                     </div>
                   </div>
@@ -542,7 +542,7 @@ export default function EditFixturePage() {
                   onChange={e => setMatchNotes(e.target.value)}
                   rows={4}
                   placeholder="Enter any notes about the match…"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 resize-y"
                 />
               </div>
             </div>
@@ -603,7 +603,7 @@ export default function EditFixturePage() {
                                 const otherGoals = totalGoals - perf.goals
                                 updatePerf(p.id, 'goals', maxGoals === Infinity ? val : Math.min(val, maxGoals - otherGoals))
                               }}
-                              className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                              className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                             />
                           </td>
                           <td className="px-3 py-2.5 text-center">
@@ -612,7 +612,7 @@ export default function EditFixturePage() {
                               min={0}
                               value={perf.assists}
                               onChange={e => updatePerf(p.id, 'assists', Math.max(0, parseInt(e.target.value) || 0))}
-                              className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                              className="w-14 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                             />
                           </td>
                           <td className="px-3 py-2.5 text-center">
@@ -629,7 +629,7 @@ export default function EditFixturePage() {
                               min={0}
                               value={perf.mins_played}
                               onChange={e => updatePerf(p.id, 'mins_played', Math.max(0, parseInt(e.target.value) || 0))}
-                              className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+                              className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
                             />
                           </td>
                         </tr>

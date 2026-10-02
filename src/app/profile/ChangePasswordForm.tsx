@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -57,7 +57,7 @@ export default function ChangePasswordForm() {
             required
             minLength={8}
             placeholder="Min. 8 characters"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
           />
         </div>
         <div>
@@ -68,7 +68,7 @@ export default function ChangePasswordForm() {
             onChange={e => setConfirm(e.target.value)}
             required
             placeholder="Repeat password"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
           />
         </div>
         <button
@@ -76,7 +76,7 @@ export default function ChangePasswordForm() {
           disabled={loading}
           className="w-full bg-red-800 hover:bg-red-900 text-white font-semibold py-2.5 rounded-lg text-sm transition disabled:opacity-60"
         >
-          {loading ? 'Updating…' : 'Update password'}
+          {loading ? 'Updatingâ€¦' : 'Update password'}
         </button>
       </form>
     </div>

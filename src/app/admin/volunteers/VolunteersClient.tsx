@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { addVolunteer, updateVolunteer, deleteVolunteer, addVolunteerRole, updateVolunteerRole, removeVolunteerRole, createVolunteerFromProfile } from './actions'
@@ -52,9 +52,9 @@ function VolunteerForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex gap-3">
         <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First name" required
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
         <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name" required
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
       </div>
 
       {/* Referee */}
@@ -76,13 +76,13 @@ function VolunteerForm({
             <div>
               <label className="block text-xs text-gray-500 mb-1">Email address</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="email@example.com"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
               {!initial?.id && <p className="text-xs text-gray-400 mt-1">An invitation email will be sent to this address.</p>}
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">User role</label>
               <select value={userRole} onChange={e => setUserRole(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                 {USER_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
@@ -93,7 +93,7 @@ function VolunteerForm({
       <div className="flex gap-2">
         <button type="submit" disabled={saving}
           className="bg-red-800 hover:bg-red-900 text-white font-semibold px-5 py-2 rounded-lg text-sm transition disabled:opacity-60">
-          {saving ? 'Saving…' : initial?.id ? 'Save changes' : 'Add volunteer'}
+          {saving ? 'Savingâ€¦' : initial?.id ? 'Save changes' : 'Add volunteer'}
         </button>
         <button type="button" onClick={onCancel}
           className="border border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold px-4 py-2 rounded-lg text-sm transition">
@@ -245,7 +245,7 @@ function EditRoleForm({ role, teams, onSaved, onCancel }: {
         </div>
         <button onClick={handleSave} disabled={saving || !roleName.trim()}
           className="bg-red-800 hover:bg-red-900 text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? 'Savingâ€¦' : 'Save'}
         </button>
         <button onClick={onCancel}
           className="border border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold px-3 py-1.5 rounded-lg text-sm transition">
@@ -343,7 +343,7 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
   }
 
   function userRoleLabel(role: string | null) {
-    return USER_ROLES.find(r => r.value === role)?.label ?? role ?? '—'
+    return USER_ROLES.find(r => r.value === role)?.label ?? role ?? 'â€”'
   }
 
   return (
@@ -403,7 +403,7 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                       </div>
                       <button onClick={() => setLinkingProfileId(p.id)}
                         className="text-xs font-semibold text-red-800 hover:underline flex-shrink-0">
-                        Add as volunteer →
+                        Add as volunteer â†’
                       </button>
                     </div>
                   )}
@@ -422,7 +422,7 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
             type="text"
             value={filterName}
             onChange={e => setFilterName(e.target.value)}
-            placeholder="Search by name…"
+            placeholder="Search by nameâ€¦"
             className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 w-44"
           />
           <select
@@ -499,10 +499,10 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">App user</span>
                             )}
                           </div>
-                          {v.email && <p className="text-xs text-gray-400 mt-0.5">{v.email}{v.is_app_user && v.user_role ? ` · ${userRoleLabel(v.user_role)}` : ''}</p>}
+                          {v.email && <p className="text-xs text-gray-400 mt-0.5">{v.email}{v.is_app_user && v.user_role ? ` Â· ${userRoleLabel(v.user_role)}` : ''}</p>}
                           {v.roles.length > 0 && (
                             <p className="text-xs text-gray-500 mt-0.5">
-                              {v.roles.map(r => r.role_type === 'team' ? `${r.teamName}: ${r.role_name}` : r.role_name).join(' · ')}
+                              {v.roles.map(r => r.role_type === 'team' ? `${r.teamName}: ${r.role_name}` : r.role_name).join(' Â· ')}
                             </p>
                           )}
                         </div>
@@ -542,7 +542,7 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                                       <div>
                                         <p className="text-sm font-medium text-gray-800">{r.role_name}</p>
                                         <p className="text-xs text-gray-400">
-                                          {r.role_type === 'team' ? `Team: ${r.teamName ?? '—'}` : 'Club role'}
+                                          {r.role_type === 'team' ? `Team: ${r.teamName ?? 'â€”'}` : 'Club role'}
                                         </p>
                                       </div>
                                       <div className="flex items-center gap-3 text-xs">

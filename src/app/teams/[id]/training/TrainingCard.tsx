@@ -108,32 +108,32 @@ export default function TrainingCard({
             <div>
               <label className="block text-xs text-gray-500 mb-1">Day</label>
               <select value={day} onChange={e => setDay(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                 {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Frequency</label>
               <select value={frequency} onChange={e => setFrequency(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
                 {FREQUENCIES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Start time <span className="text-gray-400">(optional)</span></label>
               <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">End time <span className="text-gray-400">(optional)</span></label>
               <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
             </div>
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Venue</label>
             <select value={venueId} onChange={e => setVenueId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700">
               <option value="">No venue</option>
               {venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
@@ -141,7 +141,7 @@ export default function TrainingCard({
           <div>
             <label className="block text-xs text-gray-500 mb-1">Notes <span className="text-gray-400">(optional)</span></label>
             <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Bottom pitch"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700" />
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700" />
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={saving}
