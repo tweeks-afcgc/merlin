@@ -24,7 +24,8 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export default async function TeamReviewsPage({ params }: { params: { id: string } }) {
+export default async function TeamReviewsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/signin')
@@ -37,7 +38,7 @@ export default async function TeamReviewsPage({ params }: { params: { id: string
   const { data: team } = await supabase
     .from('teams')
     .select('id, name, type, founding_age_group, founding_season_id, age_group, nickname')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!team) redirect('/admin/teams')
@@ -52,7 +53,7 @@ export default async function TeamReviewsPage({ params }: { params: { id: string
       fixtures(id, date, club_teams(name, clubs(name)))
     `)
     .not('ref_submitted_at', 'is', null)
-    .eq('fixtures.team_id', params.id)
+    .eq('fixtures.team_id', id)
     .order('ref_submitted_at', { ascending: false })
 
   // Filter to only reviews for this team (Supabase can't filter nested)
@@ -64,7 +65,7 @@ export default async function TeamReviewsPage({ params }: { params: { id: string
       fixtures!inner(id, date, team_id, club_teams(name, clubs(name)))
     `)
     .not('ref_submitted_at', 'is', null)
-    .eq('fixtures.team_id', params.id)
+    .eq('fixtures.team_id', id)
     .order('ref_submitted_at', { ascending: false })
 
   const rows = (allFixtureReviews ?? []).map((r: any) => ({

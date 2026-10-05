@@ -16,8 +16,9 @@ function avg(vals: (number | null)[]): number | null {
   return Math.round((filtered.reduce((a, b) => a + b, 0) / filtered.length) * 10) / 10
 }
 
-export default async function RefereeReviewsPage({ params }: { params: { id: string } }) {
+export default async function RefereeReviewsPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
+  const { id } = await params
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/signin')
 
@@ -28,7 +29,7 @@ export default async function RefereeReviewsPage({ params }: { params: { id: str
   const { data: volunteer } = await supabase
     .from('volunteers')
     .select('id, first_name, last_name, profile_id')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!volunteer || !(volunteer as any).profile_id) redirect('/admin/volunteers')
