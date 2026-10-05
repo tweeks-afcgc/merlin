@@ -274,13 +274,13 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats, readO
                 <TeamCardBody team={team} />
               </div>
             ) : (
-              <Link href={`/teams/${team.id}`} className="block px-5 py-4 pr-14">
+              <Link href={`/teams/${team.id}`} className="block px-5 py-4 pr-20">
                 <TeamCardBody team={team} />
               </Link>
             )}
 
             {!readOnly && isAdmin && (
-              <div className="absolute top-3.5 right-4 flex items-center gap-1">
+              <div className="absolute top-3.5 right-4 flex items-center gap-1 z-10">
                 {teamsWithReviews.includes(team.id) && (
                   <Link
                     href={`/admin/teams/${team.id}/reviews`}
