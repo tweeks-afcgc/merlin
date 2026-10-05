@@ -15,10 +15,13 @@ export default async function AdminTeamsPage() {
   const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const [{ data: rawTeams }, { data: seasons }] = await Promise.all([
+  const [{ data: rawTeams }, { data: seasons }, { data: reviewRows }] = await Promise.all([
     supabase.from('teams').select('*'),
     supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
+    supabase.from('fixture_reviews').select('fixtures!inner(team_id)').not('ref_submitted_at', 'is', null),
   ])
+
+  const teamsWithReviews = [...new Set((reviewRows ?? []).map((r: any) => r.fixtures?.team_id).filter(Boolean))]
 
   const currentSeason = seasons?.find(s => s.is_current) ?? null
 
@@ -57,6 +60,7 @@ export default async function AdminTeamsPage() {
           teams={teams}
           seasons={seasons ?? []}
           currentSeason={currentSeason ?? null}
+          teamsWithReviews={teamsWithReviews}
         />
       </div>
     </AppShell>

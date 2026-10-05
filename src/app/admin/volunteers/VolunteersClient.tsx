@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { addVolunteer, updateVolunteer, deleteVolunteer, addVolunteerRole, updateVolunteerRole, removeVolunteerRole, createVolunteerFromProfile } from './actions'
 
 type VolunteerRole = { id: string; role_type: string; role_name: string; team_id: string | null; teamName: string | null }
@@ -525,6 +526,9 @@ export default function VolunteersClient({ volunteers: initial, teams, unlinkedP
                             className="text-red-800 hover:underline font-medium">
                             {isExpanded ? 'Hide' : 'Roles'}
                           </button>
+                          {v.is_referee && (
+                            <Link href={`/admin/referees/${v.id}/reviews`} className="text-blue-700 hover:underline">Reviews</Link>
+                          )}
                           <button onClick={() => { setEditingId(v.id); setExpandedId(null) }}
                             className="text-gray-500 hover:text-gray-800 transition">Edit</button>
                           <button onClick={() => handleDelete(v)}

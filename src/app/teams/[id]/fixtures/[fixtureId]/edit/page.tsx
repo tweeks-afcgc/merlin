@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { updateFixture, assignRefereeFromRequest, savePerformances, saveMatchNotes, type PlayerPerformance } from '../../actions'
 import DeleteFixtureButton from '../../DeleteFixtureButton'
 import CancelFixtureButton from '../../CancelFixtureButton'
+import ReviewLinks from '../ReviewLinks'
 import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 import { sortedTeams, teamDisplayName } from '@/lib/teamSort'
 
@@ -656,6 +657,9 @@ export default function EditFixturePage() {
               </div>
             </div>
           )}
+
+          {/* Review links — admin only, past fixtures */}
+          {isAdmin && <ReviewLinks fixtureId={fixtureId} isPast={isPast} />}
 
           {/* Save / Cancel */}
           <div className="flex gap-3 mt-6">

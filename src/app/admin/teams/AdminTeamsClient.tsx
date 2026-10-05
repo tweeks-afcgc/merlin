@@ -20,6 +20,7 @@ type Props = {
   teams: Team[]
   seasons: Season[]
   currentSeason: Season | null
+  teamsWithReviews: string[]
 }
 
 function ConfirmDeleteModal({ teamName, onConfirm, onCancel, loading, error }: {
@@ -209,11 +210,12 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
   )
 }
 
-function TeamGroup({ label, teams, expanded, onToggle }: {
+function TeamGroup({ label, teams, expanded, onToggle, teamsWithReviews }: {
   label: string
   teams: Team[]
   expanded: boolean
   onToggle: () => void
+  teamsWithReviews: string[]
 }) {
   const router = useRouter()
   const [deleteTarget, setDeleteTarget] = useState<Team | null>(null)
@@ -259,6 +261,9 @@ function TeamGroup({ label, teams, expanded, onToggle }: {
                 <span className="text-sm font-medium text-gray-900">{team.display_name}</span>
                 <div className="flex items-center gap-4">
                   <Link href={`/teams/${team.id}/fixtures`} className="text-xs text-gray-400 hover:text-gray-700 hover:underline">Fixtures</Link>
+                  {teamsWithReviews.includes(team.id) && (
+                    <Link href={`/admin/teams/${team.id}/reviews`} className="text-xs text-blue-700 hover:underline">Reviews</Link>
+                  )}
                   <Link href={`/admin/teams/${team.id}/edit`} className="text-xs text-red-800 hover:underline">Edit</Link>
                   <button
                     type="button"
@@ -287,7 +292,7 @@ function TeamGroup({ label, teams, expanded, onToggle }: {
   )
 }
 
-export default function AdminTeamsClient({ teams, seasons, currentSeason }: Props) {
+export default function AdminTeamsClient({ teams, seasons, currentSeason, teamsWithReviews }: Props) {
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ Senior: true, Junior: true })
@@ -333,12 +338,14 @@ export default function AdminTeamsClient({ teams, seasons, currentSeason }: Prop
             teams={seniors}
             expanded={seniorExpanded}
             onToggle={() => toggleGroup('Senior')}
+            teamsWithReviews={teamsWithReviews}
           />
           <TeamGroup
             label="Junior"
             teams={juniors}
             expanded={juniorExpanded}
             onToggle={() => toggleGroup('Junior')}
+            teamsWithReviews={teamsWithReviews}
           />
         </>
       )}
