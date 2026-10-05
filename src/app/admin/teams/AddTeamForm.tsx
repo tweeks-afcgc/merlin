@@ -120,7 +120,7 @@ export default function AddTeamForm({ currentSeason }: { currentSeason: Season |
           disabled={loading || (type === 'junior' && !currentSeason)}
           className="w-full bg-red-800 hover:bg-red-900 text-white font-semibold py-2 rounded-lg text-sm transition disabled:opacity-60"
         >
-          {loading ? 'Addingâ€¦' : 'Add team'}
+          {loading ? 'Adding…' : 'Add team'}
         </button>
       </form>
     </div>

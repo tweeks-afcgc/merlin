@@ -27,7 +27,7 @@ function ConfirmDeleteModal({ message, onConfirm, onCancel, loading, error }: {
           </button>
           <button onClick={onConfirm} disabled={loading}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg text-sm transition disabled:opacity-50">
-            {loading ? 'Deletingâ€¦' : 'Delete'}
+            {loading ? 'Deleting…' : 'Delete'}
           </button>
         </div>
       </div>
@@ -132,7 +132,7 @@ function ClubRow({ club, defaultOpen }: { club: Club; defaultOpen: boolean }) {
             <span className="text-xs text-gray-400 shrink-0">
               {club.club_teams.length} team{club.club_teams.length !== 1 ? 's' : ''}
             </span>
-            <span className="text-gray-400 text-xs shrink-0">{open ? 'â–²' : 'â–¼'}</span>
+            <span className="text-gray-400 text-xs shrink-0">{open ? '▲' : '▼'}</span>
           </button>
         )}
 
@@ -181,7 +181,7 @@ function ClubRow({ club, defaultOpen }: { club: Club; defaultOpen: boolean }) {
 
           {/* Team rows */}
           {club.club_teams.length === 0 && !addingTeam ? (
-            <p className="px-5 py-3 text-xs text-gray-400">No teams â€” this club appears as a single opponent.</p>
+            <p className=”px-5 py-3 text-xs text-gray-400”>No teams — this club appears as a single opponent.</p>
           ) : (
             club.club_teams.map(team => (
               <div key={team.id} className="flex items-center justify-between px-5 py-2.5">
@@ -284,7 +284,7 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
         <button type="button" onClick={() => setAddClubOpen(o => !o)}
           className="w-full flex items-center justify-between px-6 py-4 text-left">
           <span className="text-base font-semibold text-gray-900">Add club</span>
-          <span className="text-gray-400 text-lg leading-none">{addClubOpen ? 'âˆ’' : '+'}</span>
+          <span className="text-gray-400 text-lg leading-none">{addClubOpen ? ‘−’ : ‘+’}</span>
         </button>
         {addClubOpen && (
           <div className="px-6 pb-6 border-t border-gray-100 pt-4">
@@ -306,7 +306,7 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
               </button>
               <button type="submit" disabled={addingClub}
                 className="bg-red-800 hover:bg-red-900 text-white font-semibold px-4 py-2 rounded-lg text-sm transition disabled:opacity-60">
-                {addingClub ? 'Addingâ€¦' : 'Add club'}
+                {addingClub ? 'Adding…' : 'Add club'}
               </button>
             </form>
           </div>
@@ -316,7 +316,7 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
       {/* Search */}
       <input
         type="text"
-        placeholder="Search clubs and teamsâ€¦"
+        placeholder="Search clubs and teams…"
         value={query}
         onChange={e => setQuery(e.target.value)}
         className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 bg-white shadow-sm"
