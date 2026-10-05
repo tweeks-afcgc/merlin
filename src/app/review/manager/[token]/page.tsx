@@ -79,8 +79,8 @@ export default async function ManagerReviewPage({ params }: { params: Promise<{ 
           <p className="text-xs text-gray-500 mt-1">Referee: <span className="font-medium">{refName}</span></p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4 mb-6">
-          <p className="text-sm text-gray-500 leading-relaxed">We want to ensure that the referees we provide are doing a good job. Whilst we are not looking to critique them, we do need to be aware if any referees are consistently putting in sub-par performances so that we can help them develop and improve, which then helps everyone.</p>
-          <p className="text-sm text-gray-500 leading-relaxed mt-2">Please do not let any emotions from the match itself cloud your feedback.</p>
+          <p className="text-sm text-gray-500 leading-relaxed">We're committed to providing good referees for all our fixtures. Your honest feedback helps us identify where referees may need support, so we can help them improve - which benefits everyone.</p>
+          <p className="text-sm text-gray-500 leading-relaxed mt-2">Please try to set aside any frustrations from the match itself and focus on the referee's overall performance.</p>
         </div>
         <ManagerReviewForm token={token} refName={refName} />
       </div>
