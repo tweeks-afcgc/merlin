@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { teamDisplayName, computeAgeGroup } from '@/lib/teamUtils'
+import { teamDisplayName, fixtureOpponentName, computeAgeGroup, type Season } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,9 +58,9 @@ export default async function PublicSchedulePage() {
       .from('fixtures')
       .select(`
         id, date, kickoff_time, venue, confirmed, pitch_id, cancelled, cancellation_reason,
-        team_id,
+        team_id, season_id,
         teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, format, kit_jersey, kit_shorts),
-        club_teams(id, name, clubs(name)),
+        club_teams(id, name, internal_team_id, clubs(name)),
         venues(name),
         pitches(name)
       `)
@@ -71,9 +71,22 @@ export default async function PublicSchedulePage() {
     supabase.from('seasons').select('id, name, start_date, is_current'),
   ])
 
-  const fixtures = (rawFixtures ?? []).map(f => {
+  // Enrich internal team opponents with their teams row (for age group resolution)
+  const internalTeamIds = [...new Set((rawFixtures ?? []).map((f: any) => f.club_teams?.internal_team_id).filter(Boolean))]
+  const internalTeamDataMap = new Map<string, any>()
+  if (internalTeamIds.length > 0) {
+    const { data: iTeams } = await supabase
+      .from('teams')
+      .select('id, name, type, founding_age_group, founding_season_id, nickname')
+      .in('id', internalTeamIds)
+    for (const t of iTeams ?? []) internalTeamDataMap.set(t.id, t)
+  }
+
+  const fixtures = (rawFixtures ?? []).map((f: any) => {
     const team = f.teams as any
-    const opponent = f.club_teams as any
+    const ct = f.club_teams as any
+    const internalTeam = ct?.internal_team_id ? internalTeamDataMap.get(ct.internal_team_id) ?? null : null
+    const opponent = ct ? { ...ct, internal_team: internalTeam } : ct
     const venueData = f.venues as any
     const pitchData = f.pitches as any
 
@@ -86,22 +99,18 @@ export default async function PublicSchedulePage() {
       pitch_id: f.pitch_id,
       team_id: f.team_id,
       teamName: team ? teamDisplayName(team, seasons ?? []) : '—',
-      teamFormat: (team as any)?.format ?? null,
+      teamFormat: team?.format ?? null,
       teamSortKey: (() => {
         if (!team) return 'z'
         if (team.type === 'senior') return `0_${team.name}`
         const age = computeAgeGroup(team, seasons ?? []) ?? 0
         return `1_${String(999 - age).padStart(4, '0')}_${team.name}`
       })(),
-      opponentName: (() => {
-        if (!opponent) return 'TBC'
-        const raw = [opponent.clubs?.name, opponent.name].filter((s: any) => s && s.trim()).join(' ') || 'TBC'
-        return raw.replace(/^\[Internal\]\s*/, '')
-      })(),
+      opponentName: fixtureOpponentName(opponent, seasons as Season[], f.season_id),
       venueName: venueData?.name ?? null,
       pitchName: pitchData?.name ?? null,
-      cancelled: !!(f as any).cancelled,
-      cancellationReason: (f as any).cancellation_reason ?? null,
+      cancelled: !!f.cancelled,
+      cancellationReason: f.cancellation_reason ?? null,
     }
   })
 
