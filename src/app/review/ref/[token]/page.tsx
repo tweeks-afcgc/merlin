@@ -11,7 +11,7 @@ export default async function RefReviewPage({ params }: { params: Promise<{ toke
   const { token } = await params
   const supabase = createAdminClient()
 
-  const { data: review } = await supabase
+  const { data: review, error: reviewError } = await supabase
     .from('fixture_reviews')
     .select('id, ref_submitted_at, ref_token, fixture_id')
     .eq('ref_token', token)
@@ -22,6 +22,9 @@ export default async function RefReviewPage({ params }: { params: Promise<{ toke
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow p-8 max-w-sm w-full text-center">
           <p className="text-gray-500 text-sm">This review link is not valid.</p>
+          <p className="text-gray-400 text-xs mt-2 font-mono break-all">token: {token ?? 'undefined'}</p>
+          <p className="text-gray-400 text-xs mt-1 font-mono break-all">error: {reviewError?.message ?? 'none'}</p>
+          <p className="text-gray-400 text-xs mt-1 font-mono">key set: {process.env.SUPABASE_SERVICE_ROLE_KEY ? 'yes' : 'no'}</p>
         </div>
       </div>
     )
