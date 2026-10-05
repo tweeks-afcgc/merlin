@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function submitRefReview(token: string, data: {
   coaches: number
@@ -9,7 +9,7 @@ export async function submitRefReview(token: string, data: {
   experience: number
   comments: string
 }) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: review, error: findErr } = await supabase
     .from('fixture_reviews')
     .select('id, ref_submitted_at')
@@ -39,7 +39,7 @@ export async function submitManagerReview(token: string, data: {
   score: number
   comments: string
 }) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: review, error: findErr } = await supabase
     .from('fixture_reviews')
     .select('id, manager_submitted_at')

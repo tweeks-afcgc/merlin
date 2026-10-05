@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import RefReviewForm from './RefReviewForm'
 
 export const dynamic = 'force-dynamic'
@@ -8,7 +8,7 @@ function formatDate(d: string) {
 }
 
 export default async function RefReviewPage({ params }: { params: { token: string } }) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: review } = await supabase
     .from('fixture_reviews')
