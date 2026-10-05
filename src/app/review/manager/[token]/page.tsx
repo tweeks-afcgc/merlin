@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { teamDisplayName } from '@/lib/teamUtils'
 import ManagerReviewForm from './ManagerReviewForm'
 
 export const dynamic = 'force-dynamic'
@@ -27,15 +28,18 @@ export default async function ManagerReviewPage({ params }: { params: Promise<{ 
     )
   }
 
-  const { data: fixture } = await supabase
-    .from('fixtures')
-    .select('id, date, referee_id, volunteer_referee_id, teams(name, nickname), club_teams(name, clubs(name)), profiles:referee_id(full_name), volunteers:volunteer_referee_id(first_name, last_name)')
-    .eq('id', review.fixture_id)
-    .single()
+  const [{ data: fixture }, { data: seasons }] = await Promise.all([
+    supabase
+      .from('fixtures')
+      .select('id, date, referee_id, volunteer_referee_id, teams(name, type, founding_age_group, founding_season_id, age_group, nickname), club_teams(name, clubs(name)), profiles:referee_id(full_name), volunteers:volunteer_referee_id(first_name, last_name)')
+      .eq('id', review.fixture_id)
+      .single(),
+    supabase.from('seasons').select('id, name, start_date, is_current'),
+  ])
 
   const team = (fixture as any)?.teams as any
   const opponent = (fixture as any)?.club_teams as any
-  const teamName = team?.nickname || team?.name || 'AFC Green Court'
+  const teamName = team ? teamDisplayName(team, seasons ?? []) : 'AFC Green Court'
   const opponentName = opponent ? [opponent.clubs?.name, opponent.name].filter(Boolean).join(' ').replace(/^\[Internal\]\s*/, '') : 'Opponent'
 
   const refProfile = (fixture as any)?.profiles as any

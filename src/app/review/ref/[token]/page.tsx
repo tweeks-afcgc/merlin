@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { teamDisplayName } from '@/lib/teamUtils'
 import RefReviewForm from './RefReviewForm'
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +12,7 @@ export default async function RefReviewPage({ params }: { params: Promise<{ toke
   const { token } = await params
   const supabase = createAdminClient()
 
-  const { data: review, error: reviewError } = await supabase
+  const { data: review } = await supabase
     .from('fixture_reviews')
     .select('id, ref_submitted_at, ref_token, fixture_id')
     .eq('ref_token', token)
@@ -22,23 +23,23 @@ export default async function RefReviewPage({ params }: { params: Promise<{ toke
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow p-8 max-w-sm w-full text-center">
           <p className="text-gray-500 text-sm">This review link is not valid.</p>
-          <p className="text-gray-400 text-xs mt-2 font-mono break-all">token: {token ?? 'undefined'}</p>
-          <p className="text-gray-400 text-xs mt-1 font-mono break-all">error: {reviewError?.message ?? 'none'}</p>
-          <p className="text-gray-400 text-xs mt-1 font-mono">key set: {process.env.SUPABASE_SERVICE_ROLE_KEY ? 'yes' : 'no'}</p>
         </div>
       </div>
     )
   }
 
-  const { data: fixture } = await supabase
-    .from('fixtures')
-    .select('id, date, teams(name, type, founding_age_group, founding_season_id, age_group, nickname), club_teams(name, clubs(name))')
-    .eq('id', review.fixture_id)
-    .single()
+  const [{ data: fixture }, { data: seasons }] = await Promise.all([
+    supabase
+      .from('fixtures')
+      .select('id, date, teams(name, type, founding_age_group, founding_season_id, age_group, nickname), club_teams(name, clubs(name))')
+      .eq('id', review.fixture_id)
+      .single(),
+    supabase.from('seasons').select('id, name, start_date, is_current'),
+  ])
 
   const team = (fixture as any)?.teams as any
   const opponent = (fixture as any)?.club_teams as any
-  const teamName = team?.nickname || team?.name || 'AFC Green Court'
+  const teamName = team ? teamDisplayName(team, seasons ?? []) : 'AFC Green Court'
   const opponentName = opponent ? [opponent.clubs?.name, opponent.name].filter(Boolean).join(' ').replace(/^\[Internal\]\s*/, '') : 'Opponent'
 
   if (review.ref_submitted_at) {

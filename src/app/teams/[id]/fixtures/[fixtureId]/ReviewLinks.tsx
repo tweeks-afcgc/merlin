@@ -115,7 +115,7 @@ export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; 
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-semibold text-gray-600">Referee review link</p>
+                  <p className="text-xs font-semibold text-gray-600">Referee Feedback</p>
                   {refSubmitted
                     ? <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Submitted</span>
                     : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">Pending</span>
@@ -136,7 +136,7 @@ export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; 
             <div className="border-t border-gray-50 pt-4">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-semibold text-gray-600">Manager review link</p>
+                  <p className="text-xs font-semibold text-gray-600">Manager Feedback</p>
                   {managerSubmitted
                     ? <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Submitted</span>
                     : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">Pending</span>
