@@ -79,7 +79,7 @@ export default async function RefReviewPage({ params }: { params: Promise<{ toke
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4 mb-6">
           <p className="text-sm font-semibold text-gray-900 mb-1">Hello, {refFirstName}</p>
-          <p className="text-sm text-gray-500 leading-relaxed">Thank you for officiating today. We take our teams' conduct seriously and use referee feedback to ensure our players, coaches, and supporters are representing the club well. It would mean a lot if you could take a moment to complete the questions below.</p>
+          <p className="text-sm text-gray-500 leading-relaxed">Thank you for officiating the above fixture. We take our teams' conduct seriously and use referee feedback to ensure our players, coaches, and supporters are representing the club well. It would mean a lot if you could take a moment to complete the questions below.</p>
           <p className="text-xs text-gray-400 mt-2">If you've received this link in error, please ignore it.</p>
         </div>
         <RefReviewForm token={token} teamName={teamName} />
