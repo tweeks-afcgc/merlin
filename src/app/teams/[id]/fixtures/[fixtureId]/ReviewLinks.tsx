@@ -34,8 +34,8 @@ function ResetButton({ label, onReset }: { label: string; onReset: () => Promise
 
   if (confirming) {
     return (
-      <div className="flex items-center gap-2 mt-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-        <p className="text-xs text-amber-800 flex-1">This will permanently delete the submitted review. This cannot be undone. Are you sure?</p>
+      <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <p className="text-xs text-amber-800 flex-1">This will permanently delete the submitted review. Are you sure?</p>
         <button type="button" onClick={handleConfirm} disabled={resetting}
           className="text-xs font-semibold px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition disabled:opacity-50">
           {resetting ? '…' : 'Reset'}
@@ -50,8 +50,8 @@ function ResetButton({ label, onReset }: { label: string; onReset: () => Promise
 
   return (
     <button type="button" onClick={() => setConfirming(true)}
-      className="text-xs text-gray-400 hover:text-red-600 transition mt-1">
-      Reset {label}
+      className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 transition flex-shrink-0">
+      Reset
     </button>
   )
 }
@@ -67,7 +67,6 @@ export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; 
 
   useEffect(() => {
     async function load() {
-      // Load existing review status
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
       const { data } = await supabase
@@ -112,8 +111,8 @@ export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; 
         ) : (
           <div className="space-y-4">
             {/* Ref review link */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-semibold text-gray-600">Referee Feedback</p>
                   {refSubmitted
@@ -121,20 +120,23 @@ export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; 
                     : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">Pending</span>
                   }
                 </div>
-                <CopyButton text={`${origin}/review/ref/${review.ref_token}`} label="Copy link" />
+                {refSubmitted ? (
+                  <ResetButton label="referee review" onReset={async () => {
+                    await resetRefReview(fixtureId)
+                    setRefSubmitted(false)
+                  }} />
+                ) : (
+                  <CopyButton text={`${origin}/review/ref/${review.ref_token}`} label="Copy link" />
+                )}
               </div>
-              <p className="text-xs text-gray-400 font-mono truncate">{origin}/review/ref/{review.ref_token}</p>
-              {refSubmitted && (
-                <ResetButton label="referee review" onReset={async () => {
-                  await resetRefReview(fixtureId)
-                  setRefSubmitted(false)
-                }} />
+              {!refSubmitted && (
+                <p className="text-xs text-gray-400 font-mono truncate">{origin}/review/ref/{review.ref_token}</p>
               )}
             </div>
 
             {/* Manager review link */}
-            <div className="border-t border-gray-50 pt-4">
-              <div className="flex items-center justify-between mb-1.5">
+            <div className="border-t border-gray-50 pt-4 space-y-2">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-semibold text-gray-600">Manager Feedback</p>
                   {managerSubmitted
@@ -142,14 +144,17 @@ export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; 
                     : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">Pending</span>
                   }
                 </div>
-                <CopyButton text={`${origin}/review/manager/${review.manager_token}`} label="Copy link" />
+                {managerSubmitted ? (
+                  <ResetButton label="manager review" onReset={async () => {
+                    await resetManagerReview(fixtureId)
+                    setManagerSubmitted(false)
+                  }} />
+                ) : (
+                  <CopyButton text={`${origin}/review/manager/${review.manager_token}`} label="Copy link" />
+                )}
               </div>
-              <p className="text-xs text-gray-400 font-mono truncate">{origin}/review/manager/{review.manager_token}</p>
-              {managerSubmitted && (
-                <ResetButton label="manager review" onReset={async () => {
-                  await resetManagerReview(fixtureId)
-                  setManagerSubmitted(false)
-                }} />
+              {!managerSubmitted && (
+                <p className="text-xs text-gray-400 font-mono truncate">{origin}/review/manager/{review.manager_token}</p>
               )}
             </div>
           </div>

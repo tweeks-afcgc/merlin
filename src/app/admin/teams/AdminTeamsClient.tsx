@@ -261,9 +261,6 @@ function TeamGroup({ label, teams, expanded, onToggle, teamsWithReviews }: {
                 <span className="text-sm font-medium text-gray-900">{team.display_name}</span>
                 <div className="flex items-center gap-4">
                   <Link href={`/teams/${team.id}/fixtures`} className="text-xs text-gray-400 hover:text-gray-700 hover:underline">Fixtures</Link>
-                  {teamsWithReviews.includes(team.id) && (
-                    <Link href={`/admin/teams/${team.id}/reviews`} className="text-xs text-blue-700 hover:underline">Reviews</Link>
-                  )}
                   <Link href={`/admin/teams/${team.id}/edit`} className="text-xs text-red-800 hover:underline">Edit</Link>
                   <button
                     type="button"

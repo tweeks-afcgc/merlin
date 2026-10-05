@@ -214,12 +214,13 @@ function TeamCardBody({ team }: { team: any }) {
   )
 }
 
-export default function TeamsClient({ teams, isAdmin, venueNames, formats, readOnly = false }: {
+export default function TeamsClient({ teams, isAdmin, venueNames, formats, readOnly = false, teamsWithReviews = [] }: {
   teams: any[]
   isAdmin: boolean
   venueNames: string[]
   formats: string[]
   readOnly?: boolean
+  teamsWithReviews?: string[]
 }) {
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [filterGender, setFilterGender] = useState<FilterGender>('all')
@@ -279,16 +280,29 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats, readO
             )}
 
             {!readOnly && isAdmin && (
-              <Link
-                href={`/admin/teams/${team.id}/edit?from=/teams`}
-                className="absolute top-3.5 right-4 p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition"
-                title="Edit team"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </Link>
+              <div className="absolute top-3.5 right-4 flex items-center gap-1">
+                {teamsWithReviews.includes(team.id) && (
+                  <Link
+                    href={`/admin/teams/${team.id}/reviews`}
+                    className="p-1.5 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                    title="View reviews"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </Link>
+                )}
+                <Link
+                  href={`/admin/teams/${team.id}/edit?from=/teams`}
+                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition"
+                  title="Edit team"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </Link>
+              </div>
             )}
           </div>
         ))}

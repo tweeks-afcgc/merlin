@@ -30,7 +30,9 @@ export default async function TeamsPage() {
 
   const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).single()
 
-  const [teamsRes, seasonsRes, rolesRes, venuesRes, compsRes, trainingRes, sponsorsRes] = await Promise.all([
+  const isAdmin = profile?.role === 'admin'
+
+  const [teamsRes, seasonsRes, rolesRes, venuesRes, compsRes, trainingRes, sponsorsRes, reviewsRes] = await Promise.all([
     supabase.from('teams').select('*'),
     supabase.from('seasons').select('id, name, start_date, is_current').order('start_date', { ascending: true }),
     supabase.from('volunteer_roles').select('team_id, role_name, volunteers(first_name, last_name)').eq('role_type', 'team'),
@@ -38,6 +40,7 @@ export default async function TeamsPage() {
     supabase.from('team_competitions').select('team_id, type, name, abbr_name, division, season_id'),
     supabase.from('training_slots').select('team_id, day_of_week, frequency, start_time, end_time, venues(name)').order('created_at'),
     supabase.from('team_sponsors').select('team_id, name, season_id'),
+    isAdmin ? supabase.from('fixture_reviews').select('fixtures!inner(team_id)').not('ref_submitted_at', 'is', null) : Promise.resolve({ data: [] }),
   ])
 
   if (teamsRes.error || seasonsRes.error) {
@@ -58,6 +61,7 @@ export default async function TeamsPage() {
   const competitionsData = compsRes.data ?? []
   const trainingData = trainingRes.data ?? []
   const sponsorsData = sponsorsRes.data ?? []
+  const teamsWithReviews = [...new Set((reviewsRes.data ?? []).map((r: any) => r.fixtures?.team_id).filter(Boolean))]
 
   const currentSeasonId = seasons.find(s => s.is_current)?.id ?? null
 
@@ -117,8 +121,6 @@ export default async function TeamsPage() {
       return (ni === -1 ? 99 : ni) - (nj === -1 ? 99 : nj)
     })
 
-  const isAdmin = profile?.role === 'admin'
-
   // Unique venue names for filter (only teams with a home ground)
   const venueNames = [...new Set(teams.map(t => t.venueName).filter(Boolean) as string[])].sort()
 
@@ -133,7 +135,7 @@ export default async function TeamsPage() {
     <AppShell userName={profile?.full_name ?? null} isAdmin={isAdmin}>
       <div className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Teams</h1>
-        <TeamsClient teams={teams} isAdmin={isAdmin} venueNames={venueNames} formats={formats} />
+        <TeamsClient teams={teams} isAdmin={isAdmin} venueNames={venueNames} formats={formats} teamsWithReviews={teamsWithReviews} />
       </div>
     </AppShell>
   )
