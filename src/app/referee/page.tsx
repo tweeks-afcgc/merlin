@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import RefDropdown from './RefDropdown'
@@ -195,13 +196,26 @@ export default async function RefereeDashboardPage({
             <h1 className="text-2xl font-bold text-gray-900">Referee</h1>
             <p className="text-sm text-gray-400 mt-1">Next 14 days.</p>
           </div>
-          {canSeeDropdown && referees.length > 0 && (
-            <RefDropdown
-              referees={referees}
-              selectedId={selectedRefId}
-              selfId={isSelfReferee ? user.id : null}
-            />
-          )}
+          <div className="flex items-center gap-2">
+            {isAdmin && isVolunteerRef && selectedVolId && (
+              <Link
+                href={`/admin/referees/${selectedVolId}/reviews`}
+                className="p-1.5 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                title="View reviews"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </Link>
+            )}
+            {canSeeDropdown && referees.length > 0 && (
+              <RefDropdown
+                referees={referees}
+                selectedId={selectedRefId}
+                selfId={isSelfReferee ? user.id : null}
+              />
+            )}
+          </div>
         </div>
 
         {/* Section 1: Assigned fixtures */}
