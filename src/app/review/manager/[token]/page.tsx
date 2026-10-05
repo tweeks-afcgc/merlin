@@ -7,13 +7,14 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export default async function ManagerReviewPage({ params }: { params: { token: string } }) {
+export default async function ManagerReviewPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
   const supabase = createAdminClient()
 
   const { data: review } = await supabase
     .from('fixture_reviews')
     .select('id, manager_submitted_at, fixture_id')
-    .eq('manager_token', params.token)
+    .eq('manager_token', token)
     .single()
 
   if (!review) {
@@ -73,7 +74,7 @@ export default async function ManagerReviewPage({ params }: { params: { token: s
           {fixture?.date && <p className="text-xs text-gray-400 mt-0.5">{formatDate(fixture.date as string)}</p>}
           <p className="text-xs text-gray-500 mt-1">Referee: <span className="font-medium">{refName}</span></p>
         </div>
-        <ManagerReviewForm token={params.token} refName={refName} />
+        <ManagerReviewForm token={token} refName={refName} />
       </div>
     </div>
   )

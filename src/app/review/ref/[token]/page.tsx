@@ -7,13 +7,14 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export default async function RefReviewPage({ params }: { params: { token: string } }) {
+export default async function RefReviewPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
   const supabase = createAdminClient()
 
   const { data: review } = await supabase
     .from('fixture_reviews')
     .select('id, ref_submitted_at, ref_token, fixture_id')
-    .eq('ref_token', params.token)
+    .eq('ref_token', token)
     .single()
 
   if (!review) {
@@ -66,7 +67,7 @@ export default async function RefReviewPage({ params }: { params: { token: strin
           <p className="text-sm font-semibold text-gray-900">{teamName} vs {opponentName}</p>
           {fixture?.date && <p className="text-xs text-gray-400 mt-0.5">{formatDate(fixture.date as string)}</p>}
         </div>
-        <RefReviewForm token={params.token} teamName={teamName} />
+        <RefReviewForm token={token} teamName={teamName} />
       </div>
     </div>
   )
