@@ -126,33 +126,40 @@ export default async function TeamReviewsPage({ params }: { params: Promise<{ id
             </div>
 
             {/* Individual reviews */}
-            <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
               {rows.map(r => (
-                <div key={r.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">vs {r.opponent}</p>
-                      <p className="text-xs text-gray-400">{formatDate(r.date)}</p>
-                    </div>
+                <div key={r.id} className="flex items-center gap-4 px-4 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">vs {r.opponent}</p>
+                    <p className="text-xs text-gray-400">{formatDate(r.date)}</p>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                  <div className="flex items-center gap-3 flex-shrink-0">
                     {[
-                      { label: 'Coaches', val: r.coaches },
-                      { label: 'Spectators', val: r.spectators },
-                      { label: 'Players', val: r.players },
-                      { label: 'Experience', val: r.experience },
+                      { label: 'Co', val: r.coaches },
+                      { label: 'Sp', val: r.spectators },
+                      { label: 'Pl', val: r.players },
+                      { label: 'Ex', val: r.experience },
                     ].map(({ label, val }) => (
-                      <div key={label} className="bg-gray-50 rounded-lg px-3 py-2 text-center">
-                        <p className="text-xs text-gray-400">{label}</p>
-                        <p className={`text-lg font-bold ${val === null ? 'text-gray-300' : val >= 4 ? 'text-green-600' : val >= 3 ? 'text-amber-500' : 'text-red-600'}`}>
-                          {val ?? '—'}<span className="text-xs font-normal text-gray-400">/5</span>
+                      <div key={label} className="text-center w-8">
+                        <p className="text-xs text-gray-400 leading-none mb-0.5">{label}</p>
+                        <p className={`text-sm font-bold leading-none ${val === null ? 'text-gray-300' : val >= 4 ? 'text-green-600' : val >= 3 ? 'text-amber-500' : 'text-red-600'}`}>
+                          {val ?? '—'}
                         </p>
                       </div>
                     ))}
+                    {r.comments ? (
+                      <div className="relative group w-5 flex-shrink-0">
+                        <svg className="w-4 h-4 text-gray-300 hover:text-gray-500 cursor-default transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <div className="absolute right-0 top-6 z-20 hidden group-hover:block w-64 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg">
+                          <p className="italic">"{r.comments}"</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-5 flex-shrink-0" />
+                    )}
                   </div>
-                  {r.comments && (
-                    <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-4 py-3 italic">"{r.comments}"</p>
-                  )}
                 </div>
               ))}
             </div>
