@@ -175,9 +175,13 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
         {f.confirmed && f.venue === 'home' && (
           <EmailModal fixture={f} />
         )}
-        {canConfirm && (
+        {f.goalsFor !== null && f.goalsAgainst !== null ? (
+          <span className={`text-sm font-bold tabular-nums ${f.goalsFor > f.goalsAgainst ? 'text-green-700' : f.goalsFor < f.goalsAgainst ? 'text-red-600' : 'text-amber-600'}`}>
+            {f.goalsFor} - {f.goalsAgainst}
+          </span>
+        ) : canConfirm ? (
           <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (needsTime || needsPitch)} />
-        )}
+        ) : null}
       </div>
     </div>
   )
