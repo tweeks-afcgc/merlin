@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
-import AdminNav from '@/components/AdminNav'
 import { teamDisplayName } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
@@ -68,7 +67,6 @@ export default async function RefereeReviewsPage({ params }: { params: Promise<{
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin>
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <AdminNav />
         <div className="mb-6">
           <Link href="/referee" className="text-xs text-gray-400 hover:text-gray-600 transition">← Referee</Link>
           <h1 className="text-xl font-bold text-gray-900 mt-2">{refName}</h1>
