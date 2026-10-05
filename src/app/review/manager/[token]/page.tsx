@@ -12,16 +12,7 @@ export default async function ManagerReviewPage({ params }: { params: { token: s
 
   const { data: review } = await supabase
     .from('fixture_reviews')
-    .select(`
-      id, manager_submitted_at,
-      fixtures(
-        id, date, referee_id, volunteer_referee_id,
-        teams(name, nickname),
-        club_teams(name, clubs(name)),
-        profiles:referee_id(full_name),
-        volunteers:volunteer_referee_id(first_name, last_name)
-      )
-    `)
+    .select('id, manager_submitted_at, fixture_id')
     .eq('manager_token', params.token)
     .single()
 
@@ -35,14 +26,19 @@ export default async function ManagerReviewPage({ params }: { params: { token: s
     )
   }
 
-  const fixture = review.fixtures as any
-  const team = fixture?.teams as any
-  const opponent = fixture?.club_teams as any
+  const { data: fixture } = await supabase
+    .from('fixtures')
+    .select('id, date, referee_id, volunteer_referee_id, teams(name, nickname), club_teams(name, clubs(name)), profiles:referee_id(full_name), volunteers:volunteer_referee_id(first_name, last_name)')
+    .eq('id', review.fixture_id)
+    .single()
+
+  const team = (fixture as any)?.teams as any
+  const opponent = (fixture as any)?.club_teams as any
   const teamName = team?.nickname || team?.name || 'AFC Green Court'
   const opponentName = opponent ? [opponent.clubs?.name, opponent.name].filter(Boolean).join(' ').replace(/^\[Internal\]\s*/, '') : 'Opponent'
 
-  const refProfile = fixture?.profiles as any
-  const refVol = fixture?.volunteers as any
+  const refProfile = (fixture as any)?.profiles as any
+  const refVol = (fixture as any)?.volunteers as any
   const refName = refProfile?.full_name
     ?? (refVol ? `${refVol.first_name ?? ''} ${refVol.last_name ?? ''}`.trim() : null)
     ?? 'the referee'
@@ -74,7 +70,7 @@ export default async function ManagerReviewPage({ params }: { params: { token: s
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4 mb-6">
           <p className="text-sm font-semibold text-gray-900">{teamName} vs {opponentName}</p>
-          {fixture?.date && <p className="text-xs text-gray-400 mt-0.5">{formatDate(fixture.date)}</p>}
+          {fixture?.date && <p className="text-xs text-gray-400 mt-0.5">{formatDate(fixture.date as string)}</p>}
           <p className="text-xs text-gray-500 mt-1">Referee: <span className="font-medium">{refName}</span></p>
         </div>
         <ManagerReviewForm token={params.token} refName={refName} />

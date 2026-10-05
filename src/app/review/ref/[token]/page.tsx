@@ -12,14 +12,7 @@ export default async function RefReviewPage({ params }: { params: { token: strin
 
   const { data: review } = await supabase
     .from('fixture_reviews')
-    .select(`
-      id, ref_submitted_at, ref_token,
-      fixtures(
-        id, date, venue,
-        teams(name, type, founding_age_group, founding_season_id, age_group, nickname),
-        club_teams(name, clubs(name))
-      )
-    `)
+    .select('id, ref_submitted_at, ref_token, fixture_id')
     .eq('ref_token', params.token)
     .single()
 
@@ -33,9 +26,14 @@ export default async function RefReviewPage({ params }: { params: { token: strin
     )
   }
 
-  const fixture = review.fixtures as any
-  const team = fixture?.teams as any
-  const opponent = fixture?.club_teams as any
+  const { data: fixture } = await supabase
+    .from('fixtures')
+    .select('id, date, teams(name, type, founding_age_group, founding_season_id, age_group, nickname), club_teams(name, clubs(name))')
+    .eq('id', review.fixture_id)
+    .single()
+
+  const team = (fixture as any)?.teams as any
+  const opponent = (fixture as any)?.club_teams as any
   const teamName = team?.nickname || team?.name || 'AFC Green Court'
   const opponentName = opponent ? [opponent.clubs?.name, opponent.name].filter(Boolean).join(' ').replace(/^\[Internal\]\s*/, '') : 'Opponent'
 
@@ -66,7 +64,7 @@ export default async function RefReviewPage({ params }: { params: { token: strin
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4 mb-6">
           <p className="text-sm font-semibold text-gray-900">{teamName} vs {opponentName}</p>
-          {fixture?.date && <p className="text-xs text-gray-400 mt-0.5">{formatDate(fixture.date)}</p>}
+          {fixture?.date && <p className="text-xs text-gray-400 mt-0.5">{formatDate(fixture.date as string)}</p>}
         </div>
         <RefReviewForm token={params.token} teamName={teamName} />
       </div>
