@@ -81,10 +81,10 @@ export default async function RefereeReviewsPage({ params }: { params: { id: str
             {/* Average */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6 flex items-center gap-6">
               <div className="text-center">
-                <p className={`text-4xl font-bold ${avgScore === null ? 'text-gray-300' : avgScore >= 7 ? 'text-green-600' : avgScore >= 5 ? 'text-amber-500' : 'text-red-600'}`}>
+                <p className={`text-4xl font-bold ${avgScore === null ? 'text-gray-300' : avgScore >= 4 ? 'text-green-600' : avgScore >= 3 ? 'text-amber-500' : 'text-red-600'}`}>
                   {avgScore ?? '—'}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">avg / 10</p>
+                <p className="text-xs text-gray-400 mt-1">avg / 5</p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-700">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</p>
@@ -102,10 +102,10 @@ export default async function RefereeReviewsPage({ params }: { params: { id: str
                       <p className="text-xs text-gray-400">{formatDate(r.date)}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <span className={`text-2xl font-bold ${r.score === null ? 'text-gray-300' : r.score >= 7 ? 'text-green-600' : r.score >= 5 ? 'text-amber-500' : 'text-red-600'}`}>
+                      <span className={`text-2xl font-bold ${r.score === null ? 'text-gray-300' : r.score >= 4 ? 'text-green-600' : r.score >= 3 ? 'text-amber-500' : 'text-red-600'}`}>
                         {r.score ?? '—'}
                       </span>
-                      <span className="text-xs text-gray-400">/10</span>
+                      <span className="text-xs text-gray-400">/5</span>
                     </div>
                   </div>
                   {r.comments && (

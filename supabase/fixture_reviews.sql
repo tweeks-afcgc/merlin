@@ -13,7 +13,7 @@ create table if not exists fixture_reviews (
   ref_comments text,
   -- Manager's review of the referee
   manager_submitted_at timestamptz,
-  manager_ref_score smallint check (manager_ref_score between 1 and 10),
+  manager_ref_score smallint check (manager_ref_score between 1 and 5),
   manager_comments text,
   created_at timestamptz not null default now()
 );

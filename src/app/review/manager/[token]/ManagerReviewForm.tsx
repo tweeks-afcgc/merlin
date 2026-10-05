@@ -3,6 +3,34 @@
 import { useState } from 'react'
 import { submitManagerReview } from '../../actions'
 
+function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          className="p-0.5 transition"
+        >
+          <svg
+            className={`w-10 h-10 transition ${(hover || value) >= n ? 'text-amber-400' : 'text-gray-200'}`}
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const LABELS = ['', 'Poor', 'Below average', 'Average', 'Good', 'Excellent']
+
 export default function ManagerReviewForm({ token, refName }: { token: string; refName: string }) {
   const [score, setScore] = useState(0)
   const [comments, setComments] = useState('')
@@ -12,7 +40,7 @@ export default function ManagerReviewForm({ token, refName }: { token: string; r
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!score) { setError('Please give a score out of 10.'); return }
+    if (!score) { setError('Please give a star rating.'); return }
     setSubmitting(true)
     setError(null)
     const result = await submitManagerReview(token, { score, comments })
@@ -34,37 +62,19 @@ export default function ManagerReviewForm({ token, refName }: { token: string; r
     )
   }
 
-  const scoreLabel = score === 0 ? '' : score <= 3 ? 'Poor' : score <= 5 ? 'Below average' : score <= 7 ? 'Good' : score <= 9 ? 'Very good' : 'Excellent'
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <p className="text-sm text-gray-600">Please rate <strong>{refName}</strong>'s performance today.</p>
-
-      {/* Score out of 10 */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-        <p className="text-sm font-semibold text-gray-900 mb-3">Overall score out of 10</p>
-        <div className="flex flex-wrap gap-2">
-          {[1,2,3,4,5,6,7,8,9,10].map(n => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setScore(n)}
-              className={`w-10 h-10 rounded-lg text-sm font-bold transition border ${
-                score === n
-                  ? 'bg-red-800 text-white border-red-800'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-red-300 hover:text-red-800'
-              }`}
-            >
-              {n}
-            </button>
-          ))}
+        <p className="text-sm font-semibold text-gray-900 mb-0.5">Overall performance</p>
+        <p className="text-xs text-gray-400 mb-3">Rate <strong>{refName}</strong>'s overall performance today</p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <StarRating value={score} onChange={setScore} />
+          {score > 0 && (
+            <span className="text-sm font-medium text-amber-600">{LABELS[score]}</span>
+          )}
         </div>
-        {score > 0 && (
-          <p className="text-sm font-medium text-red-800 mt-3">{score}/10 — {scoreLabel}</p>
-        )}
       </div>
 
-      {/* Comments */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
         <label className="block text-sm font-semibold text-gray-900 mb-1">Comments <span className="font-normal text-gray-400">(optional)</span></label>
         <textarea
