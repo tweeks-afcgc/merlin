@@ -50,7 +50,7 @@ type GenderFilter = 'all' | 'mixed' | 'girls'
 type VenueFilter = 'all' | 'home' | 'away'
 type DateRange = 14 | 30 | 'all'
 
-// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- helpers ---
 
 function formatDateLong(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -93,7 +93,7 @@ function timeSort(a: Fixture, b: Fixture) {
   return a.teamSortKey.localeCompare(b.teamSortKey)
 }
 
-// â”€â”€â”€ sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- sub-components ---
 
 function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -150,13 +150,13 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
           {showTeam && (
             <p className="text-xs text-gray-500 leading-snug truncate">vs {f.opponentName}</p>
           )}
-          {/* Warnings â€” desktop always shown, mobile only for blocking issues */}
+          {/* Warnings - desktop always shown, mobile only for blocking issues */}
           {hasWarning && (
             <p className="text-xs text-amber-600 font-medium leading-snug">
               {needsTime ? 'Kick off TBC' : 'No pitch assigned'}
             </p>
           )}
-          {/* Referee â€” only show if assigned, league-assigned, requested, or required but missing */}
+          {/* Referee - only show if assigned, league-assigned, requested, or required but missing */}
           {f.refereeName ? (
             <p className="hidden sm:block text-xs text-gray-400 leading-snug">Ref: {f.refereeName}</p>
           ) : f.leagueAssignedReferee ? (
@@ -199,7 +199,7 @@ function DateSelect({ dates, value, onChange }: { dates: string[]; value: string
   )
 }
 
-// â”€â”€â”€ Schedule view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Schedule view ---
 
 function ScheduleView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: boolean }) {
   const byDate = new Map<string, Fixture[]>()
@@ -264,7 +264,7 @@ function ScheduleView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfir
   )
 }
 
-// â”€â”€â”€ Team view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Team view ---
 
 function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canConfirm: boolean; dates: string[] }) {
   const [selectedDate, setSelectedDate] = useState(dates[0] ?? '')
@@ -288,7 +288,7 @@ function TeamView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCon
   )
 }
 
-// â”€â”€â”€ Pitch view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Pitch view ---
 
 function PitchView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canConfirm: boolean; dates: string[] }) {
   const [selectedDate, setSelectedDate] = useState(dates[0] ?? '')
@@ -349,7 +349,7 @@ function PitchView({ fixtures, canConfirm, dates }: { fixtures: Fixture[]; canCo
   )
 }
 
-// â”€â”€â”€ View dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- View dropdown ---
 
 function ViewDropdown({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
   const [open, setOpen] = useState(false)
@@ -391,7 +391,7 @@ function ViewDropdown({ view, onChange }: { view: ViewMode; onChange: (v: ViewMo
   )
 }
 
-// â”€â”€â”€ Mobile filter panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Mobile filter panel ---
 
 function MobileFilters({
   dateRange, setDateRange,
@@ -474,15 +474,15 @@ function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: b
   const dates = [...byDate.keys()]
 
   return (
-    <div className=”space-y-6”>
+    <div className="space-y-6">
       {dates.map(date => {
         const dayFixtures = byDate.get(date)!.slice().sort(timeSort)
         return (
           <div key={date}>
-            <div className=”inline-flex items-center bg-gray-700 text-white text-sm font-bold px-4 py-2 rounded-lg mb-3”>
+            <div className="inline-flex items-center bg-gray-700 text-white text-sm font-bold px-4 py-2 rounded-lg mb-3">
               {formatDateLong(date)}
             </div>
-            <div className=”bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50”>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
               {dayFixtures.map(f => {
                 const hasResult = f.goalsFor !== null && f.goalsAgainst !== null
                 const gf = f.goalsFor ?? 0
@@ -492,26 +492,26 @@ function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: b
                   : 'text-gray-300'
 
                 return (
-                  <div key={f.id} className=”flex items-center gap-3 px-4 py-3”>
-                    <div className=”flex-1 min-w-0”>
-                      <p className=”text-sm font-semibold text-gray-900 truncate”>{f.teamName}</p>
-                      <p className=”text-xs text-gray-400 truncate”>
+                  <div key={f.id} className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{f.teamName}</p>
+                      <p className="text-xs text-gray-400 truncate">
                         vs {f.opponentName}
-                        {f.cancelled && <span className=”ml-2 text-red-500 font-medium”>Cancelled</span>}
+                        {f.cancelled && <span className="ml-2 text-red-500 font-medium">Cancelled</span>}
                       </p>
                     </div>
-                    <div className=”flex items-center gap-3 flex-shrink-0”>
+                    <div className="flex items-center gap-3 flex-shrink-0">
                       {hasResult ? (
                         <span className={`text-sm font-bold tabular-nums ${resultColour}`}>
                           {gf} - {ga}
                         </span>
                       ) : (
-                        <span className=”text-sm text-gray-300”>— - —</span>
+                        <span className="text-sm text-gray-300">- - -</span>
                       )}
                       {!f.cancelled && canConfirm && (
                         <Link
                           href={`/teams/${f.team_id}/fixtures/${f.id}/result`}
-                          className=”text-xs font-semibold px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition whitespace-nowrap”
+                          className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition whitespace-nowrap"
                         >
                           {hasResult ? 'Edit result' : 'Enter result'}
                         </Link>
@@ -528,7 +528,7 @@ function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: b
   )
 }
 
-// â”€â”€â”€ Main export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Main export ---
 
 export default function FixturesList({
   fixtures,
