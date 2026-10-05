@@ -32,22 +32,21 @@ export default async function RefereeReviewsPage({ params }: { params: Promise<{
     .eq('id', id)
     .single()
 
-  if (!volunteer || !(volunteer as any).profile_id) redirect('/admin/volunteers')
+  if (!volunteer) redirect('/referee')
 
-  const profileId = (volunteer as any).profile_id
   const refName = `${volunteer.first_name} ${volunteer.last_name}`.trim()
 
-  // Get all fixtures where this profile is assigned referee, that have a submitted manager review
+  // Fetch reviews by volunteer_referee_id (how volunteer refs are stored on fixtures)
   const { data: rows } = await supabase
     .from('fixture_reviews')
     .select(`
       id, manager_submitted_at, manager_ref_score, manager_comments,
-      fixtures!inner(id, date, team_id, referee_id,
+      fixtures!inner(id, date, team_id, volunteer_referee_id,
         teams(name, nickname, type, founding_age_group, founding_season_id, age_group)
       )
     `)
     .not('manager_submitted_at', 'is', null)
-    .eq('fixtures.referee_id', profileId)
+    .eq('fixtures.volunteer_referee_id', id)
     .order('manager_submitted_at', { ascending: false })
 
   const reviews = (rows ?? []).map((r: any) => {
@@ -68,7 +67,7 @@ export default async function RefereeReviewsPage({ params }: { params: Promise<{
       <div className="max-w-3xl mx-auto px-4 py-8">
         <AdminNav />
         <div className="mb-6">
-          <Link href="/admin/volunteers" className="text-xs text-gray-400 hover:text-gray-600 transition">← Admin: Volunteers</Link>
+          <Link href="/referee" className="text-xs text-gray-400 hover:text-gray-600 transition">← Referee</Link>
           <h1 className="text-xl font-bold text-gray-900 mt-2">{refName}</h1>
           <p className="text-sm text-gray-400">Manager reviews — ratings from team managers</p>
         </div>

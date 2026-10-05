@@ -141,6 +141,7 @@ export default async function RefereeDashboardPage({
     { data: seasons },
     { data: myRequests },
     { data: myAssignedForClash },
+    { count: refReviewCount },
   ] = await Promise.all([
     selectedRefId
       ? isVolunteerRef
@@ -173,6 +174,12 @@ export default async function RefereeDashboardPage({
           .eq('referee_id', user.id)
           .gte('date', today).lte('date', in14Str)
       : Promise.resolve({ data: [] }),
+    isAdmin && isVolunteerRef && selectedVolId
+      ? supabase.from('fixture_reviews')
+          .select('id, fixtures!inner(volunteer_referee_id)', { count: 'exact', head: true })
+          .not('manager_submitted_at', 'is', null)
+          .eq('fixtures.volunteer_referee_id', selectedVolId)
+      : Promise.resolve({ count: 0, data: null, error: null }),
   ])
 
   const myRequestedFixtureIds = new Set((myRequests ?? []).map((r: any) => r.fixture_id))
@@ -197,7 +204,7 @@ export default async function RefereeDashboardPage({
             <p className="text-sm text-gray-400 mt-1">Next 14 days.</p>
           </div>
           <div className="flex items-center gap-2">
-            {isAdmin && isVolunteerRef && selectedVolId && (
+            {isAdmin && isVolunteerRef && selectedVolId && (refReviewCount ?? 0) > 0 && (
               <Link
                 href={`/admin/referees/${selectedVolId}/reviews`}
                 className="p-1.5 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-50 transition"
