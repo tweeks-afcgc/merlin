@@ -22,6 +22,7 @@ export default async function AdminDashboardPage() {
     { count: venueCount },
     { count: playerCount },
     { count: volunteerCount },
+    { data: pendingReviewRows },
   ] = await Promise.all([
     supabase.from('seasons').select('*').eq('is_current', true).maybeSingle(),
     supabase.from('teams').select('id, type'),
@@ -30,10 +31,22 @@ export default async function AdminDashboardPage() {
     supabase.from('venues').select('*', { count: 'exact', head: true }),
     supabase.from('players').select('*', { count: 'exact', head: true }),
     supabase.from('volunteers').select('*', { count: 'exact', head: true }),
+    supabase
+      .from('fixture_reviews')
+      .select('id, ref_submitted_at, manager_submitted_at, fixtures!inner(date)')
+      .or('ref_submitted_at.is.null,manager_submitted_at.is.null')
+      .lt('fixtures.date', new Date().toISOString().split('T')[0]),
   ])
 
   const seniorCount = teams?.filter(t => t.type === 'senior').length ?? 0
   const juniorCount = teams?.filter(t => t.type === 'junior').length ?? 0
+
+  // Count individual pending feedback links (each row can have up to 2 pending)
+  let pendingCount = 0
+  for (const r of pendingReviewRows ?? []) {
+    if (!r.ref_submitted_at) pendingCount++
+    if (!r.manager_submitted_at) pendingCount++
+  }
 
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin>
@@ -139,6 +152,21 @@ export default async function AdminDashboardPage() {
             </p>
             <p className="text-xs text-gray-400 mt-1">Registered players</p>
             <p className="text-xs text-red-700 font-medium mt-4">Manage players →</p>
+          </Link>
+
+          {/* Reviews */}
+          <Link
+            href="/admin/reviews"
+            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-red-200 transition"
+          >
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              Reviews
+            </p>
+            <p className={`text-2xl font-bold transition group-hover:text-red-800 ${pendingCount > 0 ? 'text-amber-500' : 'text-gray-900'}`}>
+              {pendingCount}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">Pending feedback links</p>
+            <p className="text-xs text-red-700 font-medium mt-4">View pending reviews →</p>
           </Link>
 
         </div>
