@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import AdminNav from '@/components/AdminNav'
+import { teamDisplayName } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,25 +37,27 @@ export default async function RefereeReviewsPage({ params }: { params: Promise<{
 
   const refName = `${volunteer.first_name} ${volunteer.last_name}`.trim()
 
-  // Fetch reviews by volunteer_referee_id (how volunteer refs are stored on fixtures)
-  const { data: rows } = await supabase
-    .from('fixture_reviews')
-    .select(`
-      id, manager_submitted_at, manager_ref_score, manager_comments,
-      fixtures!inner(id, date, team_id, volunteer_referee_id,
-        teams(name, nickname, type, founding_age_group, founding_season_id, age_group)
-      )
-    `)
-    .not('manager_submitted_at', 'is', null)
-    .eq('fixtures.volunteer_referee_id', id)
-    .order('manager_submitted_at', { ascending: false })
+  const [{ data: rows }, { data: seasons }] = await Promise.all([
+    supabase
+      .from('fixture_reviews')
+      .select(`
+        id, manager_submitted_at, manager_ref_score, manager_comments,
+        fixtures!inner(id, date, team_id, volunteer_referee_id,
+          teams(id, name, nickname, type, founding_age_group, founding_season_id, age_group)
+        )
+      `)
+      .not('manager_submitted_at', 'is', null)
+      .eq('fixtures.volunteer_referee_id', id)
+      .order('manager_submitted_at', { ascending: false }),
+    supabase.from('seasons').select('id, name, start_date, is_current'),
+  ])
 
   const reviews = (rows ?? []).map((r: any) => {
     const team = r.fixtures?.teams as any
     return {
       id: r.id,
       date: r.fixtures?.date ?? '',
-      teamName: team?.nickname || team?.name || 'Unknown team',
+      teamName: team ? teamDisplayName(team, seasons ?? []) : 'Unknown team',
       score: r.manager_ref_score as number | null,
       comments: r.manager_comments as string | null,
     }
@@ -93,24 +96,33 @@ export default async function RefereeReviewsPage({ params }: { params: Promise<{
             </div>
 
             {/* Individual reviews */}
-            <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
               {reviews.map(r => (
-                <div key={r.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{r.teamName}</p>
-                      <p className="text-xs text-gray-400">{formatDate(r.date)}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <span className={`text-2xl font-bold ${r.score === null ? 'text-gray-300' : r.score >= 4 ? 'text-green-600' : r.score >= 3 ? 'text-amber-500' : 'text-red-600'}`}>
+                <div key={r.id} className="flex items-center gap-4 px-4 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{r.teamName}</p>
+                    <p className="text-xs text-gray-400">{formatDate(r.date)}</p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="text-right w-10">
+                      <span className={`text-sm font-bold ${r.score === null ? 'text-gray-300' : r.score >= 4 ? 'text-green-600' : r.score >= 3 ? 'text-amber-500' : 'text-red-600'}`}>
                         {r.score ?? '—'}
                       </span>
                       <span className="text-xs text-gray-400">/5</span>
                     </div>
+                    {r.comments ? (
+                      <div className="relative group w-5 flex-shrink-0">
+                        <svg className="w-4 h-4 text-gray-300 hover:text-gray-500 cursor-default transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <div className="absolute right-0 top-6 z-20 hidden group-hover:block w-64 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg">
+                          <p className="italic">"{r.comments}"</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-5 flex-shrink-0" />
+                    )}
                   </div>
-                  {r.comments && (
-                    <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-4 py-3 italic mt-2">"{r.comments}"</p>
-                  )}
                 </div>
               ))}
             </div>
