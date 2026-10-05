@@ -7,7 +7,14 @@ import { teamDisplayName, fixtureOpponentName, computeAgeGroup, type Season } fr
 
 export const dynamic = 'force-dynamic'
 
-export default async function FixturesDashboardPage() {
+export default async function FixturesDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>
+}) {
+  const { view } = await searchParams
+  const showPast = view === 'past'
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/signin')
@@ -21,21 +28,30 @@ export default async function FixturesDashboardPage() {
 
   const todayStr = new Date().toISOString().split('T')[0]
 
+  const fixtureSelect = `
+    id, date, kickoff_time, venue, confirmed, pitch_id,
+    referee_required, league_assigned_referee, referee_id, volunteer_referee_id,
+    team_id, season_id, cancelled, cancellation_reason,
+    teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format, kit_jersey, kit_shorts, kit_socks),
+    club_teams(id, name, internal_team_id, clubs(name)),
+    venues(name, address, notes),
+    pitches(name, pitch_type)
+  `
+
   const [{ data: rawFixtures }, { data: seasons }, { data: allManagerRoles }, { data: allReferees }, { data: allRequests }, { data: allVolunteerRefs }] = await Promise.all([
-    supabase
-      .from('fixtures')
-      .select(`
-        id, date, kickoff_time, venue, confirmed, pitch_id,
-        referee_required, league_assigned_referee, referee_id, volunteer_referee_id,
-        team_id, season_id, cancelled, cancellation_reason,
-        teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format, kit_jersey, kit_shorts, kit_socks),
-        club_teams(id, name, internal_team_id, clubs(name)),
-        venues(name, address, notes),
-        pitches(name, pitch_type)
-      `)
-      .gte('date', todayStr)
-      .order('date', { ascending: true })
-      .order('kickoff_time', { ascending: true }),
+    showPast
+      ? supabase
+          .from('fixtures')
+          .select(fixtureSelect)
+          .lt('date', todayStr)
+          .order('date', { ascending: false })
+          .order('kickoff_time', { ascending: false })
+      : supabase
+          .from('fixtures')
+          .select(fixtureSelect)
+          .gte('date', todayStr)
+          .order('date', { ascending: true })
+          .order('kickoff_time', { ascending: true }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
     supabase.from('volunteer_roles').select('team_id, volunteers(first_name, last_name, mobile)').eq('role_name', 'Manager').eq('role_type', 'team'),
     supabase.from('profiles').select('id, full_name').eq('is_referee', true),
@@ -156,19 +172,37 @@ export default async function FixturesDashboardPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Fixtures</h1>
-            <p className="text-sm text-gray-400 mt-1">Upcoming fixtures.</p>
+            <p className="text-sm text-gray-400 mt-1">{showPast ? 'Past fixtures this season.' : 'Upcoming fixtures.'}</p>
           </div>
-          <Link
-            href="/fixtures/add"
-            className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
-          >
-            + Add fixture
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
+              <Link
+                href="/fixtures"
+                className={`px-3 py-1.5 transition ${!showPast ? 'bg-red-800 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              >
+                Upcoming
+              </Link>
+              <Link
+                href="/fixtures?view=past"
+                className={`px-3 py-1.5 transition border-l border-gray-200 ${showPast ? 'bg-red-800 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              >
+                Past
+              </Link>
+            </div>
+            {!showPast && (
+              <Link
+                href="/fixtures/add"
+                className="bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
+              >
+                + Add fixture
+              </Link>
+            )}
+          </div>
         </div>
 
         {fixtures.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-10 text-center">
-            <p className="text-gray-400 text-sm">No fixtures in the next 14 days.</p>
+            <p className="text-gray-400 text-sm">{showPast ? 'No past fixtures this season.' : 'No upcoming fixtures.'}</p>
           </div>
         ) : (
           <FixturesList fixtures={fixtures} canConfirm={isAdmin || isFS} />
