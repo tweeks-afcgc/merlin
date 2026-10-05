@@ -105,7 +105,7 @@ function AddTeamForm({ currentSeason, seasons, onAdded }: { currentSeason: Seaso
         className="w-full flex items-center justify-between px-6 py-4 text-left"
       >
         <span className="text-base font-semibold text-gray-900">Add team</span>
-        <span className="text-gray-400 text-lg leading-none">{open ? ‘−’ : ‘+’}</span>
+        <span className="text-gray-400 text-lg leading-none">{open ? ‘-’ : ‘+’}</span>
       </button>
 
       {open && (

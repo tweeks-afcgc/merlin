@@ -181,7 +181,7 @@ function ClubRow({ club, defaultOpen }: { club: Club; defaultOpen: boolean }) {
 
           {/* Team rows */}
           {club.club_teams.length === 0 && !addingTeam ? (
-            <p className=”px-5 py-3 text-xs text-gray-400”>No teams — this club appears as a single opponent.</p>
+            <p className=”px-5 py-3 text-xs text-gray-400”>No teams - this club appears as a single opponent.</p>
           ) : (
             club.club_teams.map(team => (
               <div key={team.id} className="flex items-center justify-between px-5 py-2.5">
@@ -284,7 +284,7 @@ export default function ClubsClient({ clubs }: { clubs: Club[] }) {
         <button type="button" onClick={() => setAddClubOpen(o => !o)}
           className="w-full flex items-center justify-between px-6 py-4 text-left">
           <span className="text-base font-semibold text-gray-900">Add club</span>
-          <span className="text-gray-400 text-lg leading-none">{addClubOpen ? ‘−’ : ‘+’}</span>
+          <span className="text-gray-400 text-lg leading-none">{addClubOpen ? ‘-’ : ‘+’}</span>
         </button>
         {addClubOpen && (
           <div className="px-6 pb-6 border-t border-gray-100 pt-4">
