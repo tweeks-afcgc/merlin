@@ -40,6 +40,8 @@ type Fixture = {
   hasRefereeRequest: boolean
   cancelled: boolean
   cancellationReason: string | null
+  goalsFor: number | null
+  goalsAgainst: number | null
 }
 
 type ViewMode = 'schedule' | 'team' | 'pitch'
@@ -458,14 +460,80 @@ function MobileFilters({
   )
 }
 
+// --- Past view -----------------------------------------------------------
+
+function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: boolean }) {
+  const byDate = new Map<string, Fixture[]>()
+  for (const f of fixtures) {
+    const arr = byDate.get(f.date) ?? []; arr.push(f); byDate.set(f.date, arr)
+  }
+  const dates = [...byDate.keys()]
+
+  return (
+    <div className=”space-y-6”>
+      {dates.map(date => {
+        const dayFixtures = byDate.get(date)!.slice().sort(timeSort)
+        return (
+          <div key={date}>
+            <div className=”inline-flex items-center bg-gray-700 text-white text-sm font-bold px-4 py-2 rounded-lg mb-3”>
+              {formatDateLong(date)}
+            </div>
+            <div className=”bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50”>
+              {dayFixtures.map(f => {
+                const hasResult = f.goalsFor !== null && f.goalsAgainst !== null
+                const gf = f.goalsFor ?? 0
+                const ga = f.goalsAgainst ?? 0
+                const resultColour = hasResult
+                  ? gf > ga ? 'text-green-700' : gf < ga ? 'text-red-600' : 'text-amber-600'
+                  : 'text-gray-300'
+
+                return (
+                  <div key={f.id} className=”flex items-center gap-3 px-4 py-3”>
+                    <div className=”flex-1 min-w-0”>
+                      <p className=”text-sm font-semibold text-gray-900 truncate”>{f.teamName}</p>
+                      <p className=”text-xs text-gray-400 truncate”>
+                        vs {f.opponentName}
+                        {f.cancelled && <span className=”ml-2 text-red-500 font-medium”>Cancelled</span>}
+                      </p>
+                    </div>
+                    <div className=”flex items-center gap-3 flex-shrink-0”>
+                      {hasResult ? (
+                        <span className={`text-sm font-bold tabular-nums ${resultColour}`}>
+                          {gf} - {ga}
+                        </span>
+                      ) : (
+                        <span className=”text-sm text-gray-300”>— - —</span>
+                      )}
+                      {!f.cancelled && canConfirm && (
+                        <Link
+                          href={`/teams/${f.team_id}/fixtures/${f.id}/result`}
+                          className=”text-xs font-semibold px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition whitespace-nowrap”
+                        >
+                          {hasResult ? 'Edit result' : 'Enter result'}
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // â”€â”€â”€ Main export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function FixturesList({
   fixtures,
   canConfirm,
+  showPast = false,
 }: {
   fixtures: Fixture[]
   canConfirm: boolean
+  showPast?: boolean
 }) {
   const searchParams = useSearchParams()
   const [deletedBanner, setDeletedBanner] = useState(searchParams.get('deleted') === '1')
@@ -513,27 +581,33 @@ export default function FixturesList({
           </button>
         </div>
       )}
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <MobileFilters
-          dateRange={dateRange} setDateRange={setDateRange}
-          teamFilter={teamFilter} setTeamFilter={setTeamFilter}
-          genderFilter={genderFilter} setGenderFilter={setGenderFilter}
-          venueFilter={venueFilter} setVenueFilter={setVenueFilter}
-        />
-        <ViewDropdown view={view} onChange={setView} />
-      </div>
-
-      {filtered.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-10 text-center">
-          <p className="text-gray-400 text-sm">No fixtures match the selected filters.</p>
-        </div>
-      ) : view === 'schedule' ? (
-        <ScheduleView fixtures={filtered} canConfirm={canConfirm} />
-      ) : view === 'team' ? (
-        <TeamView fixtures={filtered} canConfirm={canConfirm} dates={fixtureDates} />
+      {showPast ? (
+        <PastView fixtures={fixtures} canConfirm={canConfirm} />
       ) : (
-        <PitchView fixtures={filtered} canConfirm={canConfirm} dates={fixtureDates} />
+        <>
+          {/* Top bar */}
+          <div className="flex items-center justify-between gap-3 mb-6">
+            <MobileFilters
+              dateRange={dateRange} setDateRange={setDateRange}
+              teamFilter={teamFilter} setTeamFilter={setTeamFilter}
+              genderFilter={genderFilter} setGenderFilter={setGenderFilter}
+              venueFilter={venueFilter} setVenueFilter={setVenueFilter}
+            />
+            <ViewDropdown view={view} onChange={setView} />
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-10 text-center">
+              <p className="text-gray-400 text-sm">No fixtures match the selected filters.</p>
+            </div>
+          ) : view === 'schedule' ? (
+            <ScheduleView fixtures={filtered} canConfirm={canConfirm} />
+          ) : view === 'team' ? (
+            <TeamView fixtures={filtered} canConfirm={canConfirm} dates={fixtureDates} />
+          ) : (
+            <PitchView fixtures={filtered} canConfirm={canConfirm} dates={fixtureDates} />
+          )}
+        </>
       )}
     </div>
   )

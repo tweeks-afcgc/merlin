@@ -31,7 +31,7 @@ export default async function FixturesDashboardPage({
   const fixtureSelect = `
     id, date, kickoff_time, venue, confirmed, pitch_id,
     referee_required, league_assigned_referee, referee_id, volunteer_referee_id,
-    team_id, season_id, cancelled, cancellation_reason,
+    team_id, season_id, cancelled, cancellation_reason, goals_for, goals_against,
     teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format, kit_jersey, kit_shorts, kit_socks),
     club_teams(id, name, internal_team_id, clubs(name)),
     venues(name, address, notes),
@@ -163,6 +163,8 @@ export default async function FixturesDashboardPage({
       hasRefereeRequest: fixturesWithRequests.has(f.id),
       cancelled: f.cancelled ?? false,
       cancellationReason: f.cancellation_reason ?? null,
+      goalsFor: f.goals_for ?? null,
+      goalsAgainst: f.goals_against ?? null,
     }
   })
 
@@ -205,7 +207,7 @@ export default async function FixturesDashboardPage({
             <p className="text-gray-400 text-sm">{showPast ? 'No past fixtures this season.' : 'No upcoming fixtures.'}</p>
           </div>
         ) : (
-          <FixturesList fixtures={fixtures} canConfirm={isAdmin || isFS} />
+          <FixturesList fixtures={fixtures} canConfirm={isAdmin || isFS} showPast={showPast} />
         )}
       </div>
     </AppShell>
