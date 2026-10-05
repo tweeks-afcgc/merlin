@@ -93,7 +93,7 @@ export default async function TeamReviewsPage({ params }: { params: Promise<{ id
       <div className="max-w-3xl mx-auto px-4 py-8">
         <AdminNav />
         <div className="mb-6">
-          <Link href="/admin/teams" className="text-xs text-gray-400 hover:text-gray-600 transition">← Admin: Teams</Link>
+          <Link href="/teams" className="text-xs text-gray-400 hover:text-gray-600 transition">← Teams</Link>
           <h1 className="text-xl font-bold text-gray-900 mt-2">{teamName}</h1>
           <p className="text-sm text-gray-400">Referee reviews — behaviour scores from referees</p>
         </div>
