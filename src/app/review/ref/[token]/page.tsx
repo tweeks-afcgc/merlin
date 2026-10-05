@@ -46,6 +46,7 @@ export default async function RefReviewPage({ params }: { params: Promise<{ toke
   const refName = refProfile?.full_name
     ?? (refVol ? `${refVol.first_name ?? ''} ${refVol.last_name ?? ''}`.trim() : null)
     ?? 'Referee'
+  const refFirstName = refVol?.first_name ?? refProfile?.full_name?.split(' ')[0] ?? 'Referee'
 
   if (review.ref_submitted_at) {
     return (
@@ -77,9 +78,9 @@ export default async function RefReviewPage({ params }: { params: Promise<{ toke
           {fixture?.date && <p className="text-xs text-gray-400 mt-0.5">{formatDate(fixture.date as string)}</p>}
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4 mb-6">
-          <p className="text-sm font-semibold text-gray-900 mb-1">Hello, {refName}</p>
-          <p className="text-sm text-gray-500 leading-relaxed">Thank you for officiating our fixture. We take the behaviour of our teams seriously and always want to ensure they are representing our club well, so we would appreciate your time in completing the following questions so we can ensure our teams are behaving appropriately.</p>
-          <p className="text-xs text-gray-400 mt-2">If you believe you have received this link in error, please disregard it.</p>
+          <p className="text-sm font-semibold text-gray-900 mb-1">Hello, {refFirstName}</p>
+          <p className="text-sm text-gray-500 leading-relaxed">Thank you for officiating today. We take our teams' conduct seriously and use referee feedback to ensure our players, coaches, and supporters are representing the club well. It would mean a lot if you could take a moment to complete the questions below.</p>
+          <p className="text-xs text-gray-400 mt-2">If you've received this link in error, please ignore it.</p>
         </div>
         <RefReviewForm token={token} teamName={teamName} />
       </div>
