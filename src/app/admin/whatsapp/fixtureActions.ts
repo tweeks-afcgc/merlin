@@ -22,7 +22,12 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
 
   const { data: fixtures, error: fixturesError } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, team_id, season_id, opponent_id, is_home')
+    .select(`
+      id, date, kickoff_time, venue, team_id,
+      teams(id, name),
+      club_teams(id, name, internal_team_id, clubs(name)),
+      venues(name, address)
+    `)
     .gte('date', todayStr)
     .order('date', { ascending: true })
     .limit(30)
@@ -32,20 +37,13 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
   if (!fixtures || fixtures.length === 0) return []
 
   const teamIds = [...new Set(fixtures.map(f => f.team_id).filter(Boolean))]
-  const venueIds = [...new Set(fixtures.map(f => f.venue).filter(Boolean))]
-  const opponentIds = [...new Set(fixtures.map(f => f.opponent_id).filter(Boolean))]
-  const [{ data: seasons }, { data: teams }, { data: venueRows }, { data: clubRows }, { data: managerRoles }] = await Promise.all([
-    supabase.from('seasons').select('id, name, start_date, is_current'),
-    teamIds.length ? supabase.from('teams').select('id, name').in('id', teamIds) : Promise.resolve({ data: [] }),
-    venueIds.length ? supabase.from('venues').select('id, name, address').in('id', venueIds) : Promise.resolve({ data: [] }),
-    opponentIds.length ? supabase.from('clubs').select('id, name').in('id', opponentIds) : Promise.resolve({ data: [] }),
-    teamIds.length ? supabase.from('volunteer_roles').select('team_id, volunteers(id, first_name, last_name, mobile)').in('team_id', teamIds).ilike('role_name', '%manager%') : Promise.resolve({ data: [] }),
-  ])
-  if (!fixtures) return []
-
-  const teamMap = new Map((teams ?? []).map(t => [t.id, t]))
-  const venueMap = new Map((venueRows ?? []).map(v => [v.id, v]))
-  const clubMap = new Map((clubRows ?? []).map(c => [c.id, c]))
+  const { data: managerRoles } = teamIds.length
+    ? await supabase
+        .from('volunteer_roles')
+        .select('team_id, volunteers(first_name, last_name, mobile)')
+        .in('team_id', teamIds)
+        .ilike('role_name', '%manager%')
+    : { data: [] }
 
   const managerMap = new Map<string, { name: string; mobile: string | null }>()
   for (const r of managerRoles ?? []) {
@@ -56,10 +54,10 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
   }
 
   return fixtures.map(f => {
-    const team = teamMap.get(f.team_id)
-    const club = f.opponent_id ? clubMap.get(f.opponent_id) : null
-    const venue = f.venue ? venueMap.get(f.venue) : null
-    const opponentName = club?.name ?? 'Unknown opponent'
+    const team = (f as any).teams
+    const ct = (f as any).club_teams
+    const venue = (f as any).venues
+    const opponentName = ct?.clubs?.name ?? ct?.name ?? 'Unknown opponent'
     const manager = managerMap.get(f.team_id)
     return {
       id: f.id,
@@ -69,7 +67,7 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
       kickoffTime: f.kickoff_time ?? null,
       opponentName,
       venueName: venue?.name ?? null,
-      venueAddress: (venue as any)?.address ?? null,
+      venueAddress: venue?.address ?? null,
       managerName: manager?.name ?? null,
       managerMobile: manager?.mobile ?? null,
     }
