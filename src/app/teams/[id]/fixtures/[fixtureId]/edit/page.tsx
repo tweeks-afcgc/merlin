@@ -122,26 +122,18 @@ export default function EditFixturePage() {
       console.log('fixture loaded:', { opponent_id: fixture?.opponent_id, is_mirror: (fixture as any)?.is_mirror })
       if (fixture?.opponent_id && fixture.opponent_id !== 'tbc') {
         const isKnownOption = opts.some(o => o.value === fixture.opponent_id)
-        console.log('opponent_id:', fixture.opponent_id, 'isKnownOption:', isKnownOption)
         if (!isKnownOption) {
-          // Check if it's an internal team opponent
-          let found = false
-          for (const c of (clubsData ?? []) as any[]) {
-            for (const ct of (c.club_teams ?? []) as any[]) {
-              if (ct.id === fixture.opponent_id) {
-                console.log('matched club_team:', ct)
-                if (ct.internal_team_id) {
-                  setOpponentId(`internal:${ct.internal_team_id}`)
-                } else if (!ct.name || !ct.name.trim()) {
-                  setOpponentId(`club:${c.id}`)
-                }
-                found = true
-                break
-              }
-            }
-            if (found) break
+          // Look up the club_teams row directly (internal opponents have no club_id)
+          const { data: ct } = await supabase
+            .from('club_teams')
+            .select('id, club_id, internal_team_id, name')
+            .eq('id', fixture.opponent_id)
+            .maybeSingle()
+          if (ct?.internal_team_id) {
+            setOpponentId(`internal:${ct.internal_team_id}`)
+          } else if (ct?.club_id && (!ct.name || !ct.name.trim())) {
+            setOpponentId(`club:${ct.club_id}`)
           }
-          if (!found) console.log('no matching club_team found for opponent_id:', fixture.opponent_id)
         }
       }
 
