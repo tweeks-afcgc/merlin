@@ -14,9 +14,8 @@ export default async function RoadmapPage() {
 
   const { data: items } = await supabase
     .from('roadmap_items')
-    .select('id, title, description, completed, created_at, completed_at')
-    .order('completed', { ascending: true })
-    .order('created_at', { ascending: false })
+    .select('id, title, description, completed, created_at, completed_at, position')
+    .order('position', { ascending: true })
 
   return (
     <AppShell userName={profile.full_name ?? null} isAdmin>

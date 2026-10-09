@@ -15,7 +15,21 @@ async function requireAdmin() {
 export async function addRoadmapItem(title: string, description: string): Promise<{ error?: string }> {
   try {
     const supabase = await requireAdmin()
-    const { error } = await supabase.from('roadmap_items').insert({ title: title.trim(), description: description.trim() || null })
+    const { data: max } = await supabase.from('roadmap_items').select('position').order('position', { ascending: false }).limit(1).maybeSingle()
+    const position = (max?.position ?? 0) + 1
+    const { error } = await supabase.from('roadmap_items').insert({ title: title.trim(), description: description.trim() || null, position })
+    if (error) return { error: error.message }
+    revalidatePath('/admin/roadmap')
+    return {}
+  } catch (e: any) {
+    return { error: e.message }
+  }
+}
+
+export async function updateRoadmapItem(id: string, title: string, description: string): Promise<{ error?: string }> {
+  try {
+    const supabase = await requireAdmin()
+    const { error } = await supabase.from('roadmap_items').update({ title: title.trim(), description: description.trim() || null }).eq('id', id)
     if (error) return { error: error.message }
     revalidatePath('/admin/roadmap')
     return {}
@@ -32,6 +46,19 @@ export async function toggleRoadmapItem(id: string, completed: boolean): Promise
       completed_at: completed ? new Date().toISOString() : null,
     }).eq('id', id)
     if (error) return { error: error.message }
+    revalidatePath('/admin/roadmap')
+    return {}
+  } catch (e: any) {
+    return { error: e.message }
+  }
+}
+
+export async function reorderRoadmapItems(ids: string[]): Promise<{ error?: string }> {
+  try {
+    const supabase = await requireAdmin()
+    await Promise.all(
+      ids.map((id, i) => supabase.from('roadmap_items').update({ position: i + 1 }).eq('id', id))
+    )
     revalidatePath('/admin/roadmap')
     return {}
   } catch (e: any) {
