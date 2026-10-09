@@ -32,7 +32,7 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
         venues(name, address)
       `)
       .gte('date', todayStr)
-      .eq('cancelled', false)
+      .or('cancelled.is.null,cancelled.eq.false')
       .order('date', { ascending: true })
       .limit(30),
     supabase.from('seasons').select('id, name, start_date, is_current'),
