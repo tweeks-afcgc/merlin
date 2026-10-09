@@ -190,6 +190,19 @@ export default async function AdminDashboardPage() {
             <p className="text-xs text-red-700 font-medium mt-4">View pending reviews →</p>
           </Link>
 
+          {/* Roadmap */}
+          <Link
+            href="/admin/roadmap"
+            className="group bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-red-200 transition"
+          >
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              Roadmap
+            </p>
+            <p className="text-2xl font-bold text-gray-900 transition group-hover:text-red-800">→</p>
+            <p className="text-xs text-gray-400 mt-1">Features &amp; improvements to build</p>
+            <p className="text-xs text-red-700 font-medium mt-4">View roadmap →</p>
+          </Link>
+
         </div>
       </div>
     </AppShell>
