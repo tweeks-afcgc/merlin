@@ -21,25 +21,26 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
   const supabase = await createClient()
   const todayStr = new Date().toISOString().split('T')[0]
 
-  const [{ data: fixtures }, { data: seasons }, { data: internalTeams }] = await Promise.all([
-    supabase
-      .from('fixtures')
-      .select(`
-        id, date, kickoff_time, venue, team_id, season_id, internal_team_id,
-        opponent_id, is_home,
-        teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format),
-        clubs:opponent_id(name),
-        venues:venue(name, address)
-      `)
-      .gte('date', todayStr)
-      .or('cancelled.is.null,cancelled.eq.false')
-      .order('date', { ascending: true })
-      .limit(30),
+  const { data: fixtures, error: fixturesError } = await supabase
+    .from('fixtures')
+    .select(`
+      id, date, kickoff_time, venue, team_id, season_id, internal_team_id,
+      opponent_id, is_home,
+      teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format),
+      clubs:opponent_id(name),
+      venues:venue(name, address)
+    `)
+    .gte('date', todayStr)
+    .or('cancelled.is.null,cancelled.eq.false')
+    .order('date', { ascending: true })
+    .limit(30)
+
+  console.log('getUpcomingFixtures:', { todayStr, count: fixtures?.length, error: fixturesError?.message ?? null })
+
+  const [{ data: seasons }, { data: internalTeams }] = await Promise.all([
     supabase.from('seasons').select('id, name, start_date, is_current'),
     supabase.from('club_teams').select('team_id, internal_team_id'),
   ])
-
-  console.log('getUpcomingFixtures:', { todayStr, count: fixtures?.length, error: !fixtures ? 'null' : null })
   if (!fixtures) return []
 
   const internalTeamIds = [...new Set(fixtures.map(f => (f as any).internal_team_id).filter(Boolean))]
