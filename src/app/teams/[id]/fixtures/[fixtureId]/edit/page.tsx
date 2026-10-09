@@ -66,7 +66,7 @@ export default function EditFixturePage() {
       const [{ data: { user } }, { data: fixture }, { data: clubsData }, { data: venuesData }, { data: refereesData }, { data: requestsData }, { data: volunteerRefsData }, { data: allTeamsData }, { data: seasonsData }] = await Promise.all([
         supabase.auth.getUser(),
         supabase.from('fixtures').select('*').eq('id', fixtureId).single(),
-        supabase.from('clubs').select('id, name, club_teams(id, name)').order('name'),
+        supabase.from('clubs').select('id, name, club_teams(id, name, internal_team_id)').order('name'),
         supabase.from('venues').select('id, name').order('name'),
         supabase.from('profiles').select('id, full_name').eq('is_referee', true).order('full_name'),
         supabase.from('referee_requests').select('id, referee_id, created_at, profiles(full_name)').eq('fixture_id', fixtureId).order('created_at'),
@@ -122,10 +122,22 @@ export default function EditFixturePage() {
       if (fixture?.opponent_id && fixture.opponent_id !== 'tbc') {
         const isKnownOption = opts.some(o => o.value === fixture.opponent_id)
         if (!isKnownOption) {
-          const matchingClub = (clubsData ?? []).find((c: any) =>
-            (c.club_teams ?? []).some((ct: any) => ct.id === fixture.opponent_id && (!ct.name || !ct.name.trim()))
-          ) as any
-          if (matchingClub) setOpponentId(`club:${matchingClub.id}`)
+          // Check if it's an internal team opponent
+          let found = false
+          for (const c of (clubsData ?? []) as any[]) {
+            for (const ct of (c.club_teams ?? []) as any[]) {
+              if (ct.id === fixture.opponent_id) {
+                if (ct.internal_team_id) {
+                  setOpponentId(`internal:${ct.internal_team_id}`)
+                } else if (!ct.name || !ct.name.trim()) {
+                  setOpponentId(`club:${c.id}`)
+                }
+                found = true
+                break
+              }
+            }
+            if (found) break
+          }
         }
       }
 
@@ -336,6 +348,7 @@ export default function EditFixturePage() {
                         name="venue"
                         value={v}
                         checked={venue === v}
+                        disabled={isMirror}
                         onChange={() => { setVenue(v); if (v !== 'home') setRefereeRequired(false) }}
                         className="text-red-800 focus:ring-red-700"
                       />
