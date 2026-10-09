@@ -39,6 +39,7 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
     supabase.from('club_teams').select('team_id, internal_team_id'),
   ])
 
+  console.log('getUpcomingFixtures:', { todayStr, count: fixtures?.length, error: !fixtures ? 'null' : null })
   if (!fixtures) return []
 
   const internalTeamIds = [...new Set(fixtures.map(f => (f as any).internal_team_id).filter(Boolean))]
