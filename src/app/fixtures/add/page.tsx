@@ -41,6 +41,8 @@ export default function AddFixtureFromDashboardPage() {
   const [tbc, setTbc] = useState(false)
   const [kickoffTime, setKickoffTime] = useState('')
   const [opponentId, setOpponentId] = useState('')
+  const [intraClub, setIntraClub] = useState(false)
+  const [intraClubTeamId, setIntraClubTeamId] = useState('')
   const [venue, setVenue] = useState('home')
   const [competition, setCompetition] = useState('friendly')
   const [venues, setVenues] = useState<{ id: string; name: string }[]>([])
@@ -100,7 +102,8 @@ export default function AddFixtureFromDashboardPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!teamId) { setError('Please select a team.'); return }
-    if (!opponentId) { setError('Please select an opponent.'); return }
+    if (intraClub && !intraClubTeamId) { setError('Please select an opponent team.'); return }
+    if (!intraClub && !opponentId) { setError('Please select an opponent.'); return }
     setSaving(true)
     setError(null)
     const fd = new FormData()
@@ -108,7 +111,9 @@ export default function AddFixtureFromDashboardPage() {
     fd.set('date', date)
     fd.set('tbc', tbc ? 'true' : 'false')
     fd.set('kickoff_time', kickoffTime)
-    fd.set('opponent_id', opponentId)
+    fd.set('opponent_id', intraClub ? `internal:${intraClubTeamId}` : opponentId)
+    fd.set('intra_club_match', intraClub ? 'true' : 'false')
+    fd.set('intra_club_team_id', intraClub ? intraClubTeamId : '')
     fd.set('venue', venue)
     fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
@@ -239,25 +244,45 @@ export default function AddFixtureFromDashboardPage() {
 
               {/* Opponent */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Opponent</label>
-                <select
-                  value={opponentId}
-                  onChange={e => setOpponentId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
-                >
-                  <option value="">Select opponent...</option>
-                  <option value="tbc">TBC</option>
-                  {opponents.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                  {internalTeams.length > 0 && (
-                    <optgroup label="â”€â”€ Internal Teams â”€â”€">
-                      {internalTeams.map(t => (
-                        <option key={t.id} value={t.id}>{t.label}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
+                <div className=”flex items-center justify-between mb-1”>
+                  <label className=”block text-sm font-medium text-gray-700”>Opponent</label>
+                  <label className=”flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer”>
+                    <input
+                      type=”checkbox”
+                      checked={intraClub}
+                      onChange={e => { setIntraClub(e.target.checked); setOpponentId(''); setIntraClubTeamId('') }}
+                      className=”rounded border-gray-300 text-red-800 focus:ring-red-700”
+                    />
+                    Intra-club match
+                  </label>
+                </div>
+                {intraClub ? (
+                  <select
+                    value={intraClubTeamId}
+                    onChange={e => setIntraClubTeamId(e.target.value)}
+                    className=”w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700”
+                  >
+                    <option value=””>Select opponent team...</option>
+                    {sortedTeams(teams, seasons).filter(t => t.id !== teamId).map(t => (
+                      <option key={t.id} value={t.id}>{teamDisplayName(t, seasons)}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <select
+                    value={opponentId}
+                    onChange={e => setOpponentId(e.target.value)}
+                    className=”w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700”
+                  >
+                    <option value=””>Select opponent...</option>
+                    <option value=”tbc”>TBC</option>
+                    {opponents.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                )}
+                {intraClub && intraClubTeamId && (
+                  <p className=”text-xs text-blue-600 mt-1.5”>A reverse fixture will be automatically created for the opponent team.</p>
+                )}
               </div>
 
               {/* Venue */}
