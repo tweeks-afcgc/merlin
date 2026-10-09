@@ -121,12 +121,14 @@ export default function EditFixturePage() {
 
       if (fixture?.opponent_id && fixture.opponent_id !== 'tbc') {
         const isKnownOption = opts.some(o => o.value === fixture.opponent_id)
+        console.log('opponent_id:', fixture.opponent_id, 'isKnownOption:', isKnownOption)
         if (!isKnownOption) {
           // Check if it's an internal team opponent
           let found = false
           for (const c of (clubsData ?? []) as any[]) {
             for (const ct of (c.club_teams ?? []) as any[]) {
               if (ct.id === fixture.opponent_id) {
+                console.log('matched club_team:', ct)
                 if (ct.internal_team_id) {
                   setOpponentId(`internal:${ct.internal_team_id}`)
                 } else if (!ct.name || !ct.name.trim()) {
@@ -138,6 +140,7 @@ export default function EditFixturePage() {
             }
             if (found) break
           }
+          if (!found) console.log('no matching club_team found for opponent_id:', fixture.opponent_id)
         }
       }
 
