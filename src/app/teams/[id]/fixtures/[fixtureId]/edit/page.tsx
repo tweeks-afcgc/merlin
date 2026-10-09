@@ -57,6 +57,8 @@ export default function EditFixturePage() {
   const [teamName, setTeamName] = useState('')
   const [matchNotes, setMatchNotes] = useState('')
   const [isMirror, setIsMirror] = useState(false)
+  const [isIntraClubPrimary, setIsIntraClubPrimary] = useState(false)
+  const [intraClubTeamId, setIntraClubTeamId] = useState('')
 
   const [players, setPlayers] = useState<Player[]>([])
   const [perfs, setPerfs] = useState<Record<string, PlayerPerformance>>({})
@@ -107,7 +109,9 @@ export default function EditFixturePage() {
         setMatchNotes((fixture as any).notes ?? '')
         setIsCancelled(!!(fixture as any).cancelled)
         setCancellationReason((fixture as any).cancellation_reason ?? null)
-        setIsMirror(!!(fixture as any).is_mirror)
+        const mirror = !!(fixture as any).is_mirror
+        setIsMirror(mirror)
+        setIsIntraClubPrimary(!mirror && !!(fixture as any).linked_fixture_id)
 
         if (fixture.home_venue_id) {
           const { data: pitchData } = await supabase
@@ -130,6 +134,7 @@ export default function EditFixturePage() {
             .maybeSingle()
           if (ct?.internal_team_id) {
             setOpponentId(`internal:${ct.internal_team_id}`)
+            setIntraClubTeamId(ct.internal_team_id)
           } else if (ct?.club_id && (!ct.name || !ct.name.trim())) {
             setOpponentId(`club:${ct.club_id}`)
           }
@@ -233,7 +238,8 @@ export default function EditFixturePage() {
     fd.set('date', date)
     fd.set('tbc', tbc ? 'true' : 'false')
     fd.set('kickoff_time', kickoffTime)
-    fd.set('opponent_id', opponentId)
+    fd.set('opponent_id', isIntraClubPrimary ? `internal:${intraClubTeamId}` : opponentId)
+    fd.set('intra_club_team_id', isIntraClubPrimary ? intraClubTeamId : '')
     fd.set('venue', venue)
     fd.set('competition', competition)
     fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
@@ -312,26 +318,47 @@ export default function EditFixturePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Opponent</label>
-                <select
-                  value={opponentId}
-                  disabled={isMirror}
-                  onChange={e => setOpponentId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-50 disabled:text-gray-400"
-                >
-                  <option value="">Select opponent...</option>
-                  <option value="tbc">TBC</option>
-                  {opponents.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                  {internalTeams.length > 0 && (
-                    <optgroup label="── Internal Teams ──">
-                      {internalTeams.map(t => (
-                        <option key={t.id} value={t.id}>{t.label}</option>
-                      ))}
-                    </optgroup>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Opponent</label>
+                  {(isIntraClubPrimary || isMirror) && (
+                    <label className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <input type="checkbox" checked disabled className="rounded border-gray-300 text-red-800 focus:ring-red-700 disabled:opacity-40" />
+                      Intra-club match
+                    </label>
                   )}
-                </select>
+                </div>
+                {isIntraClubPrimary ? (
+                  <select
+                    value={intraClubTeamId}
+                    onChange={e => setIntraClubTeamId(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                  >
+                    <option value="">Select opponent team...</option>
+                    {internalTeams.filter(t => t.id !== `internal:${teamId}`).map(t => (
+                      <option key={t.id} value={t.id.replace('internal:', '')}>{t.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <select
+                    value={opponentId}
+                    disabled={isMirror}
+                    onChange={e => setOpponentId(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-50 disabled:text-gray-400"
+                  >
+                    <option value="">Select opponent...</option>
+                    <option value="tbc">TBC</option>
+                    {opponents.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                    {internalTeams.length > 0 && (
+                      <optgroup label="── Internal Teams ──">
+                        {internalTeams.map(t => (
+                          <option key={t.id} value={t.id}>{t.label}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                )}
               </div>
 
               <div>
@@ -407,7 +434,7 @@ export default function EditFixturePage() {
                 </div>
               )}
 
-              {isAdmin && refRequests.length > 0 && (
+              {isAdmin && !isMirror && refRequests.length > 0 && (
                 <div className="border-t border-gray-100 pt-5 space-y-3">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Referee requests</p>
                   <p className="text-xs text-gray-500">Select a request to assign that referee to this fixture.</p>
@@ -440,7 +467,7 @@ export default function EditFixturePage() {
                 </div>
               )}
 
-              {isAdmin && (
+              {isAdmin && !isMirror && (
                 <div className="border-t border-gray-100 pt-5 space-y-4">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Referee</p>
                   <div className="space-y-2">

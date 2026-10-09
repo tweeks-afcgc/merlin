@@ -160,14 +160,31 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
 
   if (error) return { error: error.message }
 
-  // Sync date/kickoff/competition to linked mirror fixture (if this is the primary)
-  const { data: thisFixture } = await supabase.from('fixtures').select('linked_fixture_id, is_mirror').eq('id', fixtureId).single()
+  // Sync to linked mirror fixture (if this is the primary)
+  const intraClubTeamIdRaw = formData.get('intra_club_team_id') as string
+  const { data: thisFixture } = await supabase.from('fixtures').select('linked_fixture_id, is_mirror, team_id, opponent_id').eq('id', fixtureId).single()
   if (thisFixture?.linked_fixture_id && !thisFixture.is_mirror) {
-    await supabase.from('fixtures').update({
+    const mirrorUpdate: Record<string, any> = {
       date: newDate,
       kickoff_time: newKickoff,
       competition: newCompetition,
-    }).eq('id', thisFixture.linked_fixture_id)
+    }
+    // If opponent changed to a different internal team, re-seat the mirror
+    if (intraClubTeamIdRaw) {
+      const newMirrorOpponentId = await resolveOpponentId(supabase, `internal:${teamId}`)
+      const newMirrorTeamId = intraClubTeamIdRaw
+      // New opponent_id for the primary (club_teams row for the new internal team)
+      const newPrimaryOpponentId = await resolveOpponentId(supabase, `internal:${intraClubTeamIdRaw}`)
+      mirrorUpdate.team_id = newMirrorTeamId
+      mirrorUpdate.opponent_id = newMirrorOpponentId
+      // Update primary opponent_id to the resolved club_teams row
+      await supabase.from('fixtures').update({ opponent_id: newPrimaryOpponentId }).eq('id', fixtureId)
+    }
+    await supabase.from('fixtures').update(mirrorUpdate).eq('id', thisFixture.linked_fixture_id)
+    if (intraClubTeamIdRaw) {
+      revalidatePath(`/teams/${intraClubTeamIdRaw}/fixtures`)
+      revalidatePath(`/teams/${intraClubTeamIdRaw}`)
+    }
   }
 
   revalidatePath(`/teams/${teamId}/fixtures`)
