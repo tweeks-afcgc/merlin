@@ -25,11 +25,11 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
     supabase
       .from('fixtures')
       .select(`
-        id, date, kickoff_time, team_id, season_id, internal_team_id,
+        id, date, kickoff_time, venue, team_id, season_id, internal_team_id,
         opponent_id, is_home,
         teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format),
         clubs:opponent_id(name),
-        venues(name, address)
+        venues:venue(name, address)
       `)
       .gte('date', todayStr)
       .or('cancelled.is.null,cancelled.eq.false')
