@@ -242,11 +242,18 @@ export async function savePerformances(fixtureId: string, teamId: string, perfor
 
 export async function cancelFixture(fixtureId: string, teamId: string, cancellationReason: string) {
   const supabase = await createClient()
+  const { data: fixture } = await supabase
+    .from('fixtures').select('linked_fixture_id, is_mirror').eq('id', fixtureId).single()
   const { error } = await supabase
     .from('fixtures')
     .update({ cancelled: true, cancellation_reason: cancellationReason })
     .eq('id', fixtureId)
   if (error) return { error: error.message }
+  if (fixture?.linked_fixture_id && !fixture.is_mirror) {
+    await supabase.from('fixtures')
+      .update({ cancelled: true, cancellation_reason: cancellationReason })
+      .eq('id', fixture.linked_fixture_id)
+  }
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)
   revalidatePath('/schedule')
@@ -255,11 +262,18 @@ export async function cancelFixture(fixtureId: string, teamId: string, cancellat
 
 export async function uncancelFixture(fixtureId: string, teamId: string) {
   const supabase = await createClient()
+  const { data: fixture } = await supabase
+    .from('fixtures').select('linked_fixture_id, is_mirror').eq('id', fixtureId).single()
   const { error } = await supabase
     .from('fixtures')
     .update({ cancelled: false, cancellation_reason: null })
     .eq('id', fixtureId)
   if (error) return { error: error.message }
+  if (fixture?.linked_fixture_id && !fixture.is_mirror) {
+    await supabase.from('fixtures')
+      .update({ cancelled: false, cancellation_reason: null })
+      .eq('id', fixture.linked_fixture_id)
+  }
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)
   revalidatePath('/schedule')
@@ -268,6 +282,11 @@ export async function uncancelFixture(fixtureId: string, teamId: string) {
 
 export async function deleteFixture(fixtureId: string, teamId: string) {
   const supabase = await createClient()
+  const { data: fixture } = await supabase
+    .from('fixtures').select('linked_fixture_id, is_mirror').eq('id', fixtureId).single()
+  if (fixture?.linked_fixture_id && !fixture.is_mirror) {
+    await supabase.from('fixtures').delete().eq('id', fixture.linked_fixture_id)
+  }
   await supabase.from('fixtures').delete().eq('id', fixtureId)
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)

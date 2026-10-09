@@ -119,7 +119,6 @@ export default function EditFixturePage() {
       const opts = buildOpponentOptions((clubsData ?? []) as any)
       setOpponents(opts)
 
-      console.log('fixture loaded:', { opponent_id: fixture?.opponent_id, is_mirror: (fixture as any)?.is_mirror })
       if (fixture?.opponent_id && fixture.opponent_id !== 'tbc') {
         const isKnownOption = opts.some(o => o.value === fixture.opponent_id)
         if (!isKnownOption) {
@@ -316,8 +315,9 @@ export default function EditFixturePage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Opponent</label>
                 <select
                   value={opponentId}
+                  disabled={isMirror}
                   onChange={e => setOpponentId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-50 disabled:text-gray-400"
                 >
                   <option value="">Select opponent...</option>
                   <option value="tbc">TBC</option>
@@ -533,21 +533,23 @@ export default function EditFixturePage() {
                 </div>
               )}
 
-              <div className="flex justify-center pt-2">
-                <div className="w-full max-w-sm space-y-0">
-                  <CancelFixtureButton
-                    fixtureId={fixtureId}
-                    teamId={teamId}
-                    teamName={teamName}
-                    opponentName={opponents.find(o => o.value === opponentId)?.label ?? 'Opponent'}
-                    isCancelled={isCancelled}
-                    cancellationReason={cancellationReason}
-                  />
-                  {!refereeId && (
-                    <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnUrl()} />
-                  )}
+              {!isMirror && (
+                <div className="flex justify-center pt-2">
+                  <div className="w-full max-w-sm space-y-0">
+                    <CancelFixtureButton
+                      fixtureId={fixtureId}
+                      teamId={teamId}
+                      teamName={teamName}
+                      opponentName={opponents.find(o => o.value === opponentId)?.label ?? 'Opponent'}
+                      isCancelled={isCancelled}
+                      cancellationReason={cancellationReason}
+                    />
+                    {!refereeId && (
+                      <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnUrl()} />
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
