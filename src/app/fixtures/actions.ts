@@ -20,7 +20,7 @@ export async function confirmFixture(fixtureId: string): Promise<{ error?: strin
   // Fetch the fixture and its team's type/age group
   const { data: fixture } = await supabase
     .from('fixtures')
-    .select('id, date, kickoff_time, venue, pitch_id, team_id, teams(type, age_group)')
+    .select('id, date, kickoff_time, venue, pitch_id, team_id, linked_fixture_id, is_mirror, teams(type, age_group)')
     .eq('id', fixtureId)
     .single()
 
@@ -75,6 +75,11 @@ export async function confirmFixture(fixtureId: string): Promise<{ error?: strin
     .eq('id', fixtureId)
 
   if (error) return { error: error.message }
+
+  // Also confirm the linked mirror fixture
+  if (fixture.linked_fixture_id && !fixture.is_mirror) {
+    await supabase.from('fixtures').update({ confirmed: true }).eq('id', fixture.linked_fixture_id)
+  }
 
   revalidatePath('/fixtures')
   revalidatePath(`/teams/${fixture.team_id}/fixtures`)

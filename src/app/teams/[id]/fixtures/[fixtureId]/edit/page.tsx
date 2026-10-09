@@ -56,6 +56,7 @@ export default function EditFixturePage() {
   const [cancellationReason, setCancellationReason] = useState<string | null>(null)
   const [teamName, setTeamName] = useState('')
   const [matchNotes, setMatchNotes] = useState('')
+  const [isMirror, setIsMirror] = useState(false)
 
   const [players, setPlayers] = useState<Player[]>([])
   const [perfs, setPerfs] = useState<Record<string, PlayerPerformance>>({})
@@ -106,6 +107,7 @@ export default function EditFixturePage() {
         setMatchNotes((fixture as any).notes ?? '')
         setIsCancelled(!!(fixture as any).cancelled)
         setCancellationReason((fixture as any).cancellation_reason ?? null)
+        setIsMirror(!!(fixture as any).is_mirror)
 
         if (fixture.home_venue_id) {
           const { data: pitchData } = await supabase
@@ -261,14 +263,21 @@ export default function EditFixturePage() {
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{error}</div>
               )}
 
+              {isMirror && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 text-xs rounded-lg px-4 py-3">
+                  This is an intra-club mirror fixture. Date, kick-off time and competition are controlled by the home team's fixture and cannot be edited here.
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                 <input
                   type="date"
                   required
                   value={date}
+                  disabled={isMirror}
                   onChange={e => setDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-50 disabled:text-gray-400"
                 />
               </div>
 
@@ -278,8 +287,9 @@ export default function EditFixturePage() {
                   <input
                     type="checkbox"
                     checked={tbc}
+                    disabled={isMirror}
                     onChange={e => setTbc(e.target.checked)}
-                    className="rounded border-gray-300 text-red-800 focus:ring-red-700"
+                    className="rounded border-gray-300 text-red-800 focus:ring-red-700 disabled:opacity-40"
                   />
                   TBC
                 </label>
@@ -287,8 +297,9 @@ export default function EditFixturePage() {
                   <input
                     type="time"
                     value={kickoffTime}
+                    disabled={isMirror}
                     onChange={e => setKickoffTime(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-50 disabled:text-gray-400"
                   />
                 )}
               </div>
@@ -338,8 +349,9 @@ export default function EditFixturePage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
                 <select
                   value={competition}
+                  disabled={isMirror}
                   onChange={e => setCompetition(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700 disabled:bg-gray-50 disabled:text-gray-400"
                 >
                   <option value="friendly">Friendly</option>
                   <option value="league">League</option>

@@ -46,6 +46,8 @@ export default function AddFixtureFromTeamPage() {
   const [tbc, setTbc] = useState(false)
   const [kickoffTime, setKickoffTime] = useState('')
   const [opponentId, setOpponentId] = useState('')
+  const [intraClub, setIntraClub] = useState(false)
+  const [intraClubTeamId, setIntraClubTeamId] = useState('')
   const [venue, setVenue] = useState('home')
   const [competition, setCompetition] = useState('friendly')
   const [venues, setVenues] = useState<{ id: string; name: string }[]>([])
@@ -141,7 +143,8 @@ export default function AddFixtureFromTeamPage() {
 
   async function submit(): Promise<{ id: string } | null> {
     if (!teamId) { setError('Please select a team.'); return null }
-    if (!opponentId) { setError('Please select an opponent.'); return null }
+    if (intraClub && !intraClubTeamId) { setError('Please select an opponent team.'); return null }
+    if (!intraClub && !opponentId) { setError('Please select an opponent.'); return null }
     if (!date) { setError('Please enter a date.'); return null }
     setSaving(true)
     setError(null)
@@ -150,7 +153,9 @@ export default function AddFixtureFromTeamPage() {
     fd.set('date', date)
     fd.set('tbc', tbc ? 'true' : 'false')
     fd.set('kickoff_time', kickoffTime)
-    fd.set('opponent_id', opponentId)
+    fd.set('opponent_id', intraClub ? `internal:${intraClubTeamId}` : opponentId)
+    fd.set('intra_club_match', intraClub ? 'true' : 'false')
+    fd.set('intra_club_team_id', intraClub ? intraClubTeamId : '')
     fd.set('venue', venue)
     fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
     fd.set('pitch_id', venue === 'home' ? pitchId : '')
@@ -297,41 +302,70 @@ export default function AddFixtureFromTeamPage() {
                 </div>
               </div>
 
-              {/* Opponent — live-filter combobox */}
+              {/* Opponent */}
               <div ref={opponentRef}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Opponent</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search opponent..."
-                    value={opponentOpen ? opponentQuery : opponentLabel}
-                    onFocus={() => { setOpponentOpen(true); setOpponentQuery('') }}
-                    onChange={e => { setOpponentQuery(e.target.value); setOpponentId('') }}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
-                  />
-                  {opponentOpen && (
-                    <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
-                      {filteredOpponents.length === 0 ? (
-                        <li className="px-4 py-2.5 text-gray-400">No matches</li>
-                      ) : (
-                        filteredOpponents.map(o => (
-                          <li
-                            key={o.value}
-                            onMouseDown={() => {
-                              setOpponentId(o.value)
-                              setOpponentQuery('')
-                              setOpponentOpen(false)
-                            }}
-                            className={`px-4 py-2.5 cursor-pointer hover:bg-red-50 ${opponentId === o.value ? 'bg-red-50 font-medium text-red-800' : 'text-gray-700'}`}
-                          >
-                            {o.group && <span className="text-xs text-gray-400 mr-1.5">{o.group} ·</span>}
-                            {o.label}
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  )}
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Opponent</label>
+                  <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={intraClub}
+                      onChange={e => { setIntraClub(e.target.checked); setOpponentId(''); setIntraClubTeamId('') }}
+                      className="rounded border-gray-300 text-red-800 focus:ring-red-700"
+                    />
+                    Intra-club match
+                  </label>
                 </div>
+
+                {intraClub ? (
+                  <select
+                    value={intraClubTeamId}
+                    onChange={e => setIntraClubTeamId(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                  >
+                    <option value="">Select opponent team...</option>
+                    {sortedTeams(teams, seasons).filter(t => t.id !== teamId).map(t => (
+                      <option key={t.id} value={t.id}>{teamDisplayName(t, seasons)}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search opponent..."
+                      value={opponentOpen ? opponentQuery : opponentLabel}
+                      onFocus={() => { setOpponentOpen(true); setOpponentQuery('') }}
+                      onChange={e => { setOpponentQuery(e.target.value); setOpponentId('') }}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                    />
+                    {opponentOpen && (
+                      <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
+                        {filteredOpponents.length === 0 ? (
+                          <li className="px-4 py-2.5 text-gray-400">No matches</li>
+                        ) : (
+                          filteredOpponents.map(o => (
+                            <li
+                              key={o.value}
+                              onMouseDown={() => {
+                                setOpponentId(o.value)
+                                setOpponentQuery('')
+                                setOpponentOpen(false)
+                              }}
+                              className={`px-4 py-2.5 cursor-pointer hover:bg-red-50 ${opponentId === o.value ? 'bg-red-50 font-medium text-red-800' : 'text-gray-700'}`}
+                            >
+                              {o.group && <span className="text-xs text-gray-400 mr-1.5">{o.group} ·</span>}
+                              {o.label}
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {intraClub && intraClubTeamId && (
+                  <p className="text-xs text-blue-600 mt-1.5">A reverse fixture will be automatically created for the opponent team.</p>
+                )}
               </div>
 
               {/* Venue */}

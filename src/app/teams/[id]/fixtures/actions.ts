@@ -48,22 +48,30 @@ export async function addFixture(teamId: string, formData: FormData) {
   const tbc = formData.get('tbc') === 'true'
   const venue = formData.get('venue') as string
   const opponentRaw = formData.get('opponent_id') as string
-  const opponentId = opponentRaw === 'tbc' ? null : await resolveOpponentId(supabase, opponentRaw)
+  const intraClub = formData.get('intra_club_match') === 'true'
+  const intraClubTeamId = intraClub ? (formData.get('intra_club_team_id') as string) : null
+
+  // For intra-club, opponent is the internal team; for external, resolve normally
+  const opponentId = intraClub && intraClubTeamId
+    ? await resolveOpponentId(supabase, `internal:${intraClubTeamId}`)
+    : opponentRaw === 'tbc' ? null : await resolveOpponentId(supabase, opponentRaw)
+
   const homeVenueId = (formData.get('home_venue_id') as string) || null
   const pitchId = (formData.get('pitch_id') as string) || null
   const competitionRaw = formData.get('competition') as string
-  // cup:{id} values store the competition_id and normalise to 'cup' for the type field
   const competition = competitionRaw.startsWith('cup:') ? 'cup' : competitionRaw
   const competitionId = competitionRaw.startsWith('cup:') ? competitionRaw.slice(4) : null
-
   const leagueAssignedReferee = formData.get('league_assigned_referee') === 'true'
   const refereeRequired = !leagueAssignedReferee && formData.get('referee_required') === 'true'
+  const date = formData.get('date') as string
+  const seasonId = formData.get('season_id') as string
+  const kickoffTime = tbc || !kickoffRaw ? null : kickoffRaw
 
   const { data: inserted, error } = await supabase.from('fixtures').insert({
     team_id: teamId,
-    season_id: formData.get('season_id') as string,
-    date: formData.get('date') as string,
-    kickoff_time: tbc || !kickoffRaw ? null : kickoffRaw,
+    season_id: seasonId,
+    date,
+    kickoff_time: kickoffTime,
     opponent_id: opponentId,
     venue,
     competition,
@@ -75,6 +83,39 @@ export async function addFixture(teamId: string, formData: FormData) {
   }).select('id').single()
 
   if (error) return { error: error.message }
+
+  // Create mirror fixture for intra-club matches
+  if (intraClub && intraClubTeamId) {
+    // Mirror venue: home -> away, away -> home, neutral -> neutral
+    const mirrorVenue = venue === 'home' ? 'away' : venue === 'away' ? 'home' : 'neutral'
+    // Mirror opponent: the primary team as seen from the mirror team's perspective
+    const mirrorOpponentId = await resolveOpponentId(supabase, `internal:${teamId}`)
+
+    const { data: mirror, error: mirrorError } = await supabase.from('fixtures').insert({
+      team_id: intraClubTeamId,
+      season_id: seasonId,
+      date,
+      kickoff_time: kickoffTime,
+      opponent_id: mirrorOpponentId,
+      venue: mirrorVenue,
+      competition,
+      competition_id: competitionId,
+      referee_required: false,
+      league_assigned_referee: leagueAssignedReferee,
+      home_venue_id: mirrorVenue === 'home' ? homeVenueId : null,
+      pitch_id: mirrorVenue === 'home' ? pitchId : null,
+      is_mirror: true,
+      linked_fixture_id: inserted.id,
+    }).select('id').single()
+
+    if (!mirrorError && mirror) {
+      // Link primary back to mirror
+      await supabase.from('fixtures').update({ linked_fixture_id: mirror.id }).eq('id', inserted.id)
+      revalidatePath(`/teams/${intraClubTeamId}/fixtures`)
+      revalidatePath(`/teams/${intraClubTeamId}`)
+    }
+  }
+
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)
   revalidatePath('/schedule')
@@ -96,12 +137,17 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
   const opponentRaw = formData.get('opponent_id') as string
   const opponentId = opponentRaw === 'tbc' ? null : await resolveOpponentId(supabase, opponentRaw)
 
+  const newDate = formData.get('date') as string
+  const newKickoff = tbc || !kickoffRaw ? null : kickoffRaw
+  const newCompetition = formData.get('competition') as string
+  const newVenue = formData.get('venue') as string
+
   const { error } = await supabase.from('fixtures').update({
-    date: formData.get('date') as string,
-    kickoff_time: tbc || !kickoffRaw ? null : kickoffRaw,
+    date: newDate,
+    kickoff_time: newKickoff,
     opponent_id: opponentId,
-    venue: formData.get('venue') as string,
-    competition: formData.get('competition') as string,
+    venue: newVenue,
+    competition: newCompetition,
     home_venue_id: homeVenueId || null,
     pitch_id: pitchId || null,
     referee_required: refereeRequired,
@@ -113,6 +159,17 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
   }).eq('id', fixtureId)
 
   if (error) return { error: error.message }
+
+  // Sync date/kickoff/competition to linked mirror fixture (if this is the primary)
+  const { data: thisFixture } = await supabase.from('fixtures').select('linked_fixture_id, is_mirror').eq('id', fixtureId).single()
+  if (thisFixture?.linked_fixture_id && !thisFixture.is_mirror) {
+    await supabase.from('fixtures').update({
+      date: newDate,
+      kickoff_time: newKickoff,
+      competition: newCompetition,
+    }).eq('id', thisFixture.linked_fixture_id)
+  }
+
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)
   revalidatePath('/schedule')
