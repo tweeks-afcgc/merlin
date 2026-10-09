@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import WhatsAppModal from './WhatsAppModal'
+import FixtureConfirmModal from './FixtureConfirmModal'
+import { getUpcomingFixtures } from './whatsapp/fixtureActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +47,8 @@ export default async function AdminDashboardPage() {
       .order('first_name'),
   ])
 
+  const upcomingFixtures = await getUpcomingFixtures()
+
   const seniorCount = teams?.filter(t => t.type === 'senior').length ?? 0
   const juniorCount = teams?.filter(t => t.type === 'junior').length ?? 0
 
@@ -63,11 +67,14 @@ export default async function AdminDashboardPage() {
             <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
             <p className="text-sm text-gray-400 mt-1">Club management overview.</p>
           </div>
-          <WhatsAppModal volunteers={(volunteersWithMobile ?? []).map(v => ({
-            id: v.id,
-            name: `${v.first_name} ${v.last_name}`.trim(),
-            mobile: v.mobile!,
-          }))} />
+          <div className="flex gap-2 flex-wrap justify-end">
+            <FixtureConfirmModal fixtures={upcomingFixtures} />
+            <WhatsAppModal volunteers={(volunteersWithMobile ?? []).map(v => ({
+              id: v.id,
+              name: `${v.first_name} ${v.last_name}`.trim(),
+              mobile: v.mobile!,
+            }))} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
