@@ -29,7 +29,7 @@ export default async function FixturesDashboardPage({
   const todayStr = new Date().toISOString().split('T')[0]
 
   const fixtureSelect = `
-    id, date, kickoff_time, venue, confirmed, pitch_id,
+    id, date, kickoff_time, venue, confirmed, pitch_id, is_mirror,
     referee_required, league_assigned_referee, referee_id, volunteer_referee_id,
     team_id, season_id, cancelled, cancellation_reason, goals_for, goals_against,
     teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format, kit_jersey, kit_shorts, kit_socks),
@@ -165,6 +165,7 @@ export default async function FixturesDashboardPage({
       cancellationReason: f.cancellation_reason ?? null,
       goalsFor: f.goals_for ?? null,
       goalsAgainst: f.goals_against ?? null,
+      isMirror: f.is_mirror ?? false,
     }
   })
 

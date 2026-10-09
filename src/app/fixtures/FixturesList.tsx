@@ -42,6 +42,7 @@ type Fixture = {
   cancellationReason: string | null
   goalsFor: number | null
   goalsAgainst: number | null
+  isMirror: boolean
 }
 
 type ViewMode = 'schedule' | 'team' | 'pitch'
@@ -180,7 +181,15 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
             {f.goalsFor} - {f.goalsAgainst}
           </span>
         ) : canConfirm ? (
-          <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (needsTime || needsPitch)} />
+          f.isMirror ? (
+            <span className={`hidden sm:inline-flex text-xs font-semibold px-3 py-1.5 rounded-lg ${
+              f.confirmed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {f.confirmed ? 'Confirmed' : 'Unconfirmed'}
+            </span>
+          ) : (
+            <ConfirmToggle fixtureId={f.id} confirmed={f.confirmed} disabled={!f.confirmed && (needsTime || needsPitch)} />
+          )
         ) : null}
       </div>
     </div>

@@ -119,12 +119,16 @@ export async function unconfirmFixture(fixtureId: string): Promise<{ error?: str
   const supabase = await createClient()
 
   const { data: fixture } = await supabase
-    .from('fixtures').select('team_id').eq('id', fixtureId).single()
+    .from('fixtures').select('team_id, linked_fixture_id, is_mirror').eq('id', fixtureId).single()
 
   const { error } = await supabase
     .from('fixtures').update({ confirmed: false }).eq('id', fixtureId)
 
   if (error) return { error: error.message }
+
+  if (fixture?.linked_fixture_id && !fixture.is_mirror) {
+    await supabase.from('fixtures').update({ confirmed: false }).eq('id', fixture.linked_fixture_id)
+  }
 
   revalidatePath('/fixtures')
   if (fixture) revalidatePath(`/teams/${fixture.team_id}/fixtures`)
