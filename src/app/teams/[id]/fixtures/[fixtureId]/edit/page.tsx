@@ -119,6 +119,7 @@ export default function EditFixturePage() {
       const opts = buildOpponentOptions((clubsData ?? []) as any)
       setOpponents(opts)
 
+      console.log('fixture loaded:', { opponent_id: fixture?.opponent_id, is_mirror: (fixture as any)?.is_mirror })
       if (fixture?.opponent_id && fixture.opponent_id !== 'tbc') {
         const isKnownOption = opts.some(o => o.value === fixture.opponent_id)
         console.log('opponent_id:', fixture.opponent_id, 'isKnownOption:', isKnownOption)
