@@ -28,7 +28,7 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
       opponent_id, is_home,
       teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format),
       clubs:opponent_id(name),
-      venues:venue(name, address)
+      venues(name, address)
     `)
     .gte('date', todayStr)
     .or('cancelled.is.null,cancelled.eq.false')
