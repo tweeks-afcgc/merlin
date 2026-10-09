@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { sendWhatsAppTemplate } from '@/lib/whatsapp'
-import { fixtureOpponentName, type Season } from '@/lib/teamUtils'
 
 export type UpcomingFixture = {
   id: string
@@ -23,39 +22,30 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
 
   const { data: fixtures, error: fixturesError } = await supabase
     .from('fixtures')
-    .select(`
-      id, date, kickoff_time, venue, team_id, season_id, internal_team_id,
-      opponent_id, is_home,
-      teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname, gender, format),
-      clubs:opponent_id(name),
-      venues(name, address)
-    `)
+    .select('id, date, kickoff_time, venue, team_id, season_id, opponent_id, is_home')
     .gte('date', todayStr)
-    .or('cancelled.is.null,cancelled.eq.false')
     .order('date', { ascending: true })
     .limit(30)
 
   console.log('getUpcomingFixtures:', { todayStr, count: fixtures?.length, error: fixturesError?.message ?? null })
 
-  const [{ data: seasons }, { data: internalTeams }] = await Promise.all([
+  if (!fixtures || fixtures.length === 0) return []
+
+  const teamIds = [...new Set(fixtures.map(f => f.team_id).filter(Boolean))]
+  const venueIds = [...new Set(fixtures.map(f => f.venue).filter(Boolean))]
+  const opponentIds = [...new Set(fixtures.map(f => f.opponent_id).filter(Boolean))]
+  const [{ data: seasons }, { data: teams }, { data: venueRows }, { data: clubRows }, { data: managerRoles }] = await Promise.all([
     supabase.from('seasons').select('id, name, start_date, is_current'),
-    supabase.from('club_teams').select('team_id, internal_team_id'),
+    teamIds.length ? supabase.from('teams').select('id, name').in('id', teamIds) : Promise.resolve({ data: [] }),
+    venueIds.length ? supabase.from('venues').select('id, name, address').in('id', venueIds) : Promise.resolve({ data: [] }),
+    opponentIds.length ? supabase.from('clubs').select('id, name').in('id', opponentIds) : Promise.resolve({ data: [] }),
+    teamIds.length ? supabase.from('volunteer_roles').select('team_id, volunteers(id, first_name, last_name, mobile)').in('team_id', teamIds).ilike('role_name', '%manager%') : Promise.resolve({ data: [] }),
   ])
   if (!fixtures) return []
 
-  const internalTeamIds = [...new Set(fixtures.map(f => (f as any).internal_team_id).filter(Boolean))]
-  const { data: internalTeamRows } = internalTeamIds.length > 0
-    ? await supabase.from('teams').select('id, name, type, founding_age_group, founding_season_id, age_group, nickname').in('id', internalTeamIds)
-    : { data: [] }
-
-  const internalTeamMap = new Map((internalTeamRows ?? []).map(t => [t.id, t]))
-
-  const teamIds = [...new Set(fixtures.map(f => f.team_id).filter(Boolean))]
-  const { data: managerRoles } = await supabase
-    .from('volunteer_roles')
-    .select('team_id, volunteers(id, first_name, last_name, mobile)')
-    .in('team_id', teamIds)
-    .ilike('role_name', '%manager%')
+  const teamMap = new Map((teams ?? []).map(t => [t.id, t]))
+  const venueMap = new Map((venueRows ?? []).map(v => [v.id, v]))
+  const clubMap = new Map((clubRows ?? []).map(c => [c.id, c]))
 
   const managerMap = new Map<string, { name: string; mobile: string | null }>()
   for (const r of managerRoles ?? []) {
@@ -66,12 +56,10 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
   }
 
   return fixtures.map(f => {
-    const team = (f as any).teams
-    const club = (f as any).clubs
-    const venue = (f as any).venues
-    const internalTeam = (f as any).internal_team_id ? internalTeamMap.get((f as any).internal_team_id) : undefined
-    const opponent = { club, internal_team_id: (f as any).internal_team_id, is_home: f.is_home, internalTeam }
-    const opponentName = fixtureOpponentName(opponent as any, (seasons ?? []) as Season[], f.season_id)
+    const team = teamMap.get(f.team_id)
+    const club = f.opponent_id ? clubMap.get(f.opponent_id) : null
+    const venue = f.venue ? venueMap.get(f.venue) : null
+    const opponentName = club?.name ?? 'Unknown opponent'
     const manager = managerMap.get(f.team_id)
     return {
       id: f.id,
@@ -81,7 +69,7 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixture[]> {
       kickoffTime: f.kickoff_time ?? null,
       opponentName,
       venueName: venue?.name ?? null,
-      venueAddress: venue?.address ?? null,
+      venueAddress: (venue as any)?.address ?? null,
       managerName: manager?.name ?? null,
       managerMobile: manager?.mobile ?? null,
     }
