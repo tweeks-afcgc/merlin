@@ -54,6 +54,7 @@ export default function EditFixturePage() {
   const [goalsFor, setGoalsFor] = useState<string>('')
   const [goalsAgainst, setGoalsAgainst] = useState<string>('')
   const [isPast, setIsPast] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
   const [isCancelled, setIsCancelled] = useState(false)
   const [cancellationReason, setCancellationReason] = useState<string | null>(null)
   const [teamName, setTeamName] = useState('')
@@ -110,6 +111,7 @@ export default function EditFixturePage() {
         setGoalsAgainst(fixture.goals_against != null ? String(fixture.goals_against) : '')
         setIsPast(fixture.date < new Date().toISOString().split('T')[0])
         setMatchNotes((fixture as any).notes ?? '')
+        setConfirmed(!!(fixture as any).confirmed)
         setIsCancelled(!!(fixture as any).cancelled)
         setCancellationReason((fixture as any).cancellation_reason ?? null)
         const mirror = !!(fixture as any).is_mirror
@@ -269,6 +271,7 @@ export default function EditFixturePage() {
     fd.set('referee_id', refereeRequired ? refereeId : '')
     fd.set('goals_for', goalsFor)
     fd.set('goals_against', goalsAgainst)
+    fd.set('confirmed', confirmed ? 'true' : 'false')
 
     const result = await updateFixture(fixtureId, teamId, fd)
     if (result?.error) { setError(result.error); setSaving(false); return }
@@ -414,6 +417,21 @@ export default function EditFixturePage() {
                   <option value="cup">Cup</option>
                   <option value="shield">Shield</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={confirmed}
+                    onChange={e => setConfirmed(e.target.checked)}
+                    className="rounded border-gray-300 text-red-800 focus:ring-red-700"
+                  />
+                  <span>
+                    Fixture confirmed
+                    {confirmed && <span className="ml-1.5 text-xs font-medium text-green-700">✓</span>}
+                  </span>
+                </label>
               </div>
 
               {isAdmin && venue === 'home' && (

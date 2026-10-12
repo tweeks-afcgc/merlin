@@ -134,6 +134,7 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
   const refereeIdRaw = (formData.get('referee_id') as string) || ''
   const goalsForRaw = formData.get('goals_for') as string
   const goalsAgainstRaw = formData.get('goals_against') as string
+  const confirmed = formData.get('confirmed') === 'true'
   const opponentRaw = formData.get('opponent_id') as string
   const opponentId = opponentRaw === 'tbc' ? null : await resolveOpponentId(supabase, opponentRaw)
 
@@ -156,6 +157,7 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
     volunteer_referee_id: refereeRequired && refereeIdRaw.startsWith('vol:') ? refereeIdRaw.slice(4) : null,
     goals_for: goalsForRaw !== '' ? parseInt(goalsForRaw) : null,
     goals_against: goalsAgainstRaw !== '' ? parseInt(goalsAgainstRaw) : null,
+    confirmed,
   }).eq('id', fixtureId)
 
   if (error) return { error: error.message }
