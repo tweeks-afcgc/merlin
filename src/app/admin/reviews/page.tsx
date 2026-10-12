@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import { teamDisplayName, type Season } from '@/lib/teamUtils'
 import CopyLinkButton from './CopyLinkButton'
+import DeleteReviewButton from './DeleteReviewButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,6 +63,7 @@ export default async function AdminReviewsPage() {
 
   type PendingItem = {
     key: string
+    reviewId: string
     type: 'referee' | 'manager'
     label: string
     date: string
@@ -89,6 +91,7 @@ export default async function AdminReviewsPage() {
     if (!r.ref_submitted_at && refName) {
       pending.push({
         key: `${r.id}-ref`,
+        reviewId: r.id,
         type: 'referee',
         label: `${refName}|||${teamName}`,
         date,
@@ -102,6 +105,7 @@ export default async function AdminReviewsPage() {
       const managerLabel = managerName ? `${managerName}|||${teamName}` : teamName
       pending.push({
         key: `${r.id}-mgr`,
+        reviewId: r.id,
         type: 'manager',
         label: managerLabel,
         date,
@@ -150,6 +154,7 @@ export default async function AdminReviewsPage() {
                   <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.date)}</p>
                 </div>
                 <CopyLinkButton url={item.reviewUrl} />
+                <DeleteReviewButton reviewId={item.reviewId} type={item.type} />
                 <Link
                   href={`/teams/${item.teamId}/fixtures/${item.fixtureId}/edit`}
                   className="text-xs text-red-800 hover:underline flex-shrink-0"
