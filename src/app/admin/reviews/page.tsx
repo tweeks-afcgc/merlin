@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import { teamDisplayName, type Season } from '@/lib/teamUtils'
+import CopyLinkButton from './CopyLinkButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,11 +22,17 @@ export default async function AdminReviewsPage() {
 
   const todayStr = new Date().toISOString().split('T')[0]
 
+  // Derive the site origin from the request headers
+  const headersList = await headers()
+  const host = headersList.get('host') ?? ''
+  const proto = headersList.get('x-forwarded-proto') ?? 'https'
+  const origin = `${proto}://${host}`
+
   const [{ data: rows }, { data: seasons }] = await Promise.all([
     supabase
       .from('fixture_reviews')
       .select(`
-        id, ref_submitted_at, manager_submitted_at,
+        id, ref_token, manager_token, ref_submitted_at, manager_submitted_at,
         fixtures!inner(
           id, date, team_id, referee_id, volunteer_referee_id,
           teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname),
@@ -45,6 +53,7 @@ export default async function AdminReviewsPage() {
     date: string
     teamId: string
     fixtureId: string
+    reviewUrl: string
   }
 
   const pending: PendingItem[] = []
@@ -64,10 +73,26 @@ export default async function AdminReviewsPage() {
       : refProfile?.full_name ?? null
 
     if (!r.ref_submitted_at && refName) {
-      pending.push({ key: `${r.id}-ref`, type: 'referee', label: refName, date, teamId, fixtureId })
+      pending.push({
+        key: `${r.id}-ref`,
+        type: 'referee',
+        label: refName,
+        date,
+        teamId,
+        fixtureId,
+        reviewUrl: `${origin}/review/ref/${r.ref_token}`,
+      })
     }
     if (!r.manager_submitted_at) {
-      pending.push({ key: `${r.id}-mgr`, type: 'manager', label: teamName, date, teamId, fixtureId })
+      pending.push({
+        key: `${r.id}-mgr`,
+        type: 'manager',
+        label: teamName,
+        date,
+        teamId,
+        fixtureId,
+        reviewUrl: `${origin}/review/manager/${r.manager_token}`,
+      })
     }
   }
 
@@ -89,7 +114,7 @@ export default async function AdminReviewsPage() {
         ) : (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
             {pending.map(item => (
-              <div key={item.key} className="flex items-center gap-4 px-4 py-3">
+              <div key={item.key} className="flex items-center gap-3 px-4 py-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold flex-shrink-0 ${
@@ -103,8 +128,9 @@ export default async function AdminReviewsPage() {
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.date)}</p>
                 </div>
+                <CopyLinkButton url={item.reviewUrl} />
                 <Link
-                  href={`/teams/${item.teamId}/fixtures/${item.fixtureId}`}
+                  href={`/teams/${item.teamId}/fixtures/${item.fixtureId}/edit`}
                   className="text-xs text-red-800 hover:underline flex-shrink-0"
                 >
                   View fixture
