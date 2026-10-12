@@ -57,7 +57,7 @@ function FixtureCard({ data }: { data: FixtureCardData }) {
           </div>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/crest.png" alt="AFC Green Court" style={{ width: 72, height: 72, objectFit: 'contain' }} crossOrigin="anonymous" />
+        <img src="/crest.png" alt="AFC Green Court" style={{ height: 80, width: 'auto' }} crossOrigin="anonymous" />
       </div>
 
       <div style={{ height: 1, backgroundColor: '#e5e7eb', marginBottom: 22 }} />
