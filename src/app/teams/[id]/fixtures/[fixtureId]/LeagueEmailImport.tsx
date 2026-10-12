@@ -100,11 +100,13 @@ export default function LeagueEmailImport({
   teamId,
   venue,
   existing,
+  isIntraClub = false,
 }: {
   fixtureId: string
   teamId: string
   venue: string // 'home' | 'away' | 'neutral'
   existing: ExistingData
+  isIntraClub?: boolean
 }) {
   const [open, setOpen] = useState(existing.loaded)
   const [emailText, setEmailText] = useState('')
@@ -225,56 +227,57 @@ export default function LeagueEmailImport({
           {/* Parsed fields */}
           {parsed && (
             <div className="space-y-5">
-              {/* Videoing + colours — always show */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Videoing</label>
-                  <select
-                    value={videoingAllowed}
-                    onChange={e => setVideoingAllowed(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
-                  >
-                    <option value="">Unknown</option>
-                    <option value="yes">Allowed</option>
-                    <option value="no">Not allowed</option>
-                  </select>
-                </div>
-                {oppColours && <Field label="Opposition kit colours" value={oppColours} onChange={setOppColours} />}
-              </div>
-
-              {/* Opposition venue — only if data found */}
-              {(oppVenueName || oppVenueAddress) && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition venue</p>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {oppVenueName && <Field label="Ground name" value={oppVenueName} onChange={setOppVenueName} />}
-                    {oppVenueAddress && <Field label="Address" value={oppVenueAddress} onChange={setOppVenueAddress} />}
+              {/* Non-notes fields — hidden for intra-club matches */}
+              {!isIntraClub && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Videoing</label>
+                      <select
+                        value={videoingAllowed}
+                        onChange={e => setVideoingAllowed(e.target.value)}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                      >
+                        <option value="">Unknown</option>
+                        <option value="yes">Allowed</option>
+                        <option value="no">Not allowed</option>
+                      </select>
+                    </div>
+                    {oppColours && <Field label="Opposition kit colours" value={oppColours} onChange={setOppColours} />}
                   </div>
-                </div>
-              )}
 
-              {/* Opposition fixture secretary — only if data found */}
-              {(oppFixSecName || oppFixSecEmail || oppFixSecPhone) && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition fixture secretary</p>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    {oppFixSecName && <Field label="Name" value={oppFixSecName} onChange={setOppFixSecName} />}
-                    {oppFixSecEmail && <Field label="Email" value={oppFixSecEmail} onChange={setOppFixSecEmail} />}
-                    {oppFixSecPhone && <Field label="Phone" value={oppFixSecPhone} onChange={setOppFixSecPhone} />}
-                  </div>
-                </div>
-              )}
+                  {(oppVenueName || oppVenueAddress) && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition venue</p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {oppVenueName && <Field label="Ground name" value={oppVenueName} onChange={setOppVenueName} />}
+                        {oppVenueAddress && <Field label="Address" value={oppVenueAddress} onChange={setOppVenueAddress} />}
+                      </div>
+                    </div>
+                  )}
 
-              {/* Opposition manager — only if data found */}
-              {(oppManagerName || oppManagerEmail || oppManagerPhone) && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition team manager</p>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    {oppManagerName && <Field label="Name" value={oppManagerName} onChange={setOppManagerName} />}
-                    {oppManagerEmail && <Field label="Email" value={oppManagerEmail} onChange={setOppManagerEmail} />}
-                    {oppManagerPhone && <Field label="Phone" value={oppManagerPhone} onChange={setOppManagerPhone} />}
-                  </div>
-                </div>
+                  {(oppFixSecName || oppFixSecEmail || oppFixSecPhone) && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition fixture secretary</p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {oppFixSecName && <Field label="Name" value={oppFixSecName} onChange={setOppFixSecName} />}
+                        {oppFixSecEmail && <Field label="Email" value={oppFixSecEmail} onChange={setOppFixSecEmail} />}
+                        {oppFixSecPhone && <Field label="Phone" value={oppFixSecPhone} onChange={setOppFixSecPhone} />}
+                      </div>
+                    </div>
+                  )}
+
+                  {(oppManagerName || oppManagerEmail || oppManagerPhone) && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition team manager</p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {oppManagerName && <Field label="Name" value={oppManagerName} onChange={setOppManagerName} />}
+                        {oppManagerEmail && <Field label="Email" value={oppManagerEmail} onChange={setOppManagerEmail} />}
+                        {oppManagerPhone && <Field label="Phone" value={oppManagerPhone} onChange={setOppManagerPhone} />}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Venue notes */}
