@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-export async function GET() {
+export async function GET(req: Request) {
   // Admin only
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -11,6 +11,7 @@ export async function GET() {
 
   const token = process.env.WHATSAPP_ACCESS_TOKEN
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
+  const wabaIdParam = new URL(req.url).searchParams.get('waba_id')
 
   // Try fetching phone number info with available fields
   const phoneRes = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}?fields=id,display_phone_number,verified_name`, {
@@ -24,11 +25,14 @@ export async function GET() {
   })
   const meData = await meRes.json()
 
-  // Try fetching templates directly from phone number endpoint
-  const tmplRes = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/message_templates?fields=name,language,status&limit=50`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  const templates = await tmplRes.json()
+  // Fetch templates via WABA ID if provided
+  let templates = null
+  if (wabaIdParam) {
+    const tmplRes = await fetch(`https://graph.facebook.com/v20.0/${wabaIdParam}/message_templates?fields=name,language,status&limit=50`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    templates = await tmplRes.json()
+  }
 
-  return NextResponse.json({ phoneNumberId, phoneData, meData, templates })
+  return NextResponse.json({ phoneNumberId, phoneData, meData, templates, hint: 'Pass ?waba_id=YOUR_WABA_ID to list templates' })
 }
