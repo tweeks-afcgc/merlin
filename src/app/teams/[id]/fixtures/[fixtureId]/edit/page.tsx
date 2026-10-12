@@ -8,6 +8,7 @@ import { updateFixture, assignRefereeFromRequest, savePerformances, saveMatchNot
 import DeleteFixtureButton from '../../DeleteFixtureButton'
 import CancelFixtureButton from '../../CancelFixtureButton'
 import ReviewLinks from '../ReviewLinks'
+import LeagueEmailImport from '../LeagueEmailImport'
 import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 import { sortedTeams, teamDisplayName } from '@/lib/teamSort'
 
@@ -62,6 +63,7 @@ export default function EditFixturePage() {
 
   const [players, setPlayers] = useState<Player[]>([])
   const [perfs, setPerfs] = useState<Record<string, PlayerPerformance>>({})
+  const [leagueEmailExisting, setLeagueEmailExisting] = useState<any>({ loaded: false })
 
   useEffect(() => {
     async function load() {
@@ -112,6 +114,23 @@ export default function EditFixturePage() {
         const mirror = !!(fixture as any).is_mirror
         setIsMirror(mirror)
         setIsIntraClubPrimary(!mirror && !!(fixture as any).linked_fixture_id)
+
+        const f = fixture as any
+        const hasLeagueData = !!(f.opp_manager_name || f.opp_fixture_sec_name || f.opp_colours || f.league_notes || f.opp_venue_name)
+        setLeagueEmailExisting(hasLeagueData ? {
+          loaded: true,
+          videoingAllowed: f.videoing_allowed ?? null,
+          leagueNotes: f.league_notes ?? null,
+          oppColours: f.opp_colours ?? null,
+          oppFixtureSecName: f.opp_fixture_sec_name ?? null,
+          oppFixtureSecEmail: f.opp_fixture_sec_email ?? null,
+          oppFixtureSecPhone: f.opp_fixture_sec_phone ?? null,
+          oppManagerName: f.opp_manager_name ?? null,
+          oppManagerEmail: f.opp_manager_email ?? null,
+          oppManagerPhone: f.opp_manager_phone ?? null,
+          oppVenueName: f.opp_venue_name ?? null,
+          oppVenueAddress: f.opp_venue_address ?? null,
+        } : { loaded: false })
 
         if (fixture.home_venue_id) {
           const { data: pitchData } = await supabase
@@ -706,6 +725,16 @@ export default function EditFixturePage() {
                 </table>
               </div>
             </div>
+          )}
+
+          {/* League email import — non-mirror fixtures only */}
+          {!isMirror && (
+            <LeagueEmailImport
+              fixtureId={fixtureId}
+              teamId={teamId}
+              venue={venue}
+              existing={leagueEmailExisting}
+            />
           )}
 
           {/* Review links — admin only, past fixtures */}

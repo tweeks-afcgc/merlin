@@ -297,6 +297,38 @@ export async function uncancelFixture(fixtureId: string, teamId: string) {
   return {}
 }
 
+export async function saveLeagueEmailData(fixtureId: string, teamId: string, data: {
+  leagueNotes: string | null
+  videoingAllowed: boolean | null
+  oppColours: string | null
+  oppFixtureSecName: string | null
+  oppFixtureSecEmail: string | null
+  oppFixtureSecPhone: string | null
+  oppManagerName: string | null
+  oppManagerEmail: string | null
+  oppManagerPhone: string | null
+  oppVenueName: string | null
+  oppVenueAddress: string | null
+}): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase.from('fixtures').update({
+    league_notes: data.leagueNotes,
+    videoing_allowed: data.videoingAllowed,
+    opp_colours: data.oppColours,
+    opp_fixture_sec_name: data.oppFixtureSecName,
+    opp_fixture_sec_email: data.oppFixtureSecEmail,
+    opp_fixture_sec_phone: data.oppFixtureSecPhone,
+    opp_manager_name: data.oppManagerName,
+    opp_manager_email: data.oppManagerEmail,
+    opp_manager_phone: data.oppManagerPhone,
+    opp_venue_name: data.oppVenueName,
+    opp_venue_address: data.oppVenueAddress,
+  }).eq('id', fixtureId)
+  if (error) return { error: error.message }
+  revalidatePath(`/teams/${teamId}/fixtures`)
+  return {}
+}
+
 export async function deleteFixture(fixtureId: string, teamId: string) {
   const supabase = await createClient()
   const { data: fixture } = await supabase
