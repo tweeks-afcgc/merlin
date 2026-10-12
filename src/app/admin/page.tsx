@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
+import WhatsAppTestModal from './WhatsAppTestModal'
+import { getUpcomingFixtures } from './whatsapp/fixtureActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +40,8 @@ export default async function AdminDashboardPage() {
       .lt('fixtures.date', new Date().toISOString().split('T')[0]),
   ])
 
+  const upcomingFixtures = await getUpcomingFixtures()
+
   const seniorCount = teams?.filter(t => t.type === 'senior').length ?? 0
   const juniorCount = teams?.filter(t => t.type === 'junior').length ?? 0
 
@@ -51,9 +55,12 @@ export default async function AdminDashboardPage() {
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin>
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
-          <p className="text-sm text-gray-400 mt-1">Club management overview.</p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
+            <p className="text-sm text-gray-400 mt-1">Club management overview.</p>
+          </div>
+          <WhatsAppTestModal fixtures={upcomingFixtures} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

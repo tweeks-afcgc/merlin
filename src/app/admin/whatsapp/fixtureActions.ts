@@ -98,3 +98,27 @@ export async function sendFixtureConfirmation(fixtureId: string): Promise<{ ok: 
     fixture.venueAddress ?? 'TBC',
   ])
 }
+
+export async function sendFixtureConfirmationToNumber(fixtureId: string, overrideMobile: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated' }
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return { ok: false, error: 'Not authorised' }
+
+  const fixtures = await getUpcomingFixtures()
+  const fixture = fixtures.find(f => f.id === fixtureId)
+  if (!fixture) return { ok: false, error: 'Fixture not found' }
+
+  const dateStr = new Date(fixture.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const timeStr = fixture.kickoffTime ? ` at ${fixture.kickoffTime.slice(0, 5)}` : ''
+
+  return sendWhatsAppTemplate(overrideMobile, 'fixture_confirmed', [
+    fixture.managerName ?? 'Manager',
+    `${dateStr}${timeStr}`,
+    fixture.venueName ?? 'TBC',
+    fixture.opponentName,
+    fixture.venueAddress ?? 'TBC',
+  ])
+}
