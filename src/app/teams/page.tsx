@@ -40,7 +40,7 @@ export default async function TeamsPage() {
     supabase.from('team_competitions').select('team_id, type, name, abbr_name, division, season_id'),
     supabase.from('training_slots').select('team_id, day_of_week, frequency, start_time, end_time, venues(name)').order('created_at'),
     supabase.from('team_sponsors').select('team_id, name, season_id'),
-    isAdmin ? supabase.from('fixture_reviews').select('fixtures!inner(team_id)').not('ref_submitted_at', 'is', null) : Promise.resolve({ data: [] }),
+    isAdmin ? supabase.from('fixture_reviews').select('fixtures!inner(team_id), ref_coaches_score, ref_spectators_score, ref_players_score, ref_experience_score').not('ref_submitted_at', 'is', null) : Promise.resolve({ data: [] }),
   ])
 
   if (teamsRes.error || seasonsRes.error) {
@@ -61,7 +61,17 @@ export default async function TeamsPage() {
   const competitionsData = compsRes.data ?? []
   const trainingData = trainingRes.data ?? []
   const sponsorsData = sponsorsRes.data ?? []
-  const teamsWithReviews = [...new Set((reviewsRes.data ?? []).map((r: any) => r.fixtures?.team_id).filter(Boolean))]
+  const teamReviewStats: Record<string, { avg: number; count: number }> = {}
+  for (const r of reviewsRes.data ?? []) {
+    const teamId = (r as any).fixtures?.team_id
+    if (!teamId) continue
+    const scores = [(r as any).ref_coaches_score, (r as any).ref_spectators_score, (r as any).ref_players_score, (r as any).ref_experience_score].filter((s): s is number => s != null)
+    if (scores.length === 0) continue
+    const reviewAvg = scores.reduce((a: number, b: number) => a + b, 0) / scores.length
+    if (!teamReviewStats[teamId]) teamReviewStats[teamId] = { avg: 0, count: 0 }
+    const prev = teamReviewStats[teamId]
+    teamReviewStats[teamId] = { count: prev.count + 1, avg: (prev.avg * prev.count + reviewAvg) / (prev.count + 1) }
+  }
 
   const currentSeasonId = seasons.find(s => s.is_current)?.id ?? null
 
@@ -135,7 +145,7 @@ export default async function TeamsPage() {
     <AppShell userName={profile?.full_name ?? null} isAdmin={isAdmin}>
       <div className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Teams</h1>
-        <TeamsClient teams={teams} isAdmin={isAdmin} venueNames={venueNames} formats={formats} teamsWithReviews={teamsWithReviews} />
+        <TeamsClient teams={teams} isAdmin={isAdmin} venueNames={venueNames} formats={formats} teamReviewStats={teamReviewStats} />
       </div>
     </AppShell>
   )

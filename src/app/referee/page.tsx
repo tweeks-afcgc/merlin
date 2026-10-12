@@ -141,7 +141,7 @@ export default async function RefereeDashboardPage({
     { data: seasons },
     { data: myRequests },
     { data: myAssignedForClash },
-    { count: refReviewCount },
+    { data: refReviewRows },
   ] = await Promise.all([
     selectedRefId
       ? isVolunteerRef
@@ -176,11 +176,15 @@ export default async function RefereeDashboardPage({
       : Promise.resolve({ data: [] }),
     isAdmin && isVolunteerRef && selectedVolId
       ? supabase.from('fixture_reviews')
-          .select('id, fixtures!inner(volunteer_referee_id)', { count: 'exact', head: true })
+          .select('manager_ref_score, fixtures!inner(volunteer_referee_id)')
           .not('manager_submitted_at', 'is', null)
           .eq('fixtures.volunteer_referee_id', selectedVolId)
-      : Promise.resolve({ count: 0, data: null, error: null }),
+      : Promise.resolve({ data: [], error: null }),
   ])
+
+  const refReviewScores = (refReviewRows ?? []).map((r: any) => r.manager_ref_score).filter((s: any): s is number => s != null)
+  const refReviewCount = refReviewScores.length
+  const refReviewAvg = refReviewCount > 0 ? refReviewScores.reduce((a: number, b: number) => a + b, 0) / refReviewCount : 0
 
   const myRequestedFixtureIds = new Set((myRequests ?? []).map((r: any) => r.fixture_id))
   const myAssignedList = (myAssignedForClash ?? []) as { id: string; date: string; kickoff_time: string | null }[]
@@ -204,15 +208,17 @@ export default async function RefereeDashboardPage({
             <p className="text-sm text-gray-400 mt-1">Next 14 days.</p>
           </div>
           <div className="flex items-center gap-2">
-            {isAdmin && isVolunteerRef && selectedVolId && (refReviewCount ?? 0) > 0 && (
+            {isAdmin && isVolunteerRef && selectedVolId && refReviewCount > 0 && (
               <Link
                 href={`/admin/referees/${selectedVolId}/reviews`}
-                className="p-1.5 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-50 transition text-sm font-semibold"
                 title="View reviews"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <span>{refReviewAvg.toFixed(1)}</span>
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
+                <span className="text-gray-400 font-normal">({refReviewCount})</span>
               </Link>
             )}
             {canSeeDropdown && referees.length > 0 && (

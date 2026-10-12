@@ -214,13 +214,14 @@ function TeamCardBody({ team }: { team: any }) {
   )
 }
 
-export default function TeamsClient({ teams, isAdmin, venueNames, formats, readOnly = false, teamsWithReviews = [] }: {
+export default function TeamsClient({ teams, isAdmin, venueNames, formats, readOnly = false, teamsWithReviews = [], teamReviewStats = {} }: {
   teams: any[]
   isAdmin: boolean
   venueNames: string[]
   formats: string[]
   readOnly?: boolean
   teamsWithReviews?: string[]
+  teamReviewStats?: Record<string, { avg: number; count: number }>
 }) {
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [filterGender, setFilterGender] = useState<FilterGender>('all')
@@ -281,15 +282,17 @@ export default function TeamsClient({ teams, isAdmin, venueNames, formats, readO
 
             {!readOnly && isAdmin && (
               <div className="absolute top-3.5 right-4 flex items-center gap-1 z-10">
-                {teamsWithReviews.includes(team.id) && (
+                {teamReviewStats[team.id] && (
                   <Link
                     href={`/admin/teams/${team.id}/reviews`}
-                    className="p-1.5 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                    className="flex items-center gap-1 px-1.5 py-1 rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-50 transition text-xs font-semibold"
                     title="View reviews"
                   >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <span>{teamReviewStats[team.id].avg.toFixed(1)}</span>
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
+                    <span className="text-gray-400 font-normal">({teamReviewStats[team.id].count})</span>
                   </Link>
                 )}
                 <Link
