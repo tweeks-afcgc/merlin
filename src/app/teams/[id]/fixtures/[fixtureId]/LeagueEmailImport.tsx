@@ -227,24 +227,26 @@ export default function LeagueEmailImport({
           {/* Parsed fields */}
           {parsed && (
             <div className="space-y-5">
-              {/* Non-notes fields — hidden for intra-club matches */}
+              {/* Videoing — always shown */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Videoing</label>
+                  <select
+                    value={videoingAllowed}
+                    onChange={e => setVideoingAllowed(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
+                  >
+                    <option value="">Unknown</option>
+                    <option value="yes">Allowed</option>
+                    <option value="no">Not allowed</option>
+                  </select>
+                </div>
+                {!isIntraClub && oppColours && <Field label="Opposition kit colours" value={oppColours} onChange={setOppColours} />}
+              </div>
+
+              {/* Colours, venue, contacts — hidden for intra-club matches */}
               {!isIntraClub && (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Videoing</label>
-                      <select
-                        value={videoingAllowed}
-                        onChange={e => setVideoingAllowed(e.target.value)}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-700"
-                      >
-                        <option value="">Unknown</option>
-                        <option value="yes">Allowed</option>
-                        <option value="no">Not allowed</option>
-                      </select>
-                    </div>
-                    {oppColours && <Field label="Opposition kit colours" value={oppColours} onChange={setOppColours} />}
-                  </div>
 
                   {(oppVenueName || oppVenueAddress) && (
                     <div>
