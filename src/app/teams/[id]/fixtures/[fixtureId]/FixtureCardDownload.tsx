@@ -129,7 +129,7 @@ function FixtureCard({ data, isIntraClub }: { data: FixtureCardData; isIntraClub
   )
 }
 
-export default function FixtureCardDownload({ fixtureId, teamId, isIntraClub = false }: { fixtureId: string; teamId: string; isIntraClub?: boolean }) {
+export default function FixtureCardDownload({ fixtureId, teamId, isIntraClub = false, compact = false }: { fixtureId: string; teamId: string; isIntraClub?: boolean; compact?: boolean }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cardData, setCardData] = useState<FixtureCardData | null>(null)
@@ -204,22 +204,25 @@ export default function FixtureCardDownload({ fixtureId, teamId, isIntraClub = f
         type="button"
         onClick={handleDownload}
         disabled={loading}
-        className="flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold px-4 py-2 rounded-lg transition disabled:opacity-50"
+        className={compact
+          ? "inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 transition disabled:opacity-50"
+          : "flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold px-4 py-2 rounded-lg transition disabled:opacity-50"
+        }
       >
         {loading ? (
           <>
-            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <svg className={compact ? "w-3 h-3 animate-spin" : "w-4 h-4 animate-spin"} fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
-            Generating…
+            {compact ? 'Generating…' : 'Generating…'}
           </>
         ) : (
           <>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className={compact ? "w-3 h-3" : "w-4 h-4"} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Download info card
+            {compact ? 'Info card' : 'Download info card'}
           </>
         )}
       </button>

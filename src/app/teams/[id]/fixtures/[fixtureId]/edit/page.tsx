@@ -409,60 +409,86 @@ export default function EditFixturePage() {
     <AppShell>
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-5">
-          <Link href={`/teams/${teamId}`} className="hover:text-gray-700 transition">{teamName || 'Team'}</Link>
-          <span>›</span>
-          <Link href={returnUrl()} className="hover:text-gray-700 transition">Fixtures</Link>
-          <span>›</span>
-          <span className="text-gray-600 font-medium">
-            {opponentName ? `vs ${opponentName}` : 'Fixture'}
-          </span>
-        </nav>
+        {/* Page header */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-5">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
+            <Link href={`/teams/${teamId}`} className="hover:text-gray-600 transition">{teamName || 'Team'}</Link>
+            <span>›</span>
+            <Link href={returnUrl()} className="hover:text-gray-600 transition">Fixtures</Link>
+          </nav>
 
-        {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3 mb-6 bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-2.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            {!isMirror && (
-              <>
-                <CancelFixtureButton
-                  fixtureId={fixtureId} teamId={teamId}
-                  teamName={teamName}
-                  opponentName={opponents.find(o => o.value === opponentId)?.label ?? opponentName}
-                  isCancelled={isCancelled} cancellationReason={cancellationReason}
-                />
-                {!refereeId && (
-                  <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnUrl()} />
-                )}
-              </>
-            )}
-            <FixtureCardDownload fixtureId={fixtureId} teamId={teamId} isIntraClub={isIntraClubPrimary} />
-          </div>
-          <div className="flex items-center gap-3">
-            {dirty ? (
-              <>
-                <button type="button" onClick={discard} disabled={saving}
-                  className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition disabled:opacity-50">
-                  Discard
+          {/* Title row */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 truncate">
+                {teamName || '—'} <span className="font-normal text-gray-400">vs</span> {opponentName || 'TBC'}
+              </h1>
+              {isCancelled ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 flex-shrink-0">Cancelled</span>
+              ) : confirmed ? (
+                <button type="button" title="Click to mark unconfirmed"
+                  onClick={() => { setConfirmed(false); mark() }}
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200 transition flex-shrink-0">
+                  ✓ Confirmed
                 </button>
-                <button type="button" onClick={handleSave} disabled={saving}
-                  className="flex items-center gap-1.5 text-sm font-semibold bg-red-800 hover:bg-red-900 text-white px-4 py-1.5 rounded-lg transition disabled:opacity-60">
-                  {saving ? 'Saving…' : (
-                    <>
-                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
-                        <polyline points="17 21 17 13 7 13 7 21"/>
-                        <polyline points="7 3 7 8 15 8"/>
-                      </svg>
-                      Save changes
-                    </>
+              ) : (
+                <button type="button" title="Click to mark confirmed"
+                  onClick={() => { setConfirmed(true); mark() }}
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 hover:bg-gray-200 transition flex-shrink-0">
+                  Unconfirmed
+                </button>
+              )}
+            </div>
+
+            {/* Save / Discard */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {dirty ? (
+                <>
+                  <button type="button" onClick={discard} disabled={saving}
+                    className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition disabled:opacity-50">
+                    Discard
+                  </button>
+                  <button type="button" onClick={handleSave} disabled={saving}
+                    className="flex items-center gap-1.5 text-sm font-semibold bg-red-800 hover:bg-red-900 text-white px-4 py-1.5 rounded-lg transition disabled:opacity-60">
+                    {saving ? 'Saving…' : (
+                      <>
+                        <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                          <polyline points="17 21 17 13 7 13 7 21"/>
+                          <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        Save changes
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <span className="text-xs text-gray-400">Click any field to edit</span>
+              )}
+            </div>
+          </div>
+
+          {/* Action icon buttons */}
+          {!loading && (
+            <div className="flex items-center gap-1 mt-3 pt-3 border-t border-gray-50 flex-wrap">
+              {!isMirror && (
+                <>
+                  <CancelFixtureButton
+                    fixtureId={fixtureId} teamId={teamId}
+                    teamName={teamName}
+                    opponentName={opponents.find(o => o.value === opponentId)?.label ?? opponentName}
+                    isCancelled={isCancelled} cancellationReason={cancellationReason}
+                    compact
+                  />
+                  {!refereeId && (
+                    <DeleteFixtureButton fixtureId={fixtureId} teamId={teamId} returnTo={returnUrl()} compact />
                   )}
-                </button>
-              </>
-            ) : (
-              <span className="text-xs text-gray-400">Click any field to edit</span>
-            )}
-          </div>
+                </>
+              )}
+              <FixtureCardDownload fixtureId={fixtureId} teamId={teamId} isIntraClub={isIntraClubPrimary} compact />
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -485,18 +511,7 @@ export default function EditFixturePage() {
               <div className="space-y-4">
 
                 {/* Fixture details card */}
-                <SectionCard
-                  title="Fixture details"
-                  badge={
-                    isCancelled ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Cancelled</span>
-                    ) : confirmed ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Confirmed</span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Unconfirmed</span>
-                    )
-                  }
-                >
+                <SectionCard title="Fixture details">
                   {/* Date */}
                   <FieldRow
                     label="Date" readOnly={isMirror}
@@ -577,20 +592,6 @@ export default function EditFixturePage() {
                     <button type="button" onClick={() => saveField('opponent')}
                       className="text-xs font-semibold px-3 py-1.5 bg-red-800 text-white rounded-lg hover:bg-red-900 transition">Save</button>
                   </FieldRow>
-
-                  {/* Confirmed */}
-                  <FieldRow
-                    label="Confirmed"
-                    value={
-                      <label className="flex items-center gap-2 cursor-pointer" onClick={e => e.stopPropagation()}>
-                        <input type="checkbox" checked={confirmed}
-                          onChange={e => { setConfirmed(e.target.checked); mark() }}
-                          className="rounded border-gray-300 text-red-800 focus:ring-red-700" />
-                        <span className={confirmed ? 'text-green-700 font-medium' : 'text-gray-400'}>{confirmed ? 'Yes' : 'No'}</span>
-                      </label>
-                    }
-                    editing={false} onEdit={() => {}} onCancel={() => {}} readOnly
-                  >{null}</FieldRow>
 
                   {/* Venue type */}
                   <FieldRow

@@ -12,6 +12,7 @@ export default function CancelFixtureButton({
   opponentName,
   isCancelled,
   cancellationReason,
+  compact = false,
 }: {
   fixtureId: string
   teamId: string
@@ -19,6 +20,7 @@ export default function CancelFixtureButton({
   opponentName: string
   isCancelled: boolean
   cancellationReason: string | null
+  compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState<CancelReason>('cannot_field_team')
@@ -123,6 +125,18 @@ export default function CancelFixtureButton({
           </button>
         </div>
       </div>
+    )
+  }
+
+  if (compact) {
+    return (
+      <button type="button" onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-amber-700 hover:bg-amber-50 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:border-amber-200 transition">
+        <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        Cancel fixture
+      </button>
     )
   }
 
