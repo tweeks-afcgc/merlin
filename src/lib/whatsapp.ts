@@ -67,7 +67,7 @@ export async function sendWhatsAppTemplate(to: string, templateName: string, com
         type: 'template',
         template: {
           name: templateName,
-          language: { code: 'en_GB' },
+          language: { code: 'en_US' },
           components: [{
             type: 'body',
             parameters: components.map(text => ({ type: 'text', text })),
