@@ -116,7 +116,7 @@ export default function LeagueEmailImport({
   const [open, setOpen] = useState(existing.loaded)
   const [emailText, setEmailText] = useState('')
   const [parsed, setParsed] = useState<ParsedData | null>(existing.loaded ? existing : null)
-  const [isHome, setIsHome] = useState(venue !== 'away')
+  const isHome = venue !== 'away'
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -203,25 +203,9 @@ export default function LeagueEmailImport({
           {/* Paste area */}
           {!parsed && (
             <>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
-                  We are playing as
-                </label>
-                <div className="flex gap-3">
-                  {(['home', 'away'] as const).map(side => (
-                    <label key={side} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={isHome === (side === 'home')}
-                        onChange={() => setIsHome(side === 'home')}
-                        className="text-red-800 focus:ring-red-700"
-                      />
-                      {side.charAt(0).toUpperCase() + side.slice(1)}
-                    </label>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-400 mt-1">This determines which contact block is the opposition's.</p>
-              </div>
+              <p className="text-xs text-gray-400">
+                Playing <span className="font-medium text-gray-600">{venue === 'neutral' ? 'at a neutral venue' : venue}</span> — opposition contacts will be pulled from the {isHome ? 'away' : 'home'} club block.
+              </p>
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Paste email text</label>
@@ -248,7 +232,7 @@ export default function LeagueEmailImport({
           {/* Parsed fields */}
           {parsed && (
             <div className="space-y-5">
-              {/* Videoing + colours */}
+              {/* Videoing + colours — always show */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Videoing</label>
@@ -262,37 +246,43 @@ export default function LeagueEmailImport({
                     <option value="no">Not allowed</option>
                   </select>
                 </div>
-                <Field label="Opposition kit colours" value={oppColours} onChange={setOppColours} />
+                {oppColours && <Field label="Opposition kit colours" value={oppColours} onChange={setOppColours} />}
               </div>
 
-              {/* Opposition venue */}
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition venue</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="Ground name" value={oppVenueName} onChange={setOppVenueName} />
-                  <Field label="Address" value={oppVenueAddress} onChange={setOppVenueAddress} />
+              {/* Opposition venue — only if data found */}
+              {(oppVenueName || oppVenueAddress) && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition venue</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {oppVenueName && <Field label="Ground name" value={oppVenueName} onChange={setOppVenueName} />}
+                    {oppVenueAddress && <Field label="Address" value={oppVenueAddress} onChange={setOppVenueAddress} />}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Opposition fixture secretary */}
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition fixture secretary</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <Field label="Name" value={oppFixSecName} onChange={setOppFixSecName} />
-                  <Field label="Email" value={oppFixSecEmail} onChange={setOppFixSecEmail} />
-                  <Field label="Phone" value={oppFixSecPhone} onChange={setOppFixSecPhone} />
+              {/* Opposition fixture secretary — only if data found */}
+              {(oppFixSecName || oppFixSecEmail || oppFixSecPhone) && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition fixture secretary</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {oppFixSecName && <Field label="Name" value={oppFixSecName} onChange={setOppFixSecName} />}
+                    {oppFixSecEmail && <Field label="Email" value={oppFixSecEmail} onChange={setOppFixSecEmail} />}
+                    {oppFixSecPhone && <Field label="Phone" value={oppFixSecPhone} onChange={setOppFixSecPhone} />}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Opposition manager */}
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition team manager</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <Field label="Name" value={oppManagerName} onChange={setOppManagerName} />
-                  <Field label="Email" value={oppManagerEmail} onChange={setOppManagerEmail} />
-                  <Field label="Phone" value={oppManagerPhone} onChange={setOppManagerPhone} />
+              {/* Opposition manager — only if data found */}
+              {(oppManagerName || oppManagerEmail || oppManagerPhone) && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Opposition team manager</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {oppManagerName && <Field label="Name" value={oppManagerName} onChange={setOppManagerName} />}
+                    {oppManagerEmail && <Field label="Email" value={oppManagerEmail} onChange={setOppManagerEmail} />}
+                    {oppManagerPhone && <Field label="Phone" value={oppManagerPhone} onChange={setOppManagerPhone} />}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Venue notes */}
               <div>
