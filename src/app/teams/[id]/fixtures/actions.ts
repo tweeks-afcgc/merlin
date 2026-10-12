@@ -160,6 +160,23 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
 
   if (error) return { error: error.message }
 
+  // Auto-create review links when a result is entered and we assigned the referee
+  if (goalsForRaw !== '' && goalsAgainstRaw !== '') {
+    const { data: updatedFixture } = await supabase
+      .from('fixtures')
+      .select('referee_id, volunteer_referee_id, league_assigned_referee')
+      .eq('id', fixtureId)
+      .single()
+    const hasOurReferee =
+      !!(updatedFixture?.referee_id || updatedFixture?.volunteer_referee_id) &&
+      !(updatedFixture as any)?.league_assigned_referee
+    if (hasOurReferee) {
+      await supabase
+        .from('fixture_reviews')
+        .upsert({ fixture_id: fixtureId }, { onConflict: 'fixture_id', ignoreDuplicates: true })
+    }
+  }
+
   // Sync to linked mirror fixture (if this is the primary)
   const intraClubTeamIdRaw = formData.get('intra_club_team_id') as string
   const { data: thisFixture } = await supabase.from('fixtures').select('linked_fixture_id, is_mirror, team_id, opponent_id').eq('id', fixtureId).single()
