@@ -90,7 +90,7 @@ export default async function AdminReviewsPage() {
       pending.push({
         key: `${r.id}-ref`,
         type: 'referee',
-        label: refName,
+        label: `${refName}|||${teamName}`,
         date,
         teamId,
         fixtureId,
@@ -99,7 +99,7 @@ export default async function AdminReviewsPage() {
     }
     if (!r.manager_submitted_at) {
       const managerName = managerByTeam.get(teamId)
-      const managerLabel = managerName ? `${managerName} (${teamName})` : teamName
+      const managerLabel = managerName ? `${managerName}|||${teamName}` : teamName
       pending.push({
         key: `${r.id}-mgr`,
         type: 'manager',
@@ -140,7 +140,12 @@ export default async function AdminReviewsPage() {
                     }`}>
                       {item.type === 'referee' ? 'Referee Feedback' : 'Manager Feedback'}
                     </span>
-                    <p className="text-sm font-semibold text-gray-900 truncate">{item.label}</p>
+                    <p className="text-sm text-gray-900 truncate">
+                      <span className="font-semibold">{item.label.split('|||')[0]}</span>
+                      {item.label.includes('|||') && (
+                        <span className="font-normal text-gray-500"> ({item.label.split('|||')[1]})</span>
+                      )}
+                    </p>
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.date)}</p>
                 </div>
