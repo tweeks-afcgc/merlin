@@ -154,11 +154,23 @@ export default function FixtureCardDownload({ fixtureId, teamId }: { fixtureId: 
         logging: false,
       })
 
-      const link = document.createElement('a')
-      const slug = `${data.teamName.replace(/\s+/g, '-')}-vs-${data.opponentName.replace(/\s+/g, '-')}-${data.date}`
-      link.download = `${slug}.png`
-      link.href = canvas.toDataURL('image/png')
-      link.click()
+      const dataUrl = canvas.toDataURL('image/png')
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+      if (isMobile) {
+        // On mobile, open image in new tab so it can be saved/forwarded via WhatsApp
+        const win = window.open()
+        if (win) {
+          win.document.write(`<img src="${dataUrl}" style="max-width:100%;display:block;" />`)
+          win.document.close()
+        }
+      } else {
+        const link = document.createElement('a')
+        const slug = `${data.teamName.replace(/\s+/g, '-')}-vs-${data.opponentName.replace(/\s+/g, '-')}-${data.date}`
+        link.download = `${slug}.png`
+        link.href = dataUrl
+        link.click()
+      }
     } catch {
       setError('Failed to generate image')
     }
