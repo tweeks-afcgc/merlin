@@ -30,7 +30,7 @@ function Row({ label, value }: { label: string; value: string | null | undefined
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 8, paddingBottom: 6, borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#374151', marginBottom: 8, paddingBottom: 6, borderBottom: '2px solid #e5e7eb' }}>
         {title}
       </div>
       {children}
@@ -39,22 +39,25 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function FixtureCard({ data }: { data: FixtureCardData }) {
-  const venueLabel = data.venue === 'home' ? 'Home' : data.venue === 'away' ? 'Away' : 'Neutral'
   const videoingText = data.videoingAllowed === true ? 'Allowed' : data.videoingAllowed === false ? 'Not allowed' : null
 
   return (
     <div style={{ width: 640, backgroundColor: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', padding: 36, boxSizing: 'border-box' }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#991b1b', marginBottom: 4 }}>
-          Fixture Information
+      {/* Header row: text left, crest right */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#991b1b', marginBottom: 4 }}>
+            Fixture Information
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>
+            {data.teamName}
+          </div>
+          <div style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>
+            vs {data.opponentName}
+          </div>
         </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>
-          {data.teamName}
-        </div>
-        <div style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>
-          vs {data.opponentName}
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/crest.png" alt="AFC Green Court" style={{ width: 72, height: 72, objectFit: 'contain' }} crossOrigin="anonymous" />
       </div>
 
       <div style={{ height: 1, backgroundColor: '#e5e7eb', marginBottom: 22 }} />
@@ -65,7 +68,7 @@ function FixtureCard({ data }: { data: FixtureCardData }) {
             <Row label="Date" value={fmt(data.date)} />
             <Row label="Kick-off" value={fmtTime(data.kickoffTime)} />
             <Row label="Competition" value={data.competition} />
-            <Row label="Venue" value={`${venueLabel}${data.venueName ? ` — ${data.venueName}` : ''}`} />
+            <Row label="Venue" value={data.venueName ?? null} />
             <Row label="Address" value={data.venueAddress} />
             <Row label="Opp. colours" value={data.oppColours} />
             <Row label="Videoing" value={videoingText} />
@@ -73,25 +76,26 @@ function FixtureCard({ data }: { data: FixtureCardData }) {
         </table>
       </Section>
 
-      {(data.oppFixSecName || data.oppFixSecEmail || data.oppFixSecPhone) && (
-        <Section title="Opposition fixture secretary">
-          <table style={{ borderCollapse: 'collapse' }}>
-            <tbody>
-              <Row label="Name" value={data.oppFixSecName} />
-              <Row label="Email" value={data.oppFixSecEmail} />
-              <Row label="Phone" value={data.oppFixSecPhone} />
-            </tbody>
-          </table>
-        </Section>
-      )}
-
+      {/* Team manager before fixture secretary */}
       {(data.oppManagerName || data.oppManagerEmail || data.oppManagerPhone) && (
-        <Section title="Opposition team manager">
+        <Section title={`${data.opponentName} - Team Manager`}>
           <table style={{ borderCollapse: 'collapse' }}>
             <tbody>
               <Row label="Name" value={data.oppManagerName} />
               <Row label="Email" value={data.oppManagerEmail} />
               <Row label="Phone" value={data.oppManagerPhone} />
+            </tbody>
+          </table>
+        </Section>
+      )}
+
+      {(data.oppFixSecName || data.oppFixSecEmail || data.oppFixSecPhone) && (
+        <Section title={`${data.opponentName} - Fixture Secretary`}>
+          <table style={{ borderCollapse: 'collapse' }}>
+            <tbody>
+              <Row label="Name" value={data.oppFixSecName} />
+              <Row label="Email" value={data.oppFixSecEmail} />
+              <Row label="Phone" value={data.oppFixSecPhone} />
             </tbody>
           </table>
         </Section>
