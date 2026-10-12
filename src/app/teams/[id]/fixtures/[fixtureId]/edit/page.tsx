@@ -728,8 +728,8 @@ export default function EditFixturePage() {
             </div>
           )}
 
-          {/* League email import — non-mirror fixtures only */}
-          {!isMirror && (
+          {/* League email import — league fixtures only (not intra-club, not mirror) */}
+          {!isMirror && !isIntraClubPrimary && (
             <LeagueEmailImport
               fixtureId={fixtureId}
               teamId={teamId}
