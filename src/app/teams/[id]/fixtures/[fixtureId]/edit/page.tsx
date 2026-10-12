@@ -744,7 +744,7 @@ export default function EditFixturePage() {
 
           {/* Download info card */}
           <div className="mt-4">
-            <FixtureCardDownload fixtureId={fixtureId} teamId={teamId} />
+            <FixtureCardDownload fixtureId={fixtureId} teamId={teamId} isIntraClub={isIntraClubPrimary} />
           </div>
 
           {/* Save / Cancel */}

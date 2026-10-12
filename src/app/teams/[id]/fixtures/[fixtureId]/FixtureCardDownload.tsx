@@ -38,7 +38,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function FixtureCard({ data }: { data: FixtureCardData }) {
+function FixtureCard({ data, isIntraClub }: { data: FixtureCardData; isIntraClub: boolean }) {
   const videoingText = data.videoingAllowed === true ? 'Allowed' : data.videoingAllowed === false ? 'Not allowed' : null
 
   return (
@@ -62,6 +62,16 @@ function FixtureCard({ data }: { data: FixtureCardData }) {
 
       <div style={{ height: 1, backgroundColor: '#e5e7eb', marginBottom: 22 }} />
 
+      {/* Intra-club notice */}
+      {isIntraClub && (
+        <div style={{ backgroundColor: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, padding: '12px 16px', marginBottom: 20 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>Intra-Club Fixture</div>
+          <div style={{ fontSize: 12, color: '#78350f', lineHeight: 1.5 }}>
+            Please can both AFC Green Court managers ensure they liaise with each other regarding any kit clashes and anything else relevant ahead of this match.
+          </div>
+        </div>
+      )}
+
       <Section title="Match details">
         <table style={{ borderCollapse: 'collapse' }}>
           <tbody>
@@ -70,35 +80,38 @@ function FixtureCard({ data }: { data: FixtureCardData }) {
             <Row label="Competition" value={data.competition} />
             <Row label="Venue" value={data.venueName ?? null} />
             <Row label="Address" value={data.venueAddress} />
-            <Row label="Opp. colours" value={data.oppColours} />
+            {!isIntraClub && <Row label="Opp. colours" value={data.oppColours} />}
             <Row label="Videoing" value={videoingText} />
           </tbody>
         </table>
       </Section>
 
-      {/* Team manager before fixture secretary */}
-      {(data.oppManagerName || data.oppManagerEmail || data.oppManagerPhone) && (
-        <Section title={`${data.opponentName} - Team Manager`}>
-          <table style={{ borderCollapse: 'collapse' }}>
-            <tbody>
-              <Row label="Name" value={data.oppManagerName} />
-              <Row label="Email" value={data.oppManagerEmail} />
-              <Row label="Phone" value={data.oppManagerPhone} />
-            </tbody>
-          </table>
-        </Section>
-      )}
+      {!isIntraClub && (
+        <>
+          {(data.oppManagerName || data.oppManagerEmail || data.oppManagerPhone) && (
+            <Section title={`${data.opponentName} - Team Manager`}>
+              <table style={{ borderCollapse: 'collapse' }}>
+                <tbody>
+                  <Row label="Name" value={data.oppManagerName} />
+                  <Row label="Email" value={data.oppManagerEmail} />
+                  <Row label="Phone" value={data.oppManagerPhone} />
+                </tbody>
+              </table>
+            </Section>
+          )}
 
-      {(data.oppFixSecName || data.oppFixSecEmail || data.oppFixSecPhone) && (
-        <Section title={`${data.opponentName} - Fixture Secretary`}>
-          <table style={{ borderCollapse: 'collapse' }}>
-            <tbody>
-              <Row label="Name" value={data.oppFixSecName} />
-              <Row label="Email" value={data.oppFixSecEmail} />
-              <Row label="Phone" value={data.oppFixSecPhone} />
-            </tbody>
-          </table>
-        </Section>
+          {(data.oppFixSecName || data.oppFixSecEmail || data.oppFixSecPhone) && (
+            <Section title={`${data.opponentName} - Fixture Secretary`}>
+              <table style={{ borderCollapse: 'collapse' }}>
+                <tbody>
+                  <Row label="Name" value={data.oppFixSecName} />
+                  <Row label="Email" value={data.oppFixSecEmail} />
+                  <Row label="Phone" value={data.oppFixSecPhone} />
+                </tbody>
+              </table>
+            </Section>
+          )}
+        </>
       )}
 
       {data.leagueNotes && (
@@ -116,7 +129,7 @@ function FixtureCard({ data }: { data: FixtureCardData }) {
   )
 }
 
-export default function FixtureCardDownload({ fixtureId, teamId }: { fixtureId: string; teamId: string }) {
+export default function FixtureCardDownload({ fixtureId, teamId, isIntraClub = false }: { fixtureId: string; teamId: string; isIntraClub?: boolean }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cardData, setCardData] = useState<FixtureCardData | null>(null)
@@ -183,7 +196,7 @@ export default function FixtureCardDownload({ fixtureId, teamId }: { fixtureId: 
       {/* Hidden render target — always mounted so ref is stable */}
       <div style={{ position: 'fixed', top: -9999, left: -9999, zIndex: -1, pointerEvents: 'none' }} aria-hidden="true">
         <div ref={cardRef}>
-          {cardData && <FixtureCard data={cardData} />}
+          {cardData && <FixtureCard data={cardData} isIntraClub={isIntraClub} />}
         </div>
       </div>
 
