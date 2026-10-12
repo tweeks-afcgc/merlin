@@ -28,7 +28,7 @@ export default async function AdminReviewsPage() {
   const proto = headersList.get('x-forwarded-proto') ?? 'https'
   const origin = `${proto}://${host}`
 
-  const [{ data: rows }, { data: seasons }] = await Promise.all([
+  const [{ data: rows }, { data: seasons }, { data: teamManagers }] = await Promise.all([
     supabase
       .from('fixture_reviews')
       .select(`
@@ -44,7 +44,21 @@ export default async function AdminReviewsPage() {
       .lt('fixtures.date', todayStr)
       .order('fixtures(date)', { ascending: false }),
     supabase.from('seasons').select('id, name, start_date, is_current'),
+    supabase
+      .from('volunteer_roles')
+      .select('team_id, volunteers(first_name, last_name)')
+      .eq('role_type', 'team')
+      .ilike('role_name', '%manager%'),
   ])
+
+  // Build a map of team_id -> manager name
+  const managerByTeam = new Map<string, string>()
+  for (const r of teamManagers ?? []) {
+    if (r.team_id && (r as any).volunteers) {
+      const v = (r as any).volunteers
+      managerByTeam.set(r.team_id, `${v.first_name} ${v.last_name}`.trim())
+    }
+  }
 
   type PendingItem = {
     key: string
@@ -84,10 +98,12 @@ export default async function AdminReviewsPage() {
       })
     }
     if (!r.manager_submitted_at) {
+      const managerName = managerByTeam.get(teamId)
+      const managerLabel = managerName ? `${managerName} (${teamName})` : teamName
       pending.push({
         key: `${r.id}-mgr`,
         type: 'manager',
-        label: teamName,
+        label: managerLabel,
         date,
         teamId,
         fixtureId,
