@@ -9,6 +9,7 @@ import DeleteFixtureButton from '../../DeleteFixtureButton'
 import CancelFixtureButton from '../../CancelFixtureButton'
 import ReviewLinks from '../ReviewLinks'
 import LeagueEmailImport from '../LeagueEmailImport'
+import FixtureCardDownload from '../FixtureCardDownload'
 import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
 import { sortedTeams, teamDisplayName } from '@/lib/teamSort'
 
@@ -740,8 +741,13 @@ export default function EditFixturePage() {
           {/* Review links — admin only, past fixtures */}
           {isAdmin && <ReviewLinks fixtureId={fixtureId} isPast={isPast} />}
 
+          {/* Download info card */}
+          <div className="mt-4">
+            <FixtureCardDownload fixtureId={fixtureId} teamId={teamId} />
+          </div>
+
           {/* Save / Cancel */}
-          <div className="flex gap-3 mt-6">
+          <div className="flex gap-3 mt-4">
             <button
               type="button"
               onClick={() => router.push(returnUrl())}
