@@ -24,54 +24,66 @@ function parseSelkentEmail(text: string, isHome: boolean): ParsedData {
 
   // Videoing
   const videoingLine = t.match(/VIDEOING[:\s]*\n?([^\n]+)/i)?.[1] ?? ''
-  const videoingAllowed = videoingLine.toLowerCase().includes('allowed') ? true
-    : videoingLine.toLowerCase().includes('not') ? false : null
+  const videoingAllowed = videoingLine.toLowerCase().includes('not') ? false
+    : videoingLine.toLowerCase().includes('allow') ? true : null
 
-  // Notes — from NOTES: until HOME/AWAY CLUB COLOURS
-  const notesMatch = t.match(/NOTES:\s*\n([\s\S]+?)(?=\n\s*HOME CLUB COLOURS|\n\s*AWAY CLUB COLOURS)/i)
+  // Notes — from NOTES: until next known heading
+  const notesMatch = t.match(/NOTES[:\s]*\n([\s\S]+?)(?=\n[ \t]*(?:HOME|AWAY)\s+CLUB\s+COLOURS|\n[ \t]*HOME\s+CLUB\b|\n[ \t]*AWAY\s+CLUB\b)/i)
   const leagueNotes = notesMatch ? notesMatch[1].trim() : null
 
-  // Colours
-  const homeColours = t.match(/HOME CLUB COLOURS[:\s]*([^\n]+)/i)?.[1]?.trim() ?? null
-  const awayColours = t.match(/AWAY CLUB COLOURS[:\s]*([^\n]+)/i)?.[1]?.trim() ?? null
+  // Colours — look for the combined "X CLUB COLOURS" label
+  const homeColours = t.match(/HOME\s+CLUB\s+COLOURS[:\s]*([^\n]+)/i)?.[1]?.trim() ?? null
+  const awayColours = t.match(/AWAY\s+CLUB\s+COLOURS[:\s]*([^\n]+)/i)?.[1]?.trim() ?? null
 
-  // Contact blocks — each is: "HOME/AWAY CLUB\nFIXTURE SECRETARY:\nNAME\nEMAIL\nPHONE"
-  function extractContact(side: 'HOME' | 'AWAY', role: 'FIXTURE SECRETARY' | 'TEAM MANAGER') {
-    const roleRx = role === 'FIXTURE SECRETARY' ? 'FIXTURE\\s+SECRETARY' : 'TEAM\\s+MANAGER'
-    const rx = new RegExp(
-      `${side}\\s+CLUB\\s*\\n?\\s*${roleRx}[:\\s]*\\n([^\\n]+)\\n([^\\n]+)\\n([^\\n]+)`, 'i'
-    )
-    const m = t.match(rx)
-    return m ? { name: m[1].trim(), email: m[2].trim(), phone: m[3].trim() } : null
+  // Split text into a HOME section and an AWAY section so regexes don't bleed across
+  const homeIdx = t.search(/\bHOME\s+CLUB\b/i)
+  const awayIdx = t.search(/\bAWAY\s+CLUB\b/i)
+  let homeSection = ''
+  let awaySection = ''
+  if (homeIdx !== -1 && awayIdx !== -1) {
+    if (homeIdx < awayIdx) {
+      homeSection = t.slice(homeIdx, awayIdx)
+      awaySection = t.slice(awayIdx)
+    } else {
+      awaySection = t.slice(awayIdx, homeIdx)
+      homeSection = t.slice(homeIdx)
+    }
+  } else if (homeIdx !== -1) {
+    homeSection = t.slice(homeIdx)
+  } else if (awayIdx !== -1) {
+    awaySection = t.slice(awayIdx)
   }
 
-  const homeFixSec = extractContact('HOME', 'FIXTURE SECRETARY')
-  const awayFixSec = extractContact('AWAY', 'FIXTURE SECRETARY')
-  const homeManager = extractContact('HOME', 'TEAM MANAGER')
-  const awayManager = extractContact('AWAY', 'TEAM MANAGER')
+  // Within a section extract a contact role (name / email / phone on consecutive non-blank lines)
+  function extractRole(section: string, rolePattern: string) {
+    const rx = new RegExp(`${rolePattern}[:\\s]*\\n([^\\n]+)\\n([^\\n]+)\\n([^\\n]+)`, 'i')
+    const m = section.match(rx)
+    if (!m) return null
+    return { name: m[1].trim(), email: m[2].trim(), phone: m[3].trim() }
+  }
 
-  // Venue — "GROUND:\nVenue Name\nAddress line 1\nAddress line 2..." up to next section
-  // The HOME club's ground is the opposition's ground when we're away
-  function extractVenue(side: 'HOME' | 'AWAY') {
-    const rx = new RegExp(
-      `${side}\\s+CLUB[\\s\\S]*?GROUND[:\\s]*\\n([^\\n]+)\\n([\\s\\S]+?)(?=\\n\\s*(?:HOME|AWAY)\\s+CLUB|\\n\\s*FIXTURE\\s+SECRETARY|\\n\\s*TEAM\\s+MANAGER|$)`, 'i'
-    )
-    const m = t.match(rx)
+  // Within a section extract a ground name + address lines
+  function extractGround(section: string) {
+    const rx = /GROUND[:\s]*\n([^\n]+)\n([\s\S]+?)(?=\n[ \t]*(?:FIXTURE\s+SECRETARY|TEAM\s+MANAGER)|$)/i
+    const m = section.match(rx)
     if (!m) return null
     const name = m[1].trim()
-    const addressLines = m[2].split('\n').map(l => l.trim()).filter(Boolean)
+    const addressLines = m[2].split('\n').map((l: string) => l.trim()).filter(Boolean)
     return { name, address: addressLines.join(', ') }
   }
 
-  const homeVenue = extractVenue('HOME')
-  const awayVenue = extractVenue('AWAY')
+  const homeFixSec = extractRole(homeSection, 'FIXTURE\\s+SECRETARY')
+  const awayFixSec = extractRole(awaySection, 'FIXTURE\\s+SECRETARY')
+  const homeManager = extractRole(homeSection, 'TEAM\\s+MANAGER')
+  const awayManager = extractRole(awaySection, 'TEAM\\s+MANAGER')
+  const homeGround = extractGround(homeSection)
+  const awayGround = extractGround(awaySection)
 
-  // When we're playing away, the home club's ground is the opposition venue
-  const oppVenue = isHome ? awayVenue : homeVenue
-
+  // When playing home, the opposition is the away side (and vice versa)
   const oppFixSec = isHome ? awayFixSec : homeFixSec
   const oppManager = isHome ? awayManager : homeManager
   const oppColours = isHome ? awayColours : homeColours
+  const oppVenue = isHome ? awayGround : homeGround
 
   return {
     videoingAllowed,
