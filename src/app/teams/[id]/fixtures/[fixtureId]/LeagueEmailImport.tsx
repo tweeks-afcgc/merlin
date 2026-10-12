@@ -31,59 +31,40 @@ function parseSelkentEmail(text: string, isHome: boolean): ParsedData {
   const notesMatch = t.match(/NOTES[:\s]*\n([\s\S]+?)(?=\n[ \t]*(?:HOME|AWAY)\s+CLUB\s+COLOURS|\n[ \t]*HOME\s+CLUB\b|\n[ \t]*AWAY\s+CLUB\b)/i)
   const leagueNotes = notesMatch ? notesMatch[1].trim() : null
 
-  // Colours — look for the combined "X CLUB COLOURS" label
-  const homeColours = t.match(/HOME\s+CLUB\s+COLOURS[:\s]*([^\n]+)/i)?.[1]?.trim() ?? null
-  const awayColours = t.match(/AWAY\s+CLUB\s+COLOURS[:\s]*([^\n]+)/i)?.[1]?.trim() ?? null
+  // Colours
+  const homeColours = t.match(/Home\s+Club\s+Colours[:\s]*([^\n]+)/i)?.[1]?.trim() ?? null
+  const awayColours = t.match(/Away\s+Club\s+Colours[:\s]*([^\n]+)/i)?.[1]?.trim() ?? null
 
-  // Split text into a HOME section and an AWAY section so regexes don't bleed across
-  const homeIdx = t.search(/\bHOME\s+CLUB\b/i)
-  const awayIdx = t.search(/\bAWAY\s+CLUB\b/i)
-  let homeSection = ''
-  let awaySection = ''
-  if (homeIdx !== -1 && awayIdx !== -1) {
-    if (homeIdx < awayIdx) {
-      homeSection = t.slice(homeIdx, awayIdx)
-      awaySection = t.slice(awayIdx)
-    } else {
-      awaySection = t.slice(awayIdx, homeIdx)
-      homeSection = t.slice(homeIdx)
-    }
-  } else if (homeIdx !== -1) {
-    homeSection = t.slice(homeIdx)
-  } else if (awayIdx !== -1) {
-    awaySection = t.slice(awayIdx)
+  // Contact blocks: each looks like:
+  //   Away Club\nFixture Secretary:\tName\nEmail\nPhone
+  // "Home Club" / "Away Club" appears once per role so we match side+role together.
+  function extractContact(side: string, rolePattern: string) {
+    // Name is on the SAME line as the role label (tab-separated), then email, then phone
+    const rx = new RegExp(
+      `${side}\\s+Club[^\\n]*\\n\\s*${rolePattern}[:\\s\\t]+([^\\n]+)\\n([^\\n]+)\\n([^\\n]+)`, 'i'
+    )
+    const m = t.match(rx)
+    return m ? { name: m[1].trim(), email: m[2].trim(), phone: m[3].trim() } : null
   }
 
-  // Within a section extract a contact role (name / email / phone on consecutive non-blank lines)
-  function extractRole(section: string, rolePattern: string) {
-    const rx = new RegExp(`${rolePattern}[:\\s]*\\n([^\\n]+)\\n([^\\n]+)\\n([^\\n]+)`, 'i')
-    const m = section.match(rx)
-    if (!m) return null
-    return { name: m[1].trim(), email: m[2].trim(), phone: m[3].trim() }
+  // Ground is at the top of the email (not inside a club block) — for away fixtures
+  function extractGround() {
+    const rx = /Ground[:\s]*([^\n]+)\nAddress[:\s]*([^\n]+)/i
+    const m = t.match(rx)
+    return m ? { name: m[1].trim(), address: m[2].trim() } : null
   }
 
-  // Within a section extract a ground name + address lines
-  function extractGround(section: string) {
-    const rx = /GROUND[:\s]*\n([^\n]+)\n([\s\S]+?)(?=\n[ \t]*(?:FIXTURE\s+SECRETARY|TEAM\s+MANAGER)|$)/i
-    const m = section.match(rx)
-    if (!m) return null
-    const name = m[1].trim()
-    const addressLines = m[2].split('\n').map((l: string) => l.trim()).filter(Boolean)
-    return { name, address: addressLines.join(', ') }
-  }
+  const homeFixSec = extractContact('Home', 'Fixture\\s+Secretary')
+  const awayFixSec = extractContact('Away', 'Fixture\\s+Secretary')
+  const homeManager = extractContact('Home', 'Team\\s+Manager')
+  const awayManager = extractContact('Away', 'Team\\s+Manager')
 
-  const homeFixSec = extractRole(homeSection, 'FIXTURE\\s+SECRETARY')
-  const awayFixSec = extractRole(awaySection, 'FIXTURE\\s+SECRETARY')
-  const homeManager = extractRole(homeSection, 'TEAM\\s+MANAGER')
-  const awayManager = extractRole(awaySection, 'TEAM\\s+MANAGER')
-  const homeGround = extractGround(homeSection)
-  const awayGround = extractGround(awaySection)
-
-  // When playing home, the opposition is the away side (and vice versa)
+  // When playing home, opposition is the away side (and vice versa)
   const oppFixSec = isHome ? awayFixSec : homeFixSec
   const oppManager = isHome ? awayManager : homeManager
   const oppColours = isHome ? awayColours : homeColours
-  const oppVenue = isHome ? awayGround : homeGround
+  // Ground/address at top of email is the match venue — only relevant when playing away
+  const oppVenue = !isHome ? extractGround() : null
 
   return {
     videoingAllowed,
