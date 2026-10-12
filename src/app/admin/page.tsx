@@ -2,9 +2,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
-import WhatsAppModal from './WhatsAppModal'
-import FixtureConfirmModal from './FixtureConfirmModal'
-import { getUpcomingFixtures } from './whatsapp/fixtureActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +23,6 @@ export default async function AdminDashboardPage() {
     { count: playerCount },
     { count: volunteerCount },
     { data: pendingReviewRows },
-    { data: volunteersWithMobile },
   ] = await Promise.all([
     supabase.from('seasons').select('*').eq('is_current', true).maybeSingle(),
     supabase.from('teams').select('id, type'),
@@ -40,14 +36,7 @@ export default async function AdminDashboardPage() {
       .select('id, ref_submitted_at, manager_submitted_at, fixtures!inner(date)')
       .or('ref_submitted_at.is.null,manager_submitted_at.is.null')
       .lt('fixtures.date', new Date().toISOString().split('T')[0]),
-    supabase
-      .from('volunteers')
-      .select('id, first_name, last_name, mobile')
-      .not('mobile', 'is', null)
-      .order('first_name'),
   ])
-
-  const upcomingFixtures = await getUpcomingFixtures()
 
   const seniorCount = teams?.filter(t => t.type === 'senior').length ?? 0
   const juniorCount = teams?.filter(t => t.type === 'junior').length ?? 0
@@ -62,19 +51,9 @@ export default async function AdminDashboardPage() {
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin>
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
-            <p className="text-sm text-gray-400 mt-1">Club management overview.</p>
-          </div>
-          <div className="flex gap-2 flex-wrap justify-end">
-            <FixtureConfirmModal fixtures={upcomingFixtures} />
-            <WhatsAppModal volunteers={(volunteersWithMobile ?? []).map(v => ({
-              id: v.id,
-              name: `${v.first_name} ${v.last_name}`.trim(),
-              mobile: v.mobile!,
-            }))} />
-          </div>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
+          <p className="text-sm text-gray-400 mt-1">Club management overview.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
