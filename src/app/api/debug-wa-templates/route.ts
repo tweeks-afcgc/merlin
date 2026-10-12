@@ -12,21 +12,23 @@ export async function GET() {
   const token = process.env.WHATSAPP_ACCESS_TOKEN
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
 
-  // Get the WABA ID from the phone number
-  const phoneRes = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating,platform_type,throughput,whatsapp_business_account`, {
+  // Try fetching phone number info with available fields
+  const phoneRes = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}?fields=id,display_phone_number,verified_name`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   const phoneData = await phoneRes.json()
 
-  const wabaId = phoneData?.whatsapp_business_account?.id
+  // Try fetching the app's WABAs via the token's associated business
+  const meRes = await fetch(`https://graph.facebook.com/v20.0/me?fields=id,name`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const meData = await meRes.json()
 
-  let templates = null
-  if (wabaId) {
-    const tmplRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?fields=name,language,status&limit=50`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    templates = await tmplRes.json()
-  }
+  // Try fetching templates directly from phone number endpoint
+  const tmplRes = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/message_templates?fields=name,language,status&limit=50`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const templates = await tmplRes.json()
 
-  return NextResponse.json({ phoneNumberId, phoneData, wabaId, templates })
+  return NextResponse.json({ phoneNumberId, phoneData, meData, templates })
 }
