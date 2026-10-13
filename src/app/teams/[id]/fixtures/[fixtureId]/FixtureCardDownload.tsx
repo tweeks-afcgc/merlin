@@ -50,7 +50,7 @@ function FixtureCard({ data, isIntraClub }: { data: FixtureCardData; isIntraClub
             Fixture Information
           </div>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>
-            {data.teamName}
+            {data.teamName}{data.teamNickname ? ` (${data.teamNickname})` : ''}
           </div>
           <div style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>
             vs {data.opponentName}

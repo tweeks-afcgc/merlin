@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export type FixtureCardData = {
   teamName: string
+  teamNickname: string | null
   opponentName: string
   date: string
   kickoffTime: string | null
@@ -118,6 +119,7 @@ export async function getFixtureCardData(fixtureId: string, teamId: string): Pro
   return {
     data: {
       teamName,
+      teamNickname: thisTeam?.nickname ?? null,
       opponentName,
       date: fixture.date,
       kickoffTime: fixture.kickoff_time ?? null,
