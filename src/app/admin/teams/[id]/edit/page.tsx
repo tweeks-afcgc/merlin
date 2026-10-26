@@ -177,7 +177,7 @@ export default function EditTeamPage() {
   const [tSaving, setTSaving] = useState(false)
 
   // Competitions (current season)
-  type Competition = { id: string; type: 'league' | 'cup'; name: string; abbr_name: string | null; division: string | null }
+  type Competition = { id: string; type: 'league' | 'cup'; name: string; abbr_name: string | null; division: string | null; active: boolean }
   const [competitions, setCompetitions] = useState<Competition[]>([])
   const [addingComp, setAddingComp] = useState(false)
   const [cType, setCType] = useState<'league' | 'cup'>('league')
@@ -263,7 +263,7 @@ export default function EditTeamPage() {
       })))
       if (curSeasonId) {
         const [{ data: compsData }, { data: sponsData }] = await Promise.all([
-          supabase.from('team_competitions').select('id, type, name, abbr_name, division').eq('team_id', id).eq('season_id', curSeasonId).order('created_at'),
+          supabase.from('team_competitions').select('id, type, name, abbr_name, division, active').eq('team_id', id).eq('season_id', curSeasonId).order('created_at'),
           supabase.from('team_sponsors').select('id, name').eq('team_id', id).eq('season_id', curSeasonId).order('created_at'),
         ])
         setCompetitions((compsData ?? []) as any)
@@ -344,16 +344,21 @@ export default function EditTeamPage() {
     setTrainingSlots(prev => prev.filter(s => s.id !== slotId))
   }
 
+  async function toggleCompActive(compId: string, active: boolean) {
+    await supabase.from('team_competitions').update({ active }).eq('id', compId)
+    setCompetitions(prev => prev.map(c => c.id === compId ? { ...c, active } : c))
+  }
+
   async function addComp() {
     if (!cName.trim()) return
-    const hasLeague = competitions.some(c => c.type === 'league')
-    if (cType === 'league' && hasLeague) { setCError('Only one league per season.'); return }
+    const hasActiveLeague = competitions.some(c => c.type === 'league' && c.active)
+    if (cType === 'league' && hasActiveLeague) { setCError('Only one active league per season.'); return }
     setCSaving(true); setCError(null)
     const { data, error } = await supabase.from('team_competitions').insert({
       team_id: id, season_id: currentSeasonId, type: cType, name: cName.trim(),
       abbr_name: cType === 'league' ? (cAbbr.trim() || null) : null,
       division: cType === 'league' ? (cDiv.trim() || null) : null,
-    }).select('id, type, name, abbr_name, division').single()
+    }).select('id, type, name, abbr_name, division, active').single()
     setCSaving(false)
     if (error || !data) { setCError(error?.message ?? 'Error'); return }
     setCompetitions(prev => [...prev, data as any])
@@ -870,7 +875,7 @@ export default function EditTeamPage() {
                       </li>
                     )
                     return (
-                      <li key={c.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                      <li key={c.id} className={`px-5 py-3 flex items-center justify-between gap-3 ${!c.active ? 'opacity-50' : ''}`}>
                         <div className="flex items-center gap-2 min-w-0">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${c.type === 'league' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
                             {c.type === 'league' ? 'League' : 'Cup'}
@@ -879,10 +884,18 @@ export default function EditTeamPage() {
                             <span className="text-sm text-gray-800 truncate block">{c.name}{c.abbr_name ? ` (${c.abbr_name})` : ''}</span>
                             {c.division && <span className="text-xs text-gray-400">{c.division}</span>}
                           </div>
+                          {!c.active && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 flex-shrink-0">Inactive</span>
+                          )}
                         </div>
-                        <button type="button" onClick={() => startEditComp(c)} className="text-gray-300 hover:text-red-800 transition flex-shrink-0" title="Edit">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        </button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button type="button" onClick={() => toggleCompActive(c.id, !c.active)} className="text-xs text-gray-400 hover:text-gray-700 transition">
+                            {c.active ? 'Mark inactive' : 'Mark active'}
+                          </button>
+                          <button type="button" onClick={() => startEditComp(c)} className="text-gray-300 hover:text-red-800 transition" title="Edit">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </button>
+                        </div>
                       </li>
                     )
                   })}
@@ -894,7 +907,7 @@ export default function EditTeamPage() {
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Type</label>
                     <select value={cType} onChange={e => setCType(e.target.value as 'league' | 'cup')} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700">
-                      <option value="league" disabled={competitions.some(c => c.type === 'league')}>League{competitions.some(c => c.type === 'league') ? ' (already added)' : ''}</option>
+                      <option value="league" disabled={competitions.some(c => c.type === 'league' && c.active)}>League{competitions.some(c => c.type === 'league' && c.active) ? ' (already added)' : ''}</option>
                       <option value="cup">Cup</option>
                     </select>
                   </div>
