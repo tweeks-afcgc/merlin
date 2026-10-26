@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { cancelFixture, uncancelFixture } from './actions'
 
-type CancelReason = 'cannot_field_team' | 'waterlogged_pitch' | 'frozen_pitch'
+type CancelReason = 'cannot_field_team' | 'waterlogged_pitch' | 'frozen_pitch' | 'match_abandoned'
 
 export default function CancelFixtureButton({
   fixtureId,
@@ -36,8 +36,10 @@ export default function CancelFixtureButton({
       reasonText = `${team === 'ours' ? teamName : opponentName} cannot field a team`
     } else if (reason === 'waterlogged_pitch') {
       reasonText = 'Waterlogged pitch'
-    } else {
+    } else if (reason === 'frozen_pitch') {
       reasonText = 'Frozen pitch'
+    } else {
+      reasonText = 'Match abandoned'
     }
     const res = await cancelFixture(fixtureId, teamId, reasonText)
     setSaving(false)
@@ -76,7 +78,7 @@ export default function CancelFixtureButton({
       <div className="w-full mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 space-y-3">
         <p className="text-sm font-semibold text-amber-800">Cancel fixture — select reason</p>
         <div className="space-y-2">
-          {(['cannot_field_team', 'waterlogged_pitch', 'frozen_pitch'] as const).map(r => (
+          {(['cannot_field_team', 'waterlogged_pitch', 'frozen_pitch', 'match_abandoned'] as const).map(r => (
             <label key={r} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
@@ -86,7 +88,7 @@ export default function CancelFixtureButton({
                 className="accent-amber-600"
               />
               <span className="text-sm text-gray-700">
-                {r === 'cannot_field_team' ? 'Cannot field a team' : r === 'waterlogged_pitch' ? 'Waterlogged pitch' : 'Frozen pitch'}
+                {r === 'cannot_field_team' ? 'Cannot field a team' : r === 'waterlogged_pitch' ? 'Waterlogged pitch' : r === 'frozen_pitch' ? 'Frozen pitch' : 'Match abandoned'}
               </span>
             </label>
           ))}
