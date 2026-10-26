@@ -198,7 +198,7 @@ export default async function PublicSchedulePage() {
                                             {f.teamFormat && <span className="font-normal text-gray-400"> ({f.teamFormat})</span>}
                                           </p>
                                           {f.cancelled ? (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wide flex-shrink-0">Cancelled</span>
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wide flex-shrink-0">{f.cancellationReason === 'Match abandoned' ? 'Abandoned' : 'Cancelled'}</span>
                                           ) : !f.confirmed ? (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 flex-shrink-0">
                                               Provisional

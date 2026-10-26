@@ -124,7 +124,7 @@ function FixtureRow({ f, canConfirm, showTeam = true }: { f: Fixture; canConfirm
               {showTeam ? f.teamName : f.opponentName}
               {showTeam && f.teamFormat && <span className="font-normal text-gray-400"> ({f.teamFormat})</span>}
             </p>
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wide flex-shrink-0">Cancelled</span>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wide flex-shrink-0">{f.cancellationReason === 'Match abandoned' ? 'Abandoned' : 'Cancelled'}</span>
           </div>
           {showTeam && (
             <p className="text-xs text-gray-500 leading-snug truncate">vs {f.opponentName}</p>
@@ -506,7 +506,7 @@ function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: b
                       <p className="text-sm font-semibold text-gray-900 truncate">{f.teamName}</p>
                       <p className="text-xs text-gray-400 truncate">
                         vs {f.opponentName}
-                        {f.cancelled && <span className="ml-2 text-red-500 font-medium">Cancelled</span>}
+                        {f.cancelled && <span className="ml-2 text-red-500 font-medium">{f.cancellationReason === 'Match abandoned' ? 'Abandoned' : 'Cancelled'}</span>}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">

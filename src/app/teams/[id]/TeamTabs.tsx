@@ -196,7 +196,7 @@ export default function TeamTabs({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         {isCancelled ? (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-gray-200 text-gray-600 uppercase tracking-wide">Cancelled</span>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-gray-200 text-gray-600 uppercase tracking-wide">{fx.cancellation_reason === 'Match abandoned' ? 'Abandoned' : 'Cancelled'}</span>
                         ) : isUpcoming ? (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">NEXT</span>
                         ) : null}

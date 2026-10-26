@@ -425,7 +425,7 @@ export default function EditFixturePage() {
                 {teamName || '—'} <span className="font-normal text-gray-400">vs</span> {opponentName || 'TBC'}
               </h1>
               {isCancelled ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 flex-shrink-0">Cancelled</span>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 flex-shrink-0">{cancellationReason === 'Match abandoned' ? 'Abandoned' : 'Cancelled'}</span>
               ) : confirmed ? (
                 <button type="button" title="Click to mark unconfirmed"
                   onClick={() => { setConfirmed(false); mark() }}
