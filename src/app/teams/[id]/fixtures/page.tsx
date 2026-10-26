@@ -5,6 +5,7 @@ import AppShell from '@/components/AppShell'
 import BackButton from '@/components/BackButton'
 import { teamDisplayName, fixtureOpponentName, type Season } from '@/lib/teamUtils'
 import FixtureNotesCell from './FixtureNotesCell'
+import EnterResultInline from './EnterResultInline'
 
 export const dynamic = 'force-dynamic'
 
@@ -220,11 +221,13 @@ export default async function FixturesPage({
                       <td className="px-3 py-3 whitespace-nowrap">
                         {hasResult
                           ? <span className="text-base font-bold text-gray-800">{goalsFor} – {goalsAgainst}</span>
+                          : isPast
+                          ? <EnterResultInline fixtureId={f.id} teamId={teamId} />
                           : <span className="text-gray-300">—</span>}
                       </td>
                       <FixtureNotesCell notes={(f as any).notes ?? null} />
                       <td className="px-3 py-3 text-right whitespace-nowrap">
-                        <Link href={`/teams/${teamId}/fixtures/${f.id}/edit`} className="p-1.5 rounded-lg text-gray-300 hover:text-red-800 hover:bg-red-50 transition inline-flex" title="Edit fixture">
+                        <Link href={`/teams/${teamId}/fixtures/${f.id}/edit`} className={`p-1.5 rounded-lg transition inline-flex ${isPast ? 'text-gray-400 hover:text-red-800 hover:bg-red-50' : 'text-gray-300 hover:text-red-800 hover:bg-red-50'}`} title="Edit fixture">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
