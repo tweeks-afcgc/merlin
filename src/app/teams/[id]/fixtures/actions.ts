@@ -3,6 +3,46 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
+// Creates a fixture_reviews row only if a non-league, non-manager referee is assigned.
+async function maybeCreateReviewLink(supabase: any, fixtureId: string, teamId: string) {
+  const { data: f } = await supabase
+    .from('fixtures')
+    .select('referee_id, volunteer_referee_id, league_assigned_referee')
+    .eq('id', fixtureId)
+    .single()
+
+  if (!f) return
+  if (f.league_assigned_referee) return
+  if (!f.referee_id && !f.volunteer_referee_id) return
+
+  // Resolve the referee's profile ID
+  let refProfileId: string | null = f.referee_id ?? null
+  if (!refProfileId && f.volunteer_referee_id) {
+    const { data: vol } = await supabase
+      .from('volunteers')
+      .select('profile_id')
+      .eq('id', f.volunteer_referee_id)
+      .maybeSingle()
+    refProfileId = vol?.profile_id ?? null
+  }
+
+  if (!refProfileId) return
+
+  // Skip if the referee is also a manager of this team
+  const { data: mgr } = await supabase
+    .from('team_managers')
+    .select('user_id')
+    .eq('team_id', teamId)
+    .eq('user_id', refProfileId)
+    .maybeSingle()
+
+  if (mgr) return
+
+  await supabase
+    .from('fixture_reviews')
+    .upsert({ fixture_id: fixtureId }, { onConflict: 'fixture_id', ignoreDuplicates: true })
+}
+
 // If opponent_id is 'club:${clubId}', find or create a blank club_team row for that club.
 // If opponent_id is 'internal:${teamId}', find or create a club_teams row for the internal team.
 async function resolveOpponentId(supabase: any, opponentId: string): Promise<string> {
@@ -164,9 +204,7 @@ export async function updateFixture(fixtureId: string, teamId: string, formData:
 
   // Auto-create review link when result is entered
   if (goalsForRaw !== '' && goalsAgainstRaw !== '') {
-    await supabase
-      .from('fixture_reviews')
-      .upsert({ fixture_id: fixtureId }, { onConflict: 'fixture_id', ignoreDuplicates: true })
+    await maybeCreateReviewLink(supabase, fixtureId, teamId)
   }
 
   // Sync to linked mirror fixture (if this is the primary)
@@ -228,9 +266,7 @@ export async function saveResult(fixtureId: string, teamId: string, goalsFor: nu
     .eq('id', fixtureId)
   if (error) return { error: error.message }
   // Auto-create review link when result entered
-  await supabase
-    .from('fixture_reviews')
-    .upsert({ fixture_id: fixtureId }, { onConflict: 'fixture_id', ignoreDuplicates: true })
+  await maybeCreateReviewLink(supabase, fixtureId, teamId)
   revalidatePath(`/teams/${teamId}/fixtures`)
   revalidatePath(`/teams/${teamId}`)
 }
