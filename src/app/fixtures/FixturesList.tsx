@@ -509,7 +509,7 @@ function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: b
                         {f.cancelled && <span className="ml-2 text-red-500 font-medium">Cancelled</span>}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {hasResult ? (
                         <span className={`text-sm font-bold tabular-nums ${resultColour}`}>
                           {gf} - {ga}
@@ -519,12 +519,22 @@ function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: b
                       )}
                       {!f.cancelled && canConfirm && (
                         <Link
-                          href={`/teams/${f.team_id}/fixtures/${f.id}/result`}
+                          href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`}
                           className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition whitespace-nowrap"
                         >
                           {hasResult ? 'Edit result' : 'Enter result'}
                         </Link>
                       )}
+                      <Link
+                        href={`/teams/${f.team_id}/fixtures/${f.id}/edit?from=/fixtures`}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-800 hover:bg-red-50 transition inline-flex"
+                        title="Edit fixture"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </Link>
                     </div>
                   </div>
                 )
