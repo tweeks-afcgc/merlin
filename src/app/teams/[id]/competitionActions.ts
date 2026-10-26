@@ -24,6 +24,14 @@ export async function deleteTeamCompetition(id: string, teamId: string) {
   revalidatePath(`/teams/${teamId}`)
 }
 
+export async function toggleTeamCompetitionActive(id: string, teamId: string, active: boolean) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('team_competitions').update({ active }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath(`/teams/${teamId}`)
+  return {}
+}
+
 export async function addTeamSponsor(teamId: string, seasonId: string, name: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('team_sponsors').insert({ team_id: teamId, season_id: seasonId, name: name.trim() })

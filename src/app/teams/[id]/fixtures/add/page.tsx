@@ -114,7 +114,7 @@ export default function AddFixtureFromTeamPage() {
   useEffect(() => {
     setCompetition('friendly')
     if (!teamId || !seasonId) { setTeamCompetitions([]); return }
-    supabase.from('team_competitions').select('id, type, name, abbr_name, division').eq('team_id', teamId).eq('season_id', seasonId).order('created_at')
+    supabase.from('team_competitions').select('id, type, name, abbr_name, division').eq('team_id', teamId).eq('season_id', seasonId).eq('active', true).order('created_at')
       .then(({ data }) => setTeamCompetitions((data ?? []) as any))
   }, [teamId, seasonId])
 

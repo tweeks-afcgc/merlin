@@ -175,7 +175,7 @@ export default async function TeamDashboardPage({
     (team as any).default_pitch_id
       ? supabase.from('pitches').select('name').eq('id', (team as any).default_pitch_id).single()
       : Promise.resolve({ data: null }),
-    supabase.from('team_competitions').select('id, season_id, type, name, abbr_name, division').eq('team_id', id).order('created_at'),
+    supabase.from('team_competitions').select('id, season_id, type, name, abbr_name, division, active').eq('team_id', id).order('created_at'),
     supabase.from('team_sponsors').select('id, season_id, name').eq('team_id', id).order('created_at'),
   ])
   const defaultVenueName: string | null = (defaultVenueRow as any)?.name ?? null

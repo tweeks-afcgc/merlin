@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { addTeamCompetition, deleteTeamCompetition } from './competitionActions'
+import { addTeamCompetition, deleteTeamCompetition, toggleTeamCompetitionActive } from './competitionActions'
 
 type Competition = {
   id: string; season_id: string; type: 'league' | 'cup'
-  name: string; abbr_name: string | null; division: string | null
+  name: string; abbr_name: string | null; division: string | null; active: boolean
 }
 type Season = { id: string; name: string; is_current: boolean }
 
@@ -32,15 +32,20 @@ export default function CompetitionsCard({
   const [error, setError] = useState<string | null>(null)
 
   const filtered = competitions.filter(c => c.season_id === seasonId)
-  const hasLeague = filtered.some(c => c.type === 'league')
+  const hasActiveLeague = filtered.some(c => c.type === 'league' && c.active)
 
   function resetForm() {
     setNewName(''); setNewAbbr(''); setNewDivision(''); setNewType('league'); setError(null)
   }
 
+  async function handleToggleActive(id: string, active: boolean) {
+    await toggleTeamCompetitionActive(id, teamId, active)
+    setCompetitions(prev => prev.map(c => c.id === id ? { ...c, active } : c))
+  }
+
   async function handleAdd() {
     if (!newName.trim()) return
-    if (newType === 'league' && hasLeague) { setError('Only one league competition per season.'); return }
+    if (newType === 'league' && hasActiveLeague) { setError('Only one active league competition per season.'); return }
     setSaving(true)
     setError(null)
     const result = await addTeamCompetition(
@@ -54,6 +59,7 @@ export default function CompetitionsCard({
       name: newName.trim(),
       abbr_name: newType === 'league' ? (newAbbr.trim() || null) : null,
       division: newType === 'league' ? (newDivision.trim() || null) : null,
+      active: true,
     }])
     resetForm()
     setAdding(false)
@@ -103,7 +109,7 @@ export default function CompetitionsCard({
       {filtered.length > 0 && (
         <ul className="divide-y divide-gray-50">
           {filtered.map(c => (
-            <li key={c.id} className="px-5 py-3 flex items-center justify-between gap-3">
+            <li key={c.id} className={`px-5 py-3 flex items-center justify-between gap-3 ${!c.active ? 'opacity-50' : ''}`}>
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
                   c.type === 'league' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
@@ -118,15 +124,27 @@ export default function CompetitionsCard({
                     <span className="text-xs text-gray-400">Division {c.division}</span>
                   )}
                 </div>
+                {!c.active && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 flex-shrink-0">Inactive</span>
+                )}
               </div>
               {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(c.id)}
-                  className="text-xs text-gray-300 hover:text-red-500 transition flex-shrink-0"
-                >
-                  Remove
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleActive(c.id, !c.active)}
+                    className="text-xs text-gray-400 hover:text-gray-700 transition"
+                  >
+                    {c.active ? 'Mark inactive' : 'Mark active'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(c.id)}
+                    className="text-xs text-gray-300 hover:text-red-500 transition"
+                  >
+                    Remove
+                  </button>
+                </div>
               )}
             </li>
           ))}
@@ -143,7 +161,7 @@ export default function CompetitionsCard({
               onChange={e => setNewType(e.target.value as 'league' | 'cup')}
               className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
             >
-              <option value="league" disabled={hasLeague}>League{hasLeague ? ' (already added)' : ''}</option>
+              <option value="league" disabled={hasActiveLeague}>League{hasActiveLeague ? ' (already added)' : ''}</option>
               <option value="cup">Cup</option>
             </select>
           </div>
