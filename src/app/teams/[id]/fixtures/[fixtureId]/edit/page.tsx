@@ -486,7 +486,11 @@ export default function EditFixturePage() {
                   )}
                 </>
               )}
-              <FixtureCardDownload fixtureId={fixtureId} teamId={teamId} isIntraClub={isIntraClubPrimary} compact />
+              <FixtureCardDownload
+                fixtureId={fixtureId} teamId={teamId} isIntraClub={isIntraClubPrimary} compact
+                blocked={tbc || !opponentId || opponentId === 'tbc'}
+                blockedReason={tbc && (!opponentId || opponentId === 'tbc') ? 'Kick-off time and opponent are TBC' : tbc ? 'Kick-off time is TBC' : 'Opponent is TBC'}
+              />
             </div>
           )}
         </div>

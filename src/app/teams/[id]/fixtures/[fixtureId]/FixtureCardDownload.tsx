@@ -129,7 +129,7 @@ function FixtureCard({ data, isIntraClub }: { data: FixtureCardData; isIntraClub
   )
 }
 
-export default function FixtureCardDownload({ fixtureId, teamId, isIntraClub = false, compact = false }: { fixtureId: string; teamId: string; isIntraClub?: boolean; compact?: boolean }) {
+export default function FixtureCardDownload({ fixtureId, teamId, isIntraClub = false, compact = false, blocked = false, blockedReason }: { fixtureId: string; teamId: string; isIntraClub?: boolean; compact?: boolean; blocked?: boolean; blockedReason?: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cardData, setCardData] = useState<FixtureCardData | null>(null)
@@ -203,10 +203,11 @@ export default function FixtureCardDownload({ fixtureId, teamId, isIntraClub = f
       <button
         type="button"
         onClick={handleDownload}
-        disabled={loading}
+        disabled={loading || blocked}
+        title={blocked ? blockedReason : undefined}
         className={compact
-          ? "inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 transition disabled:opacity-50"
-          : "flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold px-4 py-2 rounded-lg transition disabled:opacity-50"
+          ? "inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          : "flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold px-4 py-2 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed"
         }
       >
         {loading ? (
