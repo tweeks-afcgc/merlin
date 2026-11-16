@@ -475,7 +475,16 @@ function MobileFilters({
 
 // --- Past view -----------------------------------------------------------
 
+type PastSortMode = 'time' | 'age'
+
+function ageSort(a: Fixture, b: Fixture) {
+  // Youngest first = descending teamSortKey (higher age number = younger)
+  return b.teamSortKey.localeCompare(a.teamSortKey)
+}
+
 function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: boolean }) {
+  const [sortMode, setSortMode] = useState<PastSortMode>('time')
+
   const byDate = new Map<string, Fixture[]>()
   for (const f of fixtures) {
     const arr = byDate.get(f.date) ?? []; arr.push(f); byDate.set(f.date, arr)
@@ -484,8 +493,23 @@ function PastView({ fixtures, canConfirm }: { fixtures: Fixture[]; canConfirm: b
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-400 font-medium">Sort by</span>
+        <button
+          onClick={() => setSortMode('time')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${sortMode === 'time' ? 'bg-red-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          Kick-off time
+        </button>
+        <button
+          onClick={() => setSortMode('age')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${sortMode === 'age' ? 'bg-red-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          Age group
+        </button>
+      </div>
       {dates.map(date => {
-        const dayFixtures = byDate.get(date)!.slice().sort(timeSort)
+        const dayFixtures = byDate.get(date)!.slice().sort(sortMode === 'time' ? timeSort : ageSort)
         return (
           <div key={date}>
             <div className="inline-flex items-center bg-gray-700 text-white text-sm font-bold px-4 py-2 rounded-lg mb-3">
