@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { updateFixture, assignRefereeFromRequest, savePerformances, saveMatchNotes, type PlayerPerformance } from '../../actions'
 import DeleteFixtureButton from '../../DeleteFixtureButton'
 import CancelFixtureButton from '../../CancelFixtureButton'
-import ReviewLinks from '../ReviewLinks'
+import ReviewLinks, { type ReviewLinksHandle } from '../ReviewLinks'
 import LeagueEmailImport from '../LeagueEmailImport'
 import FixtureCardDownload from '../FixtureCardDownload'
 import { buildOpponentOptions, type OpponentOption } from '@/lib/opponentUtils'
@@ -152,6 +152,7 @@ export default function EditFixturePage() {
 
   // originals for discard
   const originalsRef = useRef<Record<string, any>>({})
+  const reviewLinksRef = useRef<ReviewLinksHandle>(null)
 
   function mark() { setDirty(true) }
 
@@ -389,6 +390,33 @@ export default function EditFixturePage() {
       savePerformances(fixtureId, teamId, Object.values(perfs)),
     ])
     router.push(returnUrl())
+  }
+
+  async function handleSaveAndGenerateLinks() {
+    setSaving(true); setError(null)
+    const fd = new FormData()
+    fd.set('date', date); fd.set('tbc', tbc ? 'true' : 'false'); fd.set('kickoff_time', kickoffTime)
+    fd.set('opponent_id', isIntraClubPrimary ? `internal:${intraClubTeamId}` : opponentId)
+    fd.set('intra_club_team_id', isIntraClubPrimary ? intraClubTeamId : '')
+    fd.set('venue', venue); fd.set('competition', competition)
+    fd.set('home_venue_id', venue === 'home' ? homeVenueId : '')
+    fd.set('pitch_id', venue === 'home' ? pitchId : '')
+    fd.set('league_assigned_referee', leagueAssignedReferee ? 'true' : 'false')
+    fd.set('referee_required', refereeRequired ? 'true' : 'false')
+    fd.set('referee_id', refereeRequired ? refereeId : '')
+    fd.set('goals_for', goalsFor); fd.set('goals_against', goalsAgainst)
+    fd.set('confirmed', confirmed ? 'true' : 'false')
+    const result = await updateFixture(fixtureId, teamId, fd)
+    if (result?.error) { setError(result.error); setSaving(false); return }
+    await Promise.all([
+      saveMatchNotes(fixtureId, teamId, matchNotes),
+      savePerformances(fixtureId, teamId, Object.values(perfs)),
+    ])
+    setDirty(false)
+    // Generate review links then scroll to them
+    await reviewLinksRef.current?.generate()
+    setSaving(false)
+    document.getElementById('review-links-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   // ── Derived display values ────────────────────────────────────────────────
@@ -745,6 +773,21 @@ export default function EditFixturePage() {
                           placeholder="—" className={`${inputCls} text-center text-2xl font-bold`} />
                       </div>
                     </div>
+                    {goalsFor !== '' && goalsAgainst !== '' && (
+                      <div className="pt-3 border-t border-gray-50 mt-1">
+                        <button
+                          type="button"
+                          onClick={handleSaveAndGenerateLinks}
+                          disabled={saving}
+                          className="w-full flex items-center justify-center gap-2 bg-red-800 hover:bg-red-900 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition disabled:opacity-60"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          {saving ? 'Saving…' : 'Save result & generate review links'}
+                        </button>
+                      </div>
+                    )}
                   </SectionCard>
                 ) : (
                   <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-5 py-4">
@@ -852,7 +895,7 @@ export default function EditFixturePage() {
                 )}
 
                 {/* Review links — admin, past */}
-                {isAdmin && <ReviewLinks fixtureId={fixtureId} isPast={isPast} />}
+                {isAdmin && <div id="review-links-section"><ReviewLinks ref={reviewLinksRef} fixtureId={fixtureId} isPast={isPast} /></div>}
               </div>
 
               {/* ── RIGHT COLUMN (sidebar) ── */}

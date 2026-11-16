@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
 import { ensureFixtureReview, resetRefReview, resetManagerReview } from '@/app/admin/reviews/actions'
+
+export type ReviewLinksHandle = { generate: () => Promise<void> }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false)
@@ -56,7 +58,7 @@ function ResetButton({ label, onReset }: { label: string; onReset: () => Promise
   )
 }
 
-export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; isPast: boolean }) {
+const ReviewLinks = forwardRef<ReviewLinksHandle, { fixtureId: string; isPast: boolean }>(function ReviewLinks({ fixtureId, isPast }, ref) {
   const [review, setReview] = useState<{ ref_token: string; manager_token: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const [refSubmitted, setRefSubmitted] = useState(false)
@@ -64,6 +66,10 @@ export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; 
   const [error, setError] = useState<string | null>(null)
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
+
+  useImperativeHandle(ref, () => ({
+    generate: handleGenerate,
+  }))
 
   useEffect(() => {
     async function load() {
@@ -162,4 +168,6 @@ export default function ReviewLinks({ fixtureId, isPast }: { fixtureId: string; 
       </div>
     </div>
   )
-}
+})
+
+export default ReviewLinks
