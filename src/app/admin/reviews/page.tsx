@@ -16,6 +16,8 @@ function formatDate(d: string) {
 
 const FIXTURE_REVIEW_SELECT = `
   id, ref_token, manager_token, ref_submitted_at, manager_submitted_at,
+  ref_coaches_score, ref_spectators_score, ref_players_score, ref_experience_score, ref_comments,
+  manager_ref_score, manager_comments,
   fixtures!inner(
     id, date, team_id, referee_id, volunteer_referee_id, opponent_id, season_id,
     teams(id, name, type, founding_age_group, founding_season_id, age_group, nickname),
@@ -76,6 +78,10 @@ export default async function AdminReviewsPage({
     opponentName: string
     refName: string | null
     reviewUrl: string
+    refScores?: { coaches: number; spectators: number; players: number; experience: number }
+    refComments?: string | null
+    managerScore?: number
+    managerComments?: string | null
   }
 
   const items: ReviewItem[] = []
@@ -105,10 +111,20 @@ export default async function AdminReviewsPage({
       }
     } else {
       if (r.ref_submitted_at && refName) {
-        items.push({ key: `${r.id}-ref`, reviewId: r.id, type: 'referee', date, teamId, fixtureId, teamName, opponentName: oppName, refName, reviewUrl: `${origin}/review/ref/${r.ref_token}` })
+        items.push({
+          key: `${r.id}-ref`, reviewId: r.id, type: 'referee', date, teamId, fixtureId, teamName, opponentName: oppName, refName,
+          reviewUrl: `${origin}/review/ref/${r.ref_token}`,
+          refScores: (r.ref_coaches_score != null) ? { coaches: r.ref_coaches_score, spectators: r.ref_spectators_score, players: r.ref_players_score, experience: r.ref_experience_score } : undefined,
+          refComments: r.ref_comments,
+        })
       }
       if (r.manager_submitted_at) {
-        items.push({ key: `${r.id}-mgr`, reviewId: r.id, type: 'manager', date, teamId, fixtureId, teamName, opponentName: oppName, refName, reviewUrl: `${origin}/review/manager/${r.manager_token}` })
+        items.push({
+          key: `${r.id}-mgr`, reviewId: r.id, type: 'manager', date, teamId, fixtureId, teamName, opponentName: oppName, refName,
+          reviewUrl: `${origin}/review/manager/${r.manager_token}`,
+          managerScore: r.manager_ref_score ?? undefined,
+          managerComments: r.manager_comments,
+        })
       }
     }
   }
@@ -137,33 +153,75 @@ export default async function AdminReviewsPage({
         ) : (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
             {items.map(item => (
-              <div key={item.key} className="flex items-center gap-3 px-4 py-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold flex-shrink-0 ${
-                      item.type === 'referee' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-                    }`}>
-                      {item.type === 'referee' ? 'Referee Feedback' : 'Manager Feedback'}
-                    </span>
-                    <p className="text-sm text-gray-900 truncate">
-                      <span className="font-semibold">{item.teamName}</span>
-                      <span className="text-gray-400"> vs </span>
-                      <span>{item.opponentName}</span>
-                      {item.refName && (
-                        <span className="text-gray-400"> · {item.refName}</span>
-                      )}
-                    </p>
+              <div key={item.key} className="px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold flex-shrink-0 ${
+                        item.type === 'referee' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                      }`}>
+                        {item.type === 'referee' ? 'Referee Feedback' : 'Manager Feedback'}
+                      </span>
+                      <p className="text-sm text-gray-900 truncate">
+                        <span className="font-semibold">{item.teamName}</span>
+                        <span className="text-gray-400"> vs </span>
+                        <span>{item.opponentName}</span>
+                        {item.refName && (
+                          <span className="text-gray-400"> · {item.refName}</span>
+                        )}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.date)}</p>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.date)}</p>
+                  {activeTab === 'incomplete' && <CopyLinkButton url={item.reviewUrl} />}
+                  {activeTab === 'incomplete' && <DeleteReviewButton reviewId={item.reviewId} type={item.type} />}
+                  <Link
+                    href={`/teams/${item.teamId}/fixtures/${item.fixtureId}/edit`}
+                    className="text-xs text-red-800 hover:underline flex-shrink-0 mt-0.5"
+                  >
+                    View fixture
+                  </Link>
                 </div>
-                {activeTab === 'incomplete' && <CopyLinkButton url={item.reviewUrl} />}
-                {activeTab === 'incomplete' && <DeleteReviewButton reviewId={item.reviewId} type={item.type} />}
-                <Link
-                  href={`/teams/${item.teamId}/fixtures/${item.fixtureId}/edit`}
-                  className="text-xs text-red-800 hover:underline flex-shrink-0"
-                >
-                  View fixture
-                </Link>
+                {activeTab === 'complete' && item.type === 'referee' && item.refScores && (
+                  <div className="mt-3 pl-0 space-y-2">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                      {([['Coaches', item.refScores.coaches], ['Spectators', item.refScores.spectators], ['Players', item.refScores.players], ['Club Experience', item.refScores.experience]] as [string, number][]).map(([label, score]) => (
+                        <div key={label} className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-gray-500">{label}</span>
+                          <div className="flex items-center gap-1">
+                            {[1,2,3,4,5].map(n => (
+                              <svg key={n} className={`w-3 h-3 ${n <= score ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                            ))}
+                            <span className="text-xs font-semibold text-gray-700 ml-1">{score}/5</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {item.refComments && (
+                      <p className="text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 mt-1 italic">"{item.refComments}"</p>
+                    )}
+                  </div>
+                )}
+                {activeTab === 'complete' && item.type === 'manager' && item.managerScore != null && (
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">Referee rating</span>
+                      <div className="flex items-center gap-1">
+                        {[1,2,3,4,5].map(n => (
+                          <svg key={n} className={`w-3 h-3 ${n <= item.managerScore! ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                        ))}
+                        <span className="text-xs font-semibold text-gray-700 ml-1">{item.managerScore}/5</span>
+                      </div>
+                    </div>
+                    {item.managerComments && (
+                      <p className="text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 italic">"{item.managerComments}"</p>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
