@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
 import FixturesList from './FixturesList'
+import RefereeSolicitButton from './RefereeSolicitButton'
 import { teamDisplayName, fixtureOpponentName, computeAgeGroup, type Season } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
@@ -169,6 +170,29 @@ export default async function FixturesDashboardPage({
     }
   })
 
+  const sevenDaysFromNow = new Date()
+  sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
+  const sevenDaysStr = sevenDaysFromNow.toISOString().split('T')[0]
+
+  const refNeededFixtures = !showPast ? fixtures.filter(f =>
+    !f.cancelled &&
+    f.refereeRequired &&
+    !f.leagueAssignedReferee &&
+    !f.refereeName &&
+    f.date >= todayStr &&
+    f.date <= sevenDaysStr
+  ).map(f => ({
+    id: f.id,
+    date: f.date,
+    kickoff_time: f.kickoff_time,
+    venueName: f.venueName,
+    venue: f.venue,
+    teamFormat: f.teamFormat,
+    ageGroupLabel: f.ageGroupLabel,
+    teamName: f.teamName,
+    opponentName: f.opponentName,
+  })) : []
+
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin={isAdmin} isFixtureSecretary={isFS}>
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -192,6 +216,7 @@ export default async function FixturesDashboardPage({
                 Past
               </Link>
             </div>
+            {!showPast && <RefereeSolicitButton fixtures={refNeededFixtures} />}
             {!showPast && (
               <Link
                 href="/fixtures/add"
