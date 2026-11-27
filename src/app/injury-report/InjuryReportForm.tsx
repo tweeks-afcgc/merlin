@@ -148,7 +148,7 @@ export default function InjuryReportForm({ venues, teams }: { venues: Venue[]; t
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-lg font-bold text-gray-900 mb-2">Thank you — incident received</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-2">Thank you - incident received</h2>
         <p className="text-sm text-gray-500 leading-relaxed">
           Your injury/incident report has been submitted and received by the club. A club official will review it shortly.
           {suspectedConcussion && (

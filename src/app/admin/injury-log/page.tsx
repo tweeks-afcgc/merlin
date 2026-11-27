@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
+import { computeAgeGroup, teamDisplayName, type Season } from '@/lib/teamUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,11 +24,14 @@ export default async function InjuryLogPage() {
   const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const { data: logs } = await supabase
-    .from('injury_logs')
-    .select('id, created_at, incident_date, injured_name, reporter_name, status, suspected_concussion, ambulance_called, teams:reporter_team_id(name)')
-    .order('incident_date', { ascending: false })
-    .order('created_at', { ascending: false })
+  const [{ data: logs }, { data: seasons }] = await Promise.all([
+    supabase
+      .from('injury_logs')
+      .select('id, created_at, incident_date, injured_name, reporter_name, status, suspected_concussion, ambulance_called, teams:reporter_team_id(id, name, type, founding_age_group, founding_season_id, age_group, nickname)')
+      .order('incident_date', { ascending: false })
+      .order('created_at', { ascending: false }),
+    supabase.from('seasons').select('id, name, start_date, is_current'),
+  ])
 
   return (
     <AppShell userName={profile?.full_name ?? null} isAdmin>
@@ -56,6 +60,7 @@ export default async function InjuryLogPage() {
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
             {logs.map(log => {
               const team = (log as any).teams
+              const teamLabel = team ? teamDisplayName(team, (seasons ?? []) as Season[]) : null
               const flags = []
               if (log.suspected_concussion) flags.push('Concussion')
               if (log.ambulance_called) flags.push('Ambulance')
@@ -79,7 +84,7 @@ export default async function InjuryLogPage() {
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {formatDate(log.incident_date)}
-                      {team?.name ? ` · ${team.name}` : ''}
+                      {teamLabel ? ` · ${teamLabel}` : ''}
                       {` · Reported by ${log.reporter_name}`}
                     </p>
                   </div>

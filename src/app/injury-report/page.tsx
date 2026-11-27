@@ -31,7 +31,7 @@ export default async function InjuryReportPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-red-800 text-white px-4 py-4">
         <div className="max-w-xl mx-auto">
-          <p className="text-xs font-semibold text-red-200 uppercase tracking-wide mb-0.5">AFC Greenways</p>
+          <p className="text-xs font-semibold text-red-200 uppercase tracking-wide mb-0.5">AFC Green Court</p>
           <h1 className="text-xl font-bold">Injury / Incident Report</h1>
         </div>
       </header>
