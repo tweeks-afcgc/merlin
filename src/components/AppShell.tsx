@@ -88,6 +88,7 @@ export default function AppShell({ children, userName: nameProp, isAdmin: adminP
     { href: '/teams', label: 'Teams' },
     ...(isAdmin || isFixtureSecretary ? [{ href: '/fixtures', label: 'Fixtures' }] : []),
     ...(isAdmin || isFixtureSecretary || isReferee ? [{ href: '/referee', label: 'Referee' }] : []),
+    ...(isAdmin ? [{ href: '/admin/injury-log', label: 'Injury Log' }] : []),
     ...(isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
 
